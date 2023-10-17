@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 const bitfinex = require('./exchanges/bitfinex')
+const kraken = require('./exchanges/kraken')
 const { list_unspent } = require('./bitcoin')
 const { get_fee_rate } = require('./fees')
 const {
@@ -10,6 +11,7 @@ const {
 
 const exchanges = {
     'BFX': bitfinex,
+    'KRAKEN': kraken
 }
 const available_exchanges = Object.keys(exchanges)
 
@@ -24,12 +26,12 @@ async function maybe_withdraw(exchange_name) {
         return 0
     })
     console.log(`BTC balance on ${exchange_name}: ${btc_balance}`)
+
+    console.log(`Skipping withdrawal section`)
+    return
+    // TODO: enable this
     if (btc_balance > 0) {
-        const to_address = process.env.BTC_WITHDRAW_ADDRESS
-        if (!to_address) {
-            throw new Error(`BTC_WITHDRAW_ADDRESS must be set in .env`)
-        }
-        await exchange.withdraw_to_address({ amount_btc: btc_balance, toAddress: to_address }).catch(err => {
+        await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
             console.error(err)
         })
     }
@@ -62,6 +64,7 @@ async function run() {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 async function runLoop() {
+    console.log(process.env.KRAKEN_API_KEY)
     while (true) {
         await run().catch(err => {
             console.error(err)

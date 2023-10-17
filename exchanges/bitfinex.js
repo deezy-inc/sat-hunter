@@ -29,15 +29,18 @@ async function get_btc_balance() {
     return (btcWalletBalances && btcWalletBalances[4]) || 0
 }
 
-async function withdraw_to_address({ amount_btc, toAddress: to_address }) {
+async function withdraw({ amount_btc }) {
     check_api_key()
-    console.log(`Withdrawing ${amount_btc} BTC to ${to_address}`)
+    if (!process.env.BTC_WITHDRAW_ADDRESS) {
+        throw new Error('BTC_WITHDRAW_ADDRESS must be set')
+    }
+    console.log(`Withdrawing ${amount_btc} BTC to ${process.env.BTC_WITHDRAW_ADDRESS}`)
     const path = 'v2/auth/w/withdraw';
     const post_data = {
         wallet: 'exchange',
         method: 'bitcoin',
         amount: `${amount_btc}`,
-        address: to_address,
+        address: process.env.BTC_WITHDRAW_ADDRESS,
         fee_deduct: 1
     };
     const headers = generate_headers({ path, body: post_data })
@@ -47,5 +50,5 @@ async function withdraw_to_address({ amount_btc, toAddress: to_address }) {
 
 module.exports = {
     get_btc_balance,
-    withdraw_to_address
+    withdraw
 }
