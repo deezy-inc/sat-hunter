@@ -74,6 +74,7 @@ async function withdraw({ amount_btc }) {
             "key": process.env.KRAKEN_WITHDRAWAL_ADDRESS_KEY,
             "amount": amount_btc.toString() // in BTC, not sats; ensure amount is in the right format/precision
         };
+        console.log(data)
         const resp = await QueryPrivateEndpoint('Withdraw', data);
         if (resp.error && resp.error.length > 0) {
             throw new Error(resp.error)
