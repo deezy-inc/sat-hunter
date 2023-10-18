@@ -61,13 +61,14 @@ async function get_utxos() {
     return unspents.map(it => `${it.txid}:${it.vout}`)
 }
 
-function sign_transaction({ psbt }) {
+function sign_transaction({ psbt, witnessUtxo }) {
     if (WALLET_TYPE === 'core') {
         return walletprocesspsbt({ psbt }).psbt
     }
     let psbt_object = bitcoin.Psbt.fromBase64(psbt)
     psbt_object.updateInput(0, {
         tapInternalKey: CHILD_XONLY_PUBKEY,
+        witnessUtxo,
     })
     console.log(TWEAKED_CHILD_NODE.publicKey.toString('hex'))
     psbt_object = psbt_object.signInput(0, TWEAKED_CHILD_NODE, [bitcoin.Transaction.SIGHASH_ALL])

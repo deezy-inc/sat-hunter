@@ -44,8 +44,14 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
         }
     }
+    const prev_tx = bitcoin.Transaction.fromBuffer(psbt.data.inputs[0].nonWitnessUtxo)
+    const witnessUtxo = {
+        value: prev_tx.outs[decoded_psbt.txInputs[0].index].value,
+        script: prev_tx.outs[decoded_psbt.txInputs[0].index].script,
+    }
+
     console.log(`Signing psbt...`)
-    const signed_psbt = sign_transaction({ psbt: psbt })
+    const signed_psbt = sign_transaction({ psbt: psbt, witnessUtxo })
     console.log(signed_psbt)
     // const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt)
     // final_signed_psbt.finalizeAllInputs()
