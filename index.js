@@ -55,20 +55,17 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
         throw new Error('psbt is not complete')
     }
     const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt_info.psbt)
-    console.log(`Final fee rate of signed psbt is ${final_signed_psbt.getFeeRate()}`)
+    const final_fee_rate = final_signed_psbt.getFeeRate()
+    console.log(`Final fee rate of signed psbt is ~${final_fee_rate} sat/vbyte`)
+    if (final_fee_rate > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE) ) {
+        throw new Error(`Fee rate is too high: ${final_fee_rate} sat/vbyte`)
+    }
     const final_info = finalizepsbt({ psbt: signed_psbt_info.psbt })
     if (!final_info.complete) {
         throw new Error('psbt is not complete')
     }
     console.log(`Finalized transaction`)
     console.log(final_info)
-    const mempool_info = testmempoolaccept({ hex: final_info.hex })
-    console.log(mempool_info)
-    const fee_rate = mempool_info[0].fees.base * 100000000 / mempool_info[0].vsize
-    console.log(`Fee rate is ${fee_rate} sat/vbyte`)
-    if (fee_rate > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE) ) {
-        throw new Error(`Fee rate is too high: ${fee_rate} sat/vbyte`)
-    }
     console.log(`Broadcasting transaction...`)
     const txid = sendrawtransaction({ hex: final_info.hex })
     console.log(`Broadcasted transaction with txid: ${txid}`)
