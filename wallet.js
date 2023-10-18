@@ -39,11 +39,21 @@ function sign_transaction({ psbt }) {
     throw new Error('Not implemented')
 }
 
+async function broadcast_to_mempool_space(hex) {
+    const url = `${MEMPOOL_API}/tx`
+    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
+        console.error(err)
+        return {}
+    })
+    return data
+}
+
 async function broadcast_transaction({ hex }) {
     if (WALLET_TYPE === 'core') {
         return sendrawtransaction(hex)
     }
-    throw new Error('Not implemented')
+    const txid = await broadcast_to_mempool_space(hex)
+    return txid
 }
 
 module.exports = {

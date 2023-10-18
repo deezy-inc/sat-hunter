@@ -44,7 +44,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
         }
     }
     console.log(`Signing psbt...`)
-    const signed_psbt = sign_transaction({ psbt })
+    const signed_psbt = sign_transaction({ psbt: psbt })
     const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt)
     const final_fee_rate = final_signed_psbt.getFeeRate()
     console.log(`Final fee rate of signed psbt is ~${final_fee_rate} sat/vbyte`)
