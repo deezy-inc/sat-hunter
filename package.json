@@ -12,6 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.5.1",
-    "dotenv": "^16.3.1"
+    "bip32": "^4.0.0",
+    "bip39": "^3.1.0",
+    "bitcoinjs-lib": "^6.1.5",
+    "dotenv": "^16.3.1",
+    "tiny-secp256k1": "^2.2.3"
   }
 }
