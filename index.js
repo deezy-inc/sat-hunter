@@ -84,14 +84,15 @@ async function run() {
     let fee_rate
     const scan_request_ids = []
     for (const unspent of unspents) {
-        console.log(unspent)
+        const utxo = `${unspent.txid}:${unspent.vout}`
+        console.log(`Preparing to scan: ${utxo}`)
         if (!fee_rate) {
             fee_rate = await get_fee_rate()
             fee_rate = Math.min(fee_rate, process.env.MAX_FEE_RATE || 99999999)
         }
         const exchange_address = await get_deposit_address()
         const scan_request = await post_scan_request({
-            utxo: unspent,
+            utxo,
             exchange_address,
             extraction_fee_rate: fee_rate
         })
