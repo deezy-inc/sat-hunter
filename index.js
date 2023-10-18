@@ -76,6 +76,11 @@ async function run() {
     // List local unspent
     console.log(`Listing existing wallet utxos...`)
     const utxos = await get_utxos()
+    if (utxos.length === 0) {
+        console.log(`No utxos found in wallet`)
+        return
+    }
+    console.log(`Found ${utxos.length} utxos in wallet.`)
     console.log(utxos)
 
     // TODO: Check Deezy API for existing scan requests
