@@ -8,7 +8,7 @@ const axios = require('axios')
 const MEMPOOL_API = 'https://mempool.space/api'
 const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
 
-async function get_utxos_from_mempool_space(address) {
+async function get_utxos_from_mempool_space({ address }) {
     const url = `${MEMPOOL_API}/address/${address}/utxo`
     const { data } = await axios.get(url).catch(err => {
         console.error(err)
@@ -25,7 +25,7 @@ async function get_utxos() {
     if (!address) {
         throw new Error('LOCAL_WALLET_ADDRESS must be set')
     }
-    const unspents = await get_utxos_from_mempool_space(address)
+    const unspents = await get_utxos_from_mempool_space({ address })
     if (!unspents) {
         throw new Error('Error reaching mempool api')
     }
@@ -34,12 +34,12 @@ async function get_utxos() {
 
 function sign_transaction({ psbt }) {
     if (WALLET_TYPE === 'core') {
-        return walletprocesspsbt(psbt).psbt
+        return walletprocesspsbt({ psbt }).psbt
     }
     throw new Error('Not implemented')
 }
 
-async function broadcast_to_mempool_space(hex) {
+async function broadcast_to_mempool_space({ hex }) {
     const url = `${MEMPOOL_API}/tx`
     const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
         console.error(err)
@@ -50,9 +50,9 @@ async function broadcast_to_mempool_space(hex) {
 
 async function broadcast_transaction({ hex }) {
     if (WALLET_TYPE === 'core') {
-        return sendrawtransaction(hex)
+        return sendrawtransaction({ hex })
     }
-    const txid = await broadcast_to_mempool_space(hex)
+    const txid = await broadcast_to_mempool_space({ hex })
     return txid
 }
 
