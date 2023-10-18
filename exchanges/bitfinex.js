@@ -48,7 +48,15 @@ async function withdraw({ amount_btc }) {
     console.log(result.data)
 }
 
+async function get_deposit_address() {
+    if (!process.env.BFX_DEPOSIT_ADDRESS) {
+        throw new Error('BFX_DEPOSIT_ADDRESS must be set')
+    }
+    return process.env.BFX_DEPOSIT_ADDRESS
+}
+
 module.exports = {
     get_btc_balance,
-    withdraw
+    withdraw,
+    get_deposit_address
 }

@@ -1,20 +1,22 @@
 require('dotenv').config()
 
-const bitfinex = require('./exchanges/bitfinex')
-const kraken = require('./exchanges/kraken')
-const { list_unspent } = require('./bitcoin')
+const exchanges = require('./exchanges/config.js')
+const {
+    listunspent,
+    utxoupdatepsbt,
+    walletprocesspsbt,
+    finalizepsbt
+} = require('./bitcoin')
 const { get_fee_rate } = require('./fees')
 const {
     post_scan_request,
     get_scan_request
 } = require('./deezy')
+const {get_deposit_address} = require("./exchanges/kraken");
 
-const exchanges = {
-    'BFX': bitfinex,
-    'KRAKEN': kraken
-}
 const available_exchanges = Object.keys(exchanges)
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name) {
     const exchange = exchanges[exchange_name]
     if (!exchange) {
@@ -37,6 +39,25 @@ async function maybe_withdraw(exchange_name) {
     }
 }
 
+async function sign_and_send_psbt({ psbt }) {
+    console.log(`Updating psbt...`)
+    const updated_psbt = utxoupdatepsbt({ psbt })
+    console.log(`Signing psbt...`)
+    const signed_psbt_info = walletprocesspsbt({ psbt: updated_psbt })
+    console.log(signed_psbt_info)
+    if (!signed_psbt_info.complete) {
+        throw new Error('psbt is not complete')
+    }
+    const final_info = finalizepsbt({ psbt: signed_psbt_info.psbt })
+    if (!final_info.complete) {
+        throw new Error('psbt is not complete')
+    }
+    console.log(`Finalized transaction`)
+    console.log(final_info)
+    // TODO: check fee rate
+    // TODO: broadcast
+}
+
 async function run() {
     const exchange_name = process.env.ACTIVE_EXCHANGE
     if (!exchange_name) {
@@ -47,18 +68,41 @@ async function run() {
     await maybe_withdraw(exchange_name)
 
     // List local unspent
-    const unspents = list_unspent()
+    const unspents = listunspent()
     console.log(unspents)
 
-    // Check Deezy API for existing scan requests
+    // TODO: Check Deezy API for existing scan requests
+
     let fee_rate
+    const scan_request_ids = []
     for (const unspent of unspents) {
         console.log(unspent)
         if (!fee_rate) {
             fee_rate = await get_fee_rate()
             fee_rate = Math.min(fee_rate, process.env.MAX_FEE_RATE || 99999999)
         }
-
+        const exchange_address = await get_deposit_address()
+        const scan_request = await post_scan_request({
+            utxo: unspent,
+            exchange_address,
+            extraction_fee_rate: fee_rate
+        })
+        scan_request_ids.push(scan_request.id)
+    }
+    for (let i = 0; i < scan_request_ids.length; i++) {
+        const scan_request_id = scan_request_ids[i]
+        console.log(`Checking status of scan request with id: ${scan_request_id}`)
+        const info = await get_scan_request({ scan_request_id })
+        if (info.status !== 'COMPLETED') {
+            console.log(`Scan request with id: ${scan_request_id} is not complete yet, will wait and retry`)
+            await sleep(2000)
+            i--
+            continue
+        }
+        console.log(`Scan request with id: ${scan_request_id} is complete`)
+        console.log(info)
+        // TODO: check for validity of PSBT.
+        await sign_and_send_psbt({ psbt: info.extraction_psbt })
     }
 }
 

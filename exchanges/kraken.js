@@ -22,7 +22,7 @@ function CreateAuthenticationSignature(
 }
 
 async function QueryPrivateEndpoint(endPointName, inputParameters) {
-    const baseDomain = "https://api.kraken.com";
+    const baseDomain = API_URL;
     const privatePath = "/0/private/";
     const apiPublicKey = process.env.KRAKEN_API_KEY
     const apiPrivateKey = process.env.KRAKEN_API_SECRET
@@ -85,7 +85,15 @@ async function withdraw({ amount_btc }) {
     }
 }
 
+async function get_deposit_address() {
+    if (!process.env.KRAKEN_DEPOSIT_ADDRESS) {
+        throw new Error('KRAKEN_DEPOSIT_ADDRESS must be set')
+    }
+    return process.env.KRAKEN_DEPOSIT_ADDRESS
+}
+
 module.exports = {
     get_btc_balance,
-    withdraw
+    withdraw,
+    get_deposit_address
 }
