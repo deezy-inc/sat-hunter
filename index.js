@@ -106,7 +106,6 @@ async function run() {
     }
 }
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 async function runLoop() {
     while (true) {
         await run().catch(err => {
