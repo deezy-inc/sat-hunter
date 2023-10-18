@@ -108,7 +108,6 @@ async function run() {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 async function runLoop() {
-    console.log(process.env.KRAKEN_API_KEY)
     while (true) {
         await run().catch(err => {
             console.error(err)
