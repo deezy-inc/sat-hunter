@@ -70,9 +70,7 @@ function sign_transaction({ psbt, witnessUtxo }) {
         tapInternalKey: CHILD_XONLY_PUBKEY,
         witnessUtxo,
     })
-    console.log(TWEAKED_CHILD_NODE.publicKey.toString('hex'))
     psbt_object = psbt_object.signInput(0, TWEAKED_CHILD_NODE, [bitcoin.Transaction.SIGHASH_ALL])
-    console.log(psbt_object.toBase64())
     return psbt_object.finalizeAllInputs().toBase64()
     // Note: assumes one input
 }
