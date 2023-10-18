@@ -30,11 +30,13 @@ async function maybe_withdraw(exchange_name) {
     })
     console.log(`BTC balance on ${exchange_name}: ${btc_balance}`)
 
-    console.log(`Withdrawing from ${exchange_name}...`)
     if (btc_balance > 0) {
+        console.log(`Withdrawing from ${exchange_name}...`)
         await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
             console.error(err)
         })
+    } else {
+        console.log(`No BTC to withdraw from ${exchange_name}`)
     }
 }
 
