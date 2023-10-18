@@ -14,6 +14,7 @@ bitcoin.initEccLib(ecc)
 
 const MEMPOOL_API = 'https://mempool.space/api'
 const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
+let CHILD_XONLY_PUBKEY
 let TWEAKED_CHILD_NODE
 const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
 
@@ -32,6 +33,7 @@ if (WALLET_TYPE === 'local') {
         TWEAKED_CHILD_NODE = child.tweak(
             bitcoin.crypto.taggedHash('TapTweak', childXOnlyPubKey),
         );
+        CHILD_XONLY_PUBKEY = childXOnlyPubKey
     }
 }
 
@@ -65,7 +67,7 @@ function sign_transaction({ psbt }) {
     }
     let psbt_object = bitcoin.Psbt.fromBase64(psbt)
     psbt_object.updateInput(0, {
-        tapInternalKey: Buffer.from(TWEAKED_CHILD_NODE.publicKey.toString('hex'), 'hex')
+        tapInternalKey: CHILD_XONLY_PUBKEY,
     })
     console.log(TWEAKED_CHILD_NODE.publicKey.toString('hex'))
     psbt_object = psbt_object.signInput(0, TWEAKED_CHILD_NODE, [bitcoin.Transaction.SIGHASH_ALL])
