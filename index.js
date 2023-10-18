@@ -60,7 +60,7 @@ async function sign_and_send_psbt({ psbt }) {
     console.log(mempool_info)
     const fee_rate = mempool_info[0].fees.base * 100000000 / mempool_info[0].vsize
     console.log(`Fee rate is ${fee_rate} sat/vbyte`)
-    if (fee_rate > process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE ) {
+    if (fee_rate > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE) ) {
         throw new Error(`Fee rate is too high: ${fee_rate} sat/vbyte`)
     }
     // TODO: broadcast
@@ -91,6 +91,7 @@ async function run() {
             fee_rate = await get_fee_rate()
             fee_rate = Math.min(fee_rate, process.env.MAX_FEE_RATE || 99999999)
         }
+        console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
         const exchange_address = await get_deposit_address()
         const scan_request = await post_scan_request({
             utxo,
