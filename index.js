@@ -17,6 +17,7 @@ const {
 
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
+const BUMP_FEE_BUFFER = 0.2
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name, exchange) {
     const btc_balance = await exchange.get_btc_balance().catch(err => {
@@ -100,7 +101,7 @@ async function run() {
         console.log(`Preparing to scan: ${utxo}`)
         if (!fee_rate) {
             fee_rate = await get_fee_rate()
-            fee_rate = Math.min(fee_rate, process.env.MAX_FEE_RATE || 99999999)
+            fee_rate = Math.min(fee_rate + BUMP_FEE_BUFFER, process.env.MAX_FEE_RATE || 99999999)
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
         const scan_request = await post_scan_request({
