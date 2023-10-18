@@ -28,9 +28,15 @@ function finalizepsbt({ psbt }) {
     return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} finalizepsbt '${psbt}'`))
 }
 
+function testmempoolaccept({ hex }) {
+    check_wallet()
+    return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} testmempoolaccept '["${hex}"]'`))
+}
+
 module.exports = {
     listunspent,
     utxoupdatepsbt,
     walletprocesspsbt,
-    finalizepsbt
+    finalizepsbt,
+    testmempoolaccept
 }

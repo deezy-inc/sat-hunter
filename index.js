@@ -5,7 +5,8 @@ const {
     listunspent,
     utxoupdatepsbt,
     walletprocesspsbt,
-    finalizepsbt
+    finalizepsbt,
+    testmemppolaccept
 } = require('./bitcoin')
 const { get_fee_rate } = require('./fees')
 const {
@@ -15,7 +16,7 @@ const {
 const {get_deposit_address} = require("./exchanges/kraken");
 
 const available_exchanges = Object.keys(exchanges)
-
+const FALLBACK_MAX_FEE_RATE = 200
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name) {
     const exchange = exchanges[exchange_name]
@@ -54,7 +55,13 @@ async function sign_and_send_psbt({ psbt }) {
     }
     console.log(`Finalized transaction`)
     console.log(final_info)
-    // TODO: check fee rate
+    const mempool_info = testmemppolaccept({ hex: final_info.hex })
+    console.log(mempool_info)
+    const fee_rate = mempool_info[0].fees.base * 100000000 / mempool_info[0].vsize
+    console.log(`Fee rate is ${fee_rate} sat/vbyte`)
+    if (fee_rate > process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE ) {
+        throw new Error(`Fee rate is too high: ${fee_rate} sat/vbyte`)
+    }
     // TODO: broadcast
 }
 
