@@ -6,7 +6,8 @@ const {
     utxoupdatepsbt,
     walletprocesspsbt,
     finalizepsbt,
-    testmempoolaccept
+    testmempoolaccept,
+    sendrawtransaction
 } = require('./bitcoin')
 const { get_fee_rate } = require('./fees')
 const {
@@ -63,7 +64,9 @@ async function sign_and_send_psbt({ psbt }) {
     if (fee_rate > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE) ) {
         throw new Error(`Fee rate is too high: ${fee_rate} sat/vbyte`)
     }
-    // TODO: broadcast
+    console.log(`Broadcasting transaction...`)
+    const txid = sendrawtransaction({ hex: final_info.hex })
+    console.log(`Broadcasted transaction with txid: ${txid}`)
 }
 
 async function run() {

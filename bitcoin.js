@@ -33,10 +33,17 @@ function testmempoolaccept({ hex }) {
     return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} testmempoolaccept '["${hex}"]'`))
 }
 
+function sendrawtransaction({ hex }) {
+    check_wallet()
+    const resp = child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} sendrawtransaction '${hex}'`)
+    return resp.toString('utf8').trim()
+}
+
 module.exports = {
     listunspent,
     utxoupdatepsbt,
     walletprocesspsbt,
     finalizepsbt,
-    testmempoolaccept
+    testmempoolaccept,
+    sendrawtransaction
 }
