@@ -1,5 +1,5 @@
 require('dotenv').config()
-
+const util = require('util')
 const exchanges = require('./exchanges/config.js')
 const {
     listunspent,
@@ -111,7 +111,7 @@ async function run() {
             continue
         }
         console.log(`Scan request with id: ${scan_request_id} is complete`)
-        console.log(info)
+        console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
         // TODO: check for validity of PSBT.
         await sign_and_send_psbt({ psbt: info.extraction_psbt })
     }
