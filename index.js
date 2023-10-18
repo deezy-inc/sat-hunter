@@ -6,7 +6,7 @@ bitcoin.initEccLib(ecc)
 const exchanges = require('./exchanges/config.js')
 const {
     get_utxos,
-    sign_transaction,
+    sign_and_finalize_transaction,
     broadcast_transaction,
 } = require('./wallet')
 const { get_fee_rate } = require('./fees')
@@ -51,7 +51,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     }
 
     console.log(`Signing psbt...`)
-    const signed_psbt = sign_transaction({ psbt: psbt, witnessUtxo })
+    const signed_psbt = sign_and_finalize_transaction({ psbt: psbt, witnessUtxo })
     console.log(signed_psbt)
     const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt)
     const final_fee_rate = final_signed_psbt.getFeeRate()
@@ -61,7 +61,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     }
     const final_tx = final_signed_psbt.extractTransaction()
     const final_hex = final_tx.toHex()
-    console.log(`Finalized transaction`)
+    console.log(`Extracted transaction`)
     console.log(final_hex)
     console.log(`Broadcasting transaction...`)
     const txid = await broadcast_transaction({ hex: final_hex})

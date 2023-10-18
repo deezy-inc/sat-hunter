@@ -23,9 +23,9 @@ function walletprocesspsbt({ psbt }) {
     return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} walletprocesspsbt '${psbt}' true "ALL"`))
 }
 
-function finalizepsbt({ psbt }) {
+function finalizepsbt({ psbt, extract = true }) {
     check_wallet()
-    return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} finalizepsbt '${psbt}'`))
+    return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} finalizepsbt '${psbt}' ${extract}`))
 }
 
 function testmempoolaccept({ hex }) {

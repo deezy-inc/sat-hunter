@@ -1,7 +1,7 @@
 const {
     listunspent,
     walletprocesspsbt,
-    sendrawtransaction,
+    sendrawtransaction, finalizepsbt,
 } = require('./bitcoin')
 const axios = require('axios')
 const ecc = require('tiny-secp256k1')
@@ -61,9 +61,10 @@ async function get_utxos() {
     return unspents.map(it => `${it.txid}:${it.vout}`)
 }
 
-function sign_transaction({ psbt, witnessUtxo }) {
+function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
     if (WALLET_TYPE === 'core') {
-        return walletprocesspsbt({ psbt }).psbt
+        const processed_psbt = walletprocesspsbt({ psbt }).psbt
+        return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt
     }
     let psbt_object = bitcoin.Psbt.fromBase64(psbt)
     psbt_object.updateInput(0, {
@@ -94,6 +95,6 @@ async function broadcast_transaction({ hex }) {
 
 module.exports = {
     get_utxos,
-    sign_transaction,
+    sign_and_finalize_transaction,
     broadcast_transaction
 }
