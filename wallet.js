@@ -64,8 +64,9 @@ function sign_transaction({ psbt }) {
         return walletprocesspsbt({ psbt }).psbt
     }
     const psbt_object = bitcoin.Psbt.fromBase64(psbt)
+    // Note: assumes one input
     return psbt_object
-        .signAllInputs(TWEAKED_CHILD_NODE)
+        .signInput(0, TWEAKED_CHILD_NODE)
         .finalizeAllInputs()
         .toBase64()
 }
