@@ -4,9 +4,33 @@ const {
     sendrawtransaction,
 } = require('./bitcoin')
 const axios = require('axios')
+const ecc = require('tiny-secp256k1')
+const {BIP32Factory} = require('bip32')
+const bip32 = BIP32Factory(ecc)
+const bitcoin = require('bitcoinjs-lib')
+const bip39 = require('bip39')
+
+bitcoin.initEccLib(ecc)
 
 const MEMPOOL_API = 'https://mempool.space/api'
 const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
+
+const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
+
+if (WALLET_TYPE === 'local') {
+    // Check validity of seed
+    const seed_phrase = process.env.LOCAL_WALLET_SEED
+    const seed_buffer = bip39.mnemonicToSeedSync(seed_phrase)
+    const hd_node = bip32.fromSeed(seed_buffer)
+    const child = hd_node.derivePath(process.env.LOCAL_DERIVATION_PATH || "m/86'/0'/0'/0/0")
+    const childXOnlyPubKey = toXOnly(child.publicKey)
+    const { address } = bitcoin.payments.p2tr({ internalPubkey: childXOnlyPubKey })
+    if (address !== process.env.LOCAL_WALLET_ADDRESS) {
+        throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct and taproot is used')
+    } else {
+        console.log(`Local wallet address: ${address}`)
+    }
+}
 
 async function get_utxos_from_mempool_space({ address }) {
     const url = `${MEMPOOL_API}/address/${address}/utxo`
@@ -31,6 +55,8 @@ async function get_utxos() {
     }
     return unspents.map(it => `${it.txid}:${it.vout}`)
 }
+
+
 
 function sign_transaction({ psbt }) {
     if (WALLET_TYPE === 'core') {
