@@ -67,7 +67,7 @@ function sign_transaction({ psbt }) {
     // Note: assumes one input
     return psbt_object
         .signInput(0, TWEAKED_CHILD_NODE, [bitcoin.Transaction.SIGHASH_ALL])
-        .finalizeAllInputs()
+        .finalizeInput(0)
         .toBase64()
 }
 
