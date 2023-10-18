@@ -1,5 +1,8 @@
 require('dotenv').config()
 const util = require('util')
+const ecc = require('tiny-secp256k1')
+const bitcoin = require('bitcoinjs-lib')
+bitcoin.initEccLib(ecc)
 const exchanges = require('./exchanges/config.js')
 const {
     listunspent,
@@ -39,10 +42,10 @@ async function maybe_withdraw(exchange_name, exchange) {
 async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address }) {
     // TODO: decode psbt here and ensure all outputs are ours.
     console.log(`Checking validity of psbt...`)
-    const decoded_psbt = decodepsbt({ psbt })
-    for (const output of decoded_psbt.tx.vout) {
-        if (output.scriptPubKey.address !== exchange_address && output.scriptPubKey.address !== rare_sat_address) {
-            throw new Error(`Invalid psbt. Output ${output.scriptPubKey.address} is not one of our addresses.`)
+    const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
+    for (const output of decoded_psbt.txOutputs) {
+        if (output.address !== exchange_address && output.address !== rare_sat_address) {
+            throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
         }
     }
     console.log(`Signing psbt...`)
