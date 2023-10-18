@@ -6,12 +6,8 @@ bitcoin.initEccLib(ecc)
 const exchanges = require('./exchanges/config.js')
 const {
     listunspent,
-    utxoupdatepsbt,
     walletprocesspsbt,
-    finalizepsbt,
-    testmempoolaccept,
     sendrawtransaction,
-    decodepsbt
 } = require('./bitcoin')
 const { get_fee_rate } = require('./fees')
 const {
@@ -60,14 +56,12 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     if (final_fee_rate > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE) ) {
         throw new Error(`Fee rate is too high: ${final_fee_rate} sat/vbyte`)
     }
-    const final_info = finalizepsbt({ psbt: signed_psbt_info.psbt })
-    if (!final_info.complete) {
-        throw new Error('psbt is not complete')
-    }
+    const final_tx = final_signed_psbt.extractTransaction()
+    const final_hex = final_tx.toHex()
     console.log(`Finalized transaction`)
-    console.log(final_info)
+    console.log(final_hex)
     console.log(`Broadcasting transaction...`)
-    const txid = sendrawtransaction({ hex: final_info.hex })
+    const txid = sendrawtransaction({ hex: final_hex})
     console.log(`Broadcasted transaction with txid: ${txid}`)
 }
 
