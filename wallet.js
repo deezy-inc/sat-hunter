@@ -65,7 +65,7 @@ function sign_transaction({ psbt }) {
     }
     const psbt_object = bitcoin.Psbt.fromBase64(psbt)
     psbt_object.signAllInputsHD(TWEAKED_CHILD_NODE)
-    return psbt.toBase64()
+    return psbt_object.toBase64()
 }
 
 async function broadcast_to_mempool_space({ hex }) {
