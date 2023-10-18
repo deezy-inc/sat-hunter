@@ -121,7 +121,7 @@ async function runLoop() {
         await run().catch(err => {
             console.error(err)
         })
-        await sleep(5000)
+        await sleep(10000)
     }
 }
 
