@@ -5,10 +5,10 @@ const bitcoin = require('bitcoinjs-lib')
 bitcoin.initEccLib(ecc)
 const exchanges = require('./exchanges/config.js')
 const {
-    listunspent,
-    walletprocesspsbt,
-    sendrawtransaction,
-} = require('./bitcoin')
+    get_utxos,
+    sign_transaction,
+    broadcast_transaction,
+} = require('./wallet')
 const { get_fee_rate } = require('./fees')
 const {
     post_scan_request,
@@ -36,7 +36,6 @@ async function maybe_withdraw(exchange_name, exchange) {
 }
 
 async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address }) {
-    // TODO: decode psbt here and ensure all outputs are ours.
     console.log(`Checking validity of psbt...`)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
     for (const output of decoded_psbt.txOutputs) {
@@ -45,12 +44,8 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
         }
     }
     console.log(`Signing psbt...`)
-    const signed_psbt_info = walletprocesspsbt({ psbt: psbt })
-    console.log(signed_psbt_info)
-    if (!signed_psbt_info.complete) {
-        throw new Error('psbt is not complete')
-    }
-    const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt_info.psbt)
+    const signed_psbt = sign_transaction({ psbt })
+    const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt)
     const final_fee_rate = final_signed_psbt.getFeeRate()
     console.log(`Final fee rate of signed psbt is ~${final_fee_rate} sat/vbyte`)
     if (final_fee_rate > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE) ) {
@@ -61,7 +56,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Finalized transaction`)
     console.log(final_hex)
     console.log(`Broadcasting transaction...`)
-    const txid = sendrawtransaction({ hex: final_hex})
+    const txid = await broadcast_transaction({ hex: final_hex})
     console.log(`Broadcasted transaction with txid: ${txid}`)
 }
 
@@ -79,8 +74,8 @@ async function run() {
 
     // List local unspent
     console.log(`Listing existing wallet utxos...`)
-    const unspents = listunspent()
-    console.log(unspents)
+    const utxos = await get_utxos()
+    console.log(utxos)
 
     // TODO: Check Deezy API for existing scan requests
 
@@ -88,8 +83,7 @@ async function run() {
     const scan_request_ids = []
     const exchange_address = await exchange.get_deposit_address()
     const rare_sat_address = process.env.RARE_SAT_ADDRESS
-    for (const unspent of unspents) {
-        const utxo = `${unspent.txid}:${unspent.vout}`
+    for (const utxo of utxos) {
         console.log(`Preparing to scan: ${utxo}`)
         if (!fee_rate) {
             fee_rate = await get_fee_rate()
