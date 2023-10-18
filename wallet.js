@@ -6,7 +6,7 @@ const {
 const axios = require('axios')
 
 const MEMPOOL_API = 'https://mempool.space/api'
-const WALLET_TYPE = process.env.BITCON_WALLET ? 'core' : 'local'
+const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
 
 async function get_utxos_from_mempool_space(address) {
     const url = `${MEMPOOL_API}/address/${address}/utxo`
