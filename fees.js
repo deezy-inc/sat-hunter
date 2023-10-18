@@ -8,3 +8,7 @@ async function get_fee_rate() {
     })
     return data.halfHourFee
 }
+
+module.exports = {
+    get_fee_rate
+}
