@@ -54,6 +54,8 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     if (!signed_psbt_info.complete) {
         throw new Error('psbt is not complete')
     }
+    const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt_info.psbt)
+    console.log(`Final fee rate of signed psbt is ${final_signed_psbt.getFeeRate()}`)
     const final_info = finalizepsbt({ psbt: signed_psbt_info.psbt })
     if (!final_info.complete) {
         throw new Error('psbt is not complete')
