@@ -46,8 +46,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
         }
     }
     console.log(`Signing psbt...`)
-    console.log(updated_psbt)
-    const signed_psbt_info = walletprocesspsbt({ psbt: updated_psbt })
+    const signed_psbt_info = walletprocesspsbt({ psbt: psbt })
     console.log(signed_psbt_info)
     if (!signed_psbt_info.complete) {
         throw new Error('psbt is not complete')
