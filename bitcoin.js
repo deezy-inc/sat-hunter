@@ -8,7 +8,7 @@ function check_wallet() {
 }
 function listunspent() {
     check_wallet()
-    const unspents = JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listunspent`))
+    const unspents = JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listunspent 0`))
     return unspents
 }
 
