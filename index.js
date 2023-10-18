@@ -108,7 +108,7 @@ async function run() {
         console.log(`Checking status of scan request with id: ${scan_request_id}`)
         const info = await get_scan_request({ scan_request_id })
         if (info.status !== 'COMPLETED') {
-            console.log(`Scan request with id: ${scan_request_id} is not complete yet, will wait and retry`)
+            console.log(`Waiting for scan to complete: ${scan_request_id}...`)
             await sleep(2000)
             i--
             continue
