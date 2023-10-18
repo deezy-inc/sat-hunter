@@ -15,6 +15,7 @@ function listunspent() {
 function utxoupdatepsbt({ psbt }) {
     check_wallet()
     const resp = child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} utxoupdatepsbt '${psbt}'`)
+    console.log(resp)
     return Buffer.from(resp).toString('base64')
 }
 
