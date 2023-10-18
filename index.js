@@ -6,7 +6,7 @@ const {
     utxoupdatepsbt,
     walletprocesspsbt,
     finalizepsbt,
-    testmemppolaccept
+    testmempoolaccept
 } = require('./bitcoin')
 const { get_fee_rate } = require('./fees')
 const {
@@ -56,7 +56,7 @@ async function sign_and_send_psbt({ psbt }) {
     }
     console.log(`Finalized transaction`)
     console.log(final_info)
-    const mempool_info = testmemppolaccept({ hex: final_info.hex })
+    const mempool_info = testmempoolaccept({ hex: final_info.hex })
     console.log(mempool_info)
     const fee_rate = mempool_info[0].fees.base * 100000000 / mempool_info[0].vsize
     console.log(`Fee rate is ${fee_rate} sat/vbyte`)
