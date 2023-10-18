@@ -14,7 +14,7 @@ bitcoin.initEccLib(ecc)
 
 const MEMPOOL_API = 'https://mempool.space/api'
 const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
-
+let TWEAKED_CHILD_NODE
 const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
 
 if (WALLET_TYPE === 'local') {
@@ -29,6 +29,9 @@ if (WALLET_TYPE === 'local') {
         throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct and taproot is used')
     } else {
         console.log(`Local wallet address: ${address}`)
+        TWEAKED_CHILD_NODE = child.tweak(
+            bitcoin.crypto.taggedHash('TapTweak', childXOnlyPubKey),
+        );
     }
 }
 
@@ -56,13 +59,13 @@ async function get_utxos() {
     return unspents.map(it => `${it.txid}:${it.vout}`)
 }
 
-
-
 function sign_transaction({ psbt }) {
     if (WALLET_TYPE === 'core') {
         return walletprocesspsbt({ psbt }).psbt
     }
-    throw new Error('Not implemented')
+    const psbt_object = bitcoin.Psbt.fromBase64(psbt)
+    psbt_object.signAllInputsHD(TWEAKED_CHILD_NODE)
+    return psbt.toBase64()
 }
 
 async function broadcast_to_mempool_space({ hex }) {
