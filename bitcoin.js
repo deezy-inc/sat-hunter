@@ -39,11 +39,17 @@ function sendrawtransaction({ hex }) {
     return resp.toString('utf8').trim()
 }
 
+function decodepsbt({ psbt }) {
+    const resp = JSON.parse(child_process.execSync(`${bitcoin_command} decodepsbt '${psbt}'`))
+    return resp
+}
+
 module.exports = {
     listunspent,
     utxoupdatepsbt,
     walletprocesspsbt,
     finalizepsbt,
     testmempoolaccept,
-    sendrawtransaction
+    sendrawtransaction,
+    decodepsbt
 }

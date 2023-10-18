@@ -7,7 +7,7 @@ function check_api_key() {
         throw new Error('DEEZY_API_KEY must be set')
     }
 }
-async function post_scan_request({ utxo, exchange_address, extraction_fee_rate }) {
+async function post_scan_request({ utxo, exchange_address, rare_sat_address, extraction_fee_rate }) {
     check_api_key()
     if (!process.env.RARE_SAT_ADDRESS) {
         throw new Error('RARE_SAT_ADDRESS must be set')
@@ -17,7 +17,7 @@ async function post_scan_request({ utxo, exchange_address, extraction_fee_rate }
         utxo_to_scan: utxo,
         extract: true,
         special_sat_addresses: [
-            process.env.RARE_SAT_ADDRESS
+            rare_sat_address
         ],
         regular_funds_addresses: [
             exchange_address
