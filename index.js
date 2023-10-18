@@ -68,6 +68,7 @@ async function run() {
     await maybe_withdraw(exchange_name)
 
     // List local unspent
+    console.log(`Listing existing wallet utxos...`)
     const unspents = listunspent()
     console.log(unspents)
 
