@@ -75,7 +75,7 @@ async function withdraw({ amount_btc }) {
             "amount": amount_btc// in BTC, not sats; ensure amount is in the right format/precision
         };
         console.log(data)
-        const resp = await QueryPrivateEndpoint('Withdraw', data);
+        const resp = await QueryPrivateEndpoint('Withdraw', (new URLSearchParams(data)).toString());
         if (resp.error && resp.error.length > 0) {
             throw new Error(resp.error)
         }
