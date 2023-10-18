@@ -65,7 +65,7 @@ function sign_transaction({ psbt }) {
     }
     let psbt_object = bitcoin.Psbt.fromBase64(psbt)
     psbt_object.updateInput(0, {
-        tapInternalKey: TWEAKED_CHILD_NODE.publicKey,
+        tapInternalKey: Buffer.from(TWEAKED_CHILD_NODE.publicKey.toString('hex'), 'hex')
     })
     console.log(TWEAKED_CHILD_NODE.publicKey.toString('hex'))
     psbt_object = psbt_object.signInput(0, TWEAKED_CHILD_NODE, [bitcoin.Transaction.SIGHASH_ALL])
