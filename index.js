@@ -44,6 +44,7 @@ async function sign_and_send_psbt({ psbt }) {
     console.log(`Updating psbt...`)
     const updated_psbt = utxoupdatepsbt({ psbt })
     console.log(`Signing psbt...`)
+    console.log(updated_psbt)
     const signed_psbt_info = walletprocesspsbt({ psbt: updated_psbt })
     console.log(signed_psbt_info)
     if (!signed_psbt_info.complete) {
