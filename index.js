@@ -37,6 +37,7 @@ async function maybe_withdraw(exchange_name, exchange) {
 
 async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address }) {
     console.log(`Checking validity of psbt...`)
+    console.log(psbt)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
     for (const output of decoded_psbt.txOutputs) {
         if (output.address !== exchange_address && output.address !== rare_sat_address) {
