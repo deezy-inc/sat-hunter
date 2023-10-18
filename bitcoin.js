@@ -20,7 +20,7 @@ function utxoupdatepsbt({ psbt }) {
 
 function walletprocesspsbt({ psbt }) {
     check_wallet()
-    return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} walletprocesspsbt '${psbt}'`))
+    return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} walletprocesspsbt '${psbt}' true "ALL"`))
 }
 
 function finalizepsbt({ psbt }) {
