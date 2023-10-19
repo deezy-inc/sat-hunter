@@ -81,9 +81,6 @@ async function run() {
     if (!exchange) {
         throw new Error(`${exchange_name} is not a valid exchange. Available options are ${available_exchanges.join(', ')}`)
     }
-    if (TELEGRAM_BOT_ENABLED) {
-        console.log(`Telegram bot is enabled`)
-    }
     // Withdraw any funds on exchange
     await maybe_withdraw(exchange_name, exchange)
 
@@ -147,6 +144,10 @@ async function run() {
 }
 
 async function runLoop() {
+    if (TELEGRAM_BOT_ENABLED) {
+        console.log(`Telegram bot is enabled`)
+        telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`)
+    }
     while (true) {
         await run().catch(err => {
             console.error(err)
