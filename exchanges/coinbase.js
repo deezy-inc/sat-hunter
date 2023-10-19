@@ -66,7 +66,8 @@ async function withdraw({ amount_btc }) {
         amount: `${amount_btc - FEE_BUFFER}`,
         currency: 'BTC',
         to: process.env.COINBASE_WITHDRAWAL_ADDRESS,
-        type: 'send'
+        type: 'send',
+        to_financial_institution: false,
     }
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
     headers['Content-Type'] = 'application/json'
