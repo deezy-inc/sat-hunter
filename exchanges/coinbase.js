@@ -3,9 +3,9 @@ const crypto = require('crypto')
 const BASE_URL = 'https://api.coinbase.com'
 
 let BTC_ACCOUNT_ID = null
+const FEE_BUFFER = 0.0005
 function create_signature({ path, timestamp, method, body = ''}) {
     const data = `${timestamp}${method}${path}${body}`
-    console.log(data)
     return crypto.createHmac('sha256', process.env.COINBASE_API_SECRET)
         .update(data)
         .digest('hex');
@@ -63,7 +63,7 @@ async function withdraw({ amount_btc }) {
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
     const body = {
-        amount: `${amount_btc}`,
+        amount: `${amount_btc - FEE_BUFFER}`,
         currency: 'BTC',
         to: process.env.COINBASE_WITHDRAWAL_ADDRESS,
         type: 'send'
