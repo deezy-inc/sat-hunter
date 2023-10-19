@@ -14,6 +14,8 @@ const {
     post_scan_request,
     get_scan_request
 } = require('./deezy')
+const TelegramBot = require('node-telegram-bot-api')
+let telegramBot = process.env.TELEGRAM_BOT_TOKEN ? new TelegramBot(process.env.TELEGRAM_BOT_TOKEN) : null
 
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -77,6 +79,10 @@ async function run() {
     const exchange = exchanges[exchange_name]
     if (!exchange) {
         throw new Error(`${exchange_name} is not a valid exchange. Available options are ${available_exchanges.join(', ')}`)
+    }
+    if (telegramBot && process.env.TELEGRAM_CHAT_ID) {
+        console.log(`Telegram bot is enabled`)
+        telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Starting scan on ${exchange_name}...`)
     }
     // Withdraw any funds on exchange
     await maybe_withdraw(exchange_name, exchange)
