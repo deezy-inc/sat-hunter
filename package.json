@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node -r dotenv/config index.js",
+    "setup-telegram": "node -r dotenv/config setup-telegram-bot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
