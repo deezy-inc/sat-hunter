@@ -3,7 +3,7 @@ const crypto = require('crypto')
 const BASE_URL = 'https://api.coinbase.com'
 
 let BTC_ACCOUNT_ID = null
-const FEE_BUFFER = 0.0005
+const FEE_BUFFER = 0.0005 // We deduct a small amount from the withdrawal amount to cover the tx fee.
 function create_signature({ path, timestamp, method, body = ''}) {
     const data = `${timestamp}${method}${path}${body}`
     return crypto.createHmac('sha256', process.env.COINBASE_API_SECRET)
