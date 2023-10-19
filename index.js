@@ -138,11 +138,11 @@ async function run() {
         console.log(`Scan request with id: ${scan_request_id} is complete`)
         console.log(info)
         if (TELEGRAM_BOT_ENABLED) {
-            if (info.special_sats.length === 0) {
+            if (info.satributes.length === 0) {
                 telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `No special sats found on this utxo`)
             } else {
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Found ${info.special_sats.length} special sats on this utxo`)
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, JSON.stringify(info.special_sats, null, 2))
+                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Found ${info.satributes.length} special sats on this utxo`)
+                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, JSON.stringify(info.satributes, null, 2))
             }
         }
         console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
