@@ -53,7 +53,7 @@ async function withdraw({ amount_btc }) {
     if (!process.env.COINBASE_API_KEY || !process.env.COINBASE_API_SECRET) {
         throw new Error('COINBASE_API_KEY and COINBASE_API_SECRET must be set')
     }
-    if (!process.env.COINBASE_WITHDRAW_ADDRESS) {
+    if (!process.env.COINBASE_WITHDRAWAL_ADDRESS) {
         throw new Error('COINBASE_WITHDRAW_ADDRESS must be set')
     }
     if (!BTC_ACCOUNT_ID) {
@@ -65,7 +65,7 @@ async function withdraw({ amount_btc }) {
     const body = {
         amount: `${amount_btc}`,
         currency: 'BTC',
-        to: process.env.COINBASE_WITHDRAW_ADDRESS,
+        to: process.env.COINBASE_WITHDRAWAL_ADDRESS,
         type: 'send'
     }
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
