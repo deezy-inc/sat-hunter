@@ -33,7 +33,7 @@ async function maybe_withdraw(exchange_name, exchange) {
         console.log(`Withdrawing from ${exchange_name}...`)
         await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
             if (TELEGRAM_BOT_ENABLED) {
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Error withdrawing from ${exchange_name}: ${JSON.stringify(err, null, 2)}`)
+                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Error withdrawing from ${exchange_name}: ${err.message}`)
             }
             console.error(err)
         })
