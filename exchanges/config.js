@@ -1,6 +1,7 @@
-const bitfinex = require('../exchanges/bitfinex')
-const kraken = require('../exchanges/kraken')
+const bitfinex = require('./bitfinex')
+const kraken = require('./kraken')
+const coinbase = require('./coinbase')
 
 module.exports = {
-  bitfinex, kraken
+  bitfinex, kraken, coinbase
 }
