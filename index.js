@@ -31,12 +31,16 @@ async function maybe_withdraw(exchange_name, exchange) {
 
     if (btc_balance > (process.env.WITHDRAWAL_THRESHOLD_BTC || 0)) {
         console.log(`Withdrawing from ${exchange_name}...`)
-        await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
+        const err = await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
             if (TELEGRAM_BOT_ENABLED) {
                 telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Error withdrawing from ${exchange_name}: ${err.message}`)
             }
             console.error(err)
+            return err
         })
+        if (!err && TELEGRAM_BOT_ENABLED) {
+            telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Withdrew ${btc_balance} BTC from ${exchange_name}`)
+        }
     } else {
         console.log(`Not enough BTC to withdraw from ${exchange_name}`)
     }
