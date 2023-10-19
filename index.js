@@ -136,6 +136,7 @@ async function run() {
             continue
         }
         console.log(`Scan request with id: ${scan_request_id} is complete`)
+        console.log(info)
         if (TELEGRAM_BOT_ENABLED) {
             if (info.special_sats.length === 0) {
                 telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `No special sats found on this utxo`)
