@@ -16,6 +16,7 @@ const {
 } = require('./deezy')
 const TelegramBot = require('node-telegram-bot-api')
 let telegramBot = process.env.TELEGRAM_BOT_TOKEN ? new TelegramBot(process.env.TELEGRAM_BOT_TOKEN) : null
+const TELEGRAM_BOT_ENABLED = telegramBot && process.env.TELEGRAM_CHAT_ID
 
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -80,9 +81,8 @@ async function run() {
     if (!exchange) {
         throw new Error(`${exchange_name} is not a valid exchange. Available options are ${available_exchanges.join(', ')}`)
     }
-    if (telegramBot && process.env.TELEGRAM_CHAT_ID) {
+    if (TELEGRAM_BOT_ENABLED) {
         console.log(`Telegram bot is enabled`)
-        telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Starting scan on ${exchange_name}...`)
     }
     // Withdraw any funds on exchange
     await maybe_withdraw(exchange_name, exchange)
@@ -105,6 +105,9 @@ async function run() {
     const rare_sat_address = process.env.RARE_SAT_ADDRESS
     for (const utxo of utxos) {
         console.log(`Preparing to scan: ${utxo}`)
+        if (TELEGRAM_BOT_ENABLED) {
+            telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Initiating scan for: ${utxo}`)
+        }
         if (!fee_rate) {
             fee_rate = await get_fee_rate()
             fee_rate = Math.min(fee_rate + BUMP_FEE_BUFFER, process.env.MAX_FEE_RATE || 99999999)
@@ -129,6 +132,14 @@ async function run() {
             continue
         }
         console.log(`Scan request with id: ${scan_request_id} is complete`)
+        if (TELEGRAM_BOT_ENABLED) {
+            if (info.special_sats.length === 0) {
+                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `No special sats found on this utxo`)
+            } else {
+                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Found ${info.special_sats.length} special sats on this utxo`)
+                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, JSON.stringify(info.special_sats, null, 2))
+            }
+        }
         console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
         // TODO: check for validity of PSBT.
         await decode_sign_and_send_psbt({ psbt: info.extraction_psbt, exchange_address, rare_sat_address })
