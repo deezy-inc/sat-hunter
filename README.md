@@ -2,9 +2,14 @@
 Automated script to hunt for rare sats.
 
 ## Requirements
-- NodeJS
 - An account on one of Coinbase, Kraken, Gemini, Bitfinex
 - Some Bitcoin
+
+# No-Code Option - Replit:
+To run the automated hunter without touching any code, fork the project on Replit (https://replit.com/@DannyDiekroeger/sat-hunter)
+and add in all the required Secrets (tutorial coming soon!)
+
+# Self Hosted Option - Run on your own server:
 
 ## Setup
 Install the Script
