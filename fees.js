@@ -27,7 +27,7 @@ async function get_min_next_block_fee_rate() {
     if (!data) {
         throw new Error('Could not get mempool blocks')
     }
-    return data[0].feeRange[1].toFixed(1)
+    return Math.round(data[0].feeRange[1] * 10) / 10
 }
 
 module.exports = {
