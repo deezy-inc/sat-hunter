@@ -79,7 +79,7 @@ async function withdraw({ amount_btc }) {
         if (resp.error && resp.error.length > 0) {
             throw new Error(resp.error)
         }
-        return resp;
+        console.log(resp);
     } catch (error) {
         console.error('An error occurred during withdrawal:', error);
         throw error; // re-throw the error if you want it to propagate
