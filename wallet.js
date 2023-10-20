@@ -1,7 +1,10 @@
 const {
     listunspent,
     walletprocesspsbt,
-    sendrawtransaction, finalizepsbt,
+    sendrawtransaction,
+    finalizepsbt,
+    listtransactions,
+    getrawtransaction
 } = require('./bitcoin')
 const axios = require('axios')
 const ecc = require('tiny-secp256k1')
@@ -93,8 +96,31 @@ async function broadcast_transaction({ hex }) {
     return txid
 }
 
+async function fetch_most_recent_unconfirmed_send() {
+    if (WALLET_TYPE === 'core') {
+        const recent_transactions = listtransactions()
+        const unconfirmed_sends = recent_transactions.filter(it => it.category === 'send' && it.confirmations === 0)
+        if (unconfirmed_sends.length === 0) {
+            return {}
+        }
+        // sort by fee ascending
+        const tx = unconfirmed_sends.sort((a, b) => a.fee - b.fee)[0]
+        const fee = -tx.fee * 100000000
+        const tx_info = getrawtransaction({ txid: tx.txid, verbose: true })
+        // Assumes one input
+        const input = tx_info.vin[0]
+        const fee_rate = fee / tx_info.vsize
+        return {
+            existing_fee_rate,
+            input_utxo: `${input.txid}:${input.vout}`,
+        }
+    }
+    throw new Error('not implemented yet')
+}
+
 module.exports = {
     get_utxos,
     sign_and_finalize_transaction,
-    broadcast_transaction
+    broadcast_transaction,
+    fetch_most_recent_unconfirmed_send,
 }

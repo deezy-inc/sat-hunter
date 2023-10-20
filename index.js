@@ -8,6 +8,7 @@ const {
     get_utxos,
     sign_and_finalize_transaction,
     broadcast_transaction,
+    fetch_most_recent_unconfirmed_send,
 } = require('./wallet')
 const { get_fee_rate } = require('./fees')
 const {
@@ -23,7 +24,7 @@ const TELEGRAM_BOT_ENABLED = telegramBot && process.env.TELEGRAM_CHAT_ID
 
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
-const BUMP_FEE_BUFFER = 0.2
+
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name, exchange) {
     const btc_balance = await exchange.get_btc_balance().catch(err => {
@@ -94,19 +95,39 @@ async function run() {
     // Withdraw any funds on exchange
     await maybe_withdraw(exchange_name, exchange)
 
+    let fee_rate = await get_fee_rate()
+    fee_rate = Math.min(fee_rate, process.env.MAX_FEE_RATE || 99999999)
+
+    // TODO: first look for existing sends and try to RBF them.
+    const {
+        existing_fee_rate,
+        input_utxo
+    } = await fetch_most_recent_unconfirmed_send()
+    const bump_utxos = []
+    if (input_utxo) {
+        if (fee_rate - existing_fee_rate > 1) {
+            const msg = `Existing transaction has fee rate of ${existing_fee_rate} sat/vbyte. Will replace with ${fee_rate} sat/vbyte`
+            console.log(msg)
+            if (TELEGRAM_BOT_ENABLED) {
+                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, msg)
+            }
+            bump_utxos.push(input_utxo)
+        }
+    }
+
     // List local unspent
     console.log(`Listing existing wallet utxos...`)
-    const utxos = await get_utxos()
+    const unspents = await get_utxos()
+    console.log(`Found ${unspents.length} utxos in wallet.`)
+    const utxos = unspents.concat(bump_utxos)
     if (utxos.length === 0) {
-        console.log(`No utxos found in wallet`)
         return
     }
-    console.log(`Found ${utxos.length} utxos in wallet.`)
     console.log(utxos)
 
     // TODO: Check Deezy API for existing scan requests
 
-    let fee_rate
+
     const scan_request_ids = []
     const exchange_address = await exchange.get_deposit_address()
     const rare_sat_address = process.env.RARE_SAT_ADDRESS
@@ -114,10 +135,6 @@ async function run() {
         console.log(`Preparing to scan: ${utxo}`)
         if (TELEGRAM_BOT_ENABLED) {
             telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Initiating scan for: ${utxo}`)
-        }
-        if (!fee_rate) {
-            fee_rate = await get_fee_rate()
-            fee_rate = Math.min(fee_rate + BUMP_FEE_BUFFER, process.env.MAX_FEE_RATE || 99999999)
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
         const scan_request = await post_scan_request({

@@ -44,6 +44,17 @@ function decodepsbt({ psbt }) {
     return resp
 }
 
+function listtransactions() {
+    check_wallet()
+    const resp = JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listtransactions`))
+    return resp
+}
+
+function getrawtransaction({ txid, verbose }) {
+    const resp = JSON.parse(child_process.execSync(`${bitcoin_command} getrawtransaction '${txid}' ${verbose}`))
+    return resp
+}
+
 module.exports = {
     listunspent,
     utxoupdatepsbt,
@@ -51,5 +62,7 @@ module.exports = {
     finalizepsbt,
     testmempoolaccept,
     sendrawtransaction,
-    decodepsbt
+    decodepsbt,
+    listtransactions,
+    getrawtransaction
 }
