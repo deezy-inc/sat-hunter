@@ -24,6 +24,7 @@ const TELEGRAM_BOT_ENABLED = telegramBot && process.env.TELEGRAM_CHAT_ID
 
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
+const SCAN_MAX_RETRIES = 60
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name, exchange) {
@@ -157,6 +158,7 @@ async function run() {
             rescan_request_ids.add(scan_request.id)
         }
     }
+    let num_retries = 0
     for (let i = 0; i < scan_request_ids.length; i++) {
         const scan_request_id = scan_request_ids[i]
         console.log(`Checking status of scan request with id: ${scan_request_id}`)
@@ -164,6 +166,11 @@ async function run() {
         if (info.status !== 'COMPLETED') {
             console.log(`Waiting for scan to complete: ${scan_request_id}...`)
             await sleep(2000)
+            num_retries++
+            if (num_retries > SCAN_MAX_RETRIES) {
+                console.log(`Scan seems stuck - aborting`)
+                return
+            }
             i--
             continue
         }
