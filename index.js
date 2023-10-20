@@ -103,25 +103,27 @@ async function run() {
     let fee_rate = await get_fee_rate()
     fee_rate = Math.min(fee_rate, process.env.MAX_FEE_RATE || 99999999)
 
-    // TODO: first look for existing sends and try to RBF them.
-    const {
-        existing_fee_rate,
-        input_utxo
-    } = await fetch_most_recent_unconfirmed_send()
-    // TODO: fix this logic - there can only be one bump_utxo right now
     const bump_utxos = []
-    if (input_utxo) {
-        console.log(`Found existing unconfirmed send with fee rate of ${existing_fee_rate} sat/vbyte`)
-        console.log(`Current fee rate is ${fee_rate} sat/vbyte`)
-        if (fee_rate - existing_fee_rate >= 1.1) {
-            const msg = `Existing transaction has fee rate of ${existing_fee_rate} sat/vbyte. Will replace with ${fee_rate} sat/vbyte`
-            console.log(msg)
-            if (TELEGRAM_BOT_ENABLED) {
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, msg)
+    if (process.env.AUTO_RBF) {
+        const {
+            existing_fee_rate,
+            input_utxo
+        } = await fetch_most_recent_unconfirmed_send()
+        // TODO: fix this logic - there can only be one bump_utxo right now
+        if (input_utxo) {
+            console.log(`Found existing unconfirmed send with fee rate of ${existing_fee_rate} sat/vbyte`)
+            console.log(`Current fee rate is ${fee_rate} sat/vbyte`)
+            if (fee_rate - existing_fee_rate >= 1.1) {
+                const msg = `Existing transaction has fee rate of ${existing_fee_rate} sat/vbyte. Will replace with ${fee_rate} sat/vbyte`
+                console.log(msg)
+                if (TELEGRAM_BOT_ENABLED) {
+                    telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, msg)
+                }
+                bump_utxos.push(input_utxo)
             }
-            bump_utxos.push(input_utxo)
         }
     }
+
     const rescanned_utxos = new Set(bump_utxos)
     const rescan_request_ids = new Set()
 
