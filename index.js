@@ -105,6 +105,8 @@ async function run() {
     } = await fetch_most_recent_unconfirmed_send()
     const bump_utxos = []
     if (input_utxo) {
+        console.log(`Found existing unconfirmed send with fee rate of ${existing_fee_rate} sat/vbyte`)
+        console.log(`Current fee rate is ${fee_rate} sat/vbyte`)
         if (fee_rate - existing_fee_rate > 1.2) {
             const msg = `Existing transaction has fee rate of ${existing_fee_rate} sat/vbyte. Will replace with ${fee_rate} sat/vbyte`
             console.log(msg)
