@@ -115,7 +115,8 @@ async function fetch_most_recent_unconfirmed_send() {
             input_utxo: `${input.txid}:${input.vout}`,
         }
     }
-    throw new Error('not implemented yet')
+    console.log(`fetch_most_recent_unconfirmed_send not implemented for ${WALLET_TYPE}`)
+    return {}
 }
 
 module.exports = {
