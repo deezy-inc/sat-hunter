@@ -28,7 +28,7 @@ cd sat-hunter
 npm install
 ```
 
-Setup ENV Variables (you'll need to do some setup for the exchange you're using)
+Setup Environment Variables (you'll need to do some setup for the exchange you're using like getting API keys and allowlisting the withdrawal address)
 ```agsl
 cp .env.example .env
 // Edit .env to match your setup.
