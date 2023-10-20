@@ -158,7 +158,6 @@ async function fetch_most_recent_unconfirmed_send() {
             input_utxo: `${input.txid}:${input.vout}`,
         }
     }
-    console.log(`fetch_most_recent_unconfirmed_send not implemented for ${WALLET_TYPE}`)
     const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
     const unconfirmed_sends = txs.filter(it => {
         // Hacky way to find which ones are ours...
