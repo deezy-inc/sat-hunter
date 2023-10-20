@@ -172,6 +172,7 @@ async function fetch_most_recent_unconfirmed_send() {
         return true
     })
     console.log(`Found ${unconfirmed_sends.length} unconfirmed sends`)
+    if (unconfirmed_sends.length === 0) return {}
     // Sort by fee descending
     const tx = unconfirmed_sends.sort((a, b) => b.fee - a.fee)[0]
     const existing_fee_rate = (tx.fee / (tx.weight / 4)).toFixed(1)
