@@ -27,6 +27,9 @@ let derivation_path
 const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
 
 if (WALLET_TYPE === 'local') {
+    if (!process.env.LOCAL_WALLET_SEED || !process.env.LOCAL_WALLET_ADDRESS) {
+        throw new Error('LOCAL_WALLET_SEED and LOCAL_WALLET_ADDRESS must be set')
+    }
     // Check validity of seed
     const seed_phrase = process.env.LOCAL_WALLET_SEED
     const seed_buffer = bip39.mnemonicToSeedSync(seed_phrase)
