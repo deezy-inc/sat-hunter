@@ -105,7 +105,7 @@ async function run() {
     } = await fetch_most_recent_unconfirmed_send()
     const bump_utxos = []
     if (input_utxo) {
-        if (fee_rate - existing_fee_rate > 1) {
+        if (fee_rate - existing_fee_rate > 1.5) {
             const msg = `Existing transaction has fee rate of ${existing_fee_rate} sat/vbyte. Will replace with ${fee_rate} sat/vbyte`
             console.log(msg)
             if (TELEGRAM_BOT_ENABLED) {
@@ -114,6 +114,8 @@ async function run() {
             bump_utxos.push(input_utxo)
         }
     }
+    const rescanned_utxos = new Set(bump_utxos)
+    const rescan_request_ids = new Set()
 
     // List local unspent
     console.log(`Listing existing wallet utxos...`)
@@ -133,7 +135,7 @@ async function run() {
     const rare_sat_address = process.env.RARE_SAT_ADDRESS
     for (const utxo of utxos) {
         console.log(`Preparing to scan: ${utxo}`)
-        if (TELEGRAM_BOT_ENABLED) {
+        if (TELEGRAM_BOT_ENABLED && !rescanned_utxos.has(utxo)) {
             telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Initiating scan for: ${utxo}`)
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
@@ -144,6 +146,9 @@ async function run() {
             extraction_fee_rate: fee_rate
         })
         scan_request_ids.push(scan_request.id)
+        if (rescanned_utxos.has(utxo)) {
+            rescan_request_ids.add(scan_request.id)
+        }
     }
     for (let i = 0; i < scan_request_ids.length; i++) {
         const scan_request_id = scan_request_ids[i]
@@ -156,7 +161,7 @@ async function run() {
             continue
         }
         console.log(`Scan request with id: ${scan_request_id} is complete`)
-        if (TELEGRAM_BOT_ENABLED) {
+        if (TELEGRAM_BOT_ENABLED && !rescan_request_ids.has(scan_request_id)) {
             telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, generate_satributes_message(info.satributes))
         }
         console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
