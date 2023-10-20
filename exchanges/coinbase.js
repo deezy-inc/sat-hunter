@@ -69,8 +69,7 @@ async function withdraw({ amount_btc }) {
         profile_id: BTC_ACCOUNT_ID,
         crypto_address: process.env.COINBASE_WITHDRAWAL_ADDRESS,
         add_network_fee_to_total: false,
-        two_factor_code: totp(process.env.COINBASE_TOTP_SECRET),
-        to_financial_institution: false
+        two_factor_code: totp(process.env.COINBASE_TOTP_SECRET)
     }
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
     headers['Content-Type'] = 'application/json'
