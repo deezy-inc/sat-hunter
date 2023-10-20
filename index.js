@@ -42,8 +42,12 @@ async function maybe_withdraw(exchange_name, exchange) {
             console.error(err)
             return err
         })
-        if (!err && TELEGRAM_BOT_ENABLED) {
-            telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Withdrew ${btc_balance} BTC from ${exchange_name}`)
+        if (!err) {
+            const msg = `Withdrew ${btc_balance} BTC from ${exchange_name}`
+            console.log(msg)
+            if (TELEGRAM_BOT_ENABLED) {
+                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, msg)
+            }
         }
     } else {
         console.log(`Not enough BTC to withdraw from ${exchange_name}`)
