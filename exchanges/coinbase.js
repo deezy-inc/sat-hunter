@@ -70,9 +70,6 @@ async function withdraw({ amount_btc }) {
         type: 'send',
         to_financial_institution: false,
     }
-    if (process.env.COINBASE_TOTP_SECRET) {
-        body.two_factor_code = totp(process.env.COINBASE_TOTP_SECRET)
-    }
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
     headers['Content-Type'] = 'application/json'
     const { data } = await axios.post(`${BASE_URL}${path}`, body, { headers }).catch(err => {
