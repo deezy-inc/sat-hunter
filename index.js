@@ -86,6 +86,9 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Broadcasting transaction...`)
     const txid = await broadcast_transaction({ hex: final_hex})
     console.log(`Broadcasted transaction with txid: ${txid}`)
+    if (TELEGRAM_BOT_ENABLED) {
+        telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Broadcasted transaction: https://mempool.space/tx/${txid}`)
+    }
 }
 
 async function run() {
