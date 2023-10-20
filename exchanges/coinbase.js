@@ -1,5 +1,6 @@
 const axios = require('axios')
 const crypto = require('crypto')
+const totp = require("totp-generator")
 const BASE_URL = 'https://api.coinbase.com'
 
 let BTC_ACCOUNT_ID = null
@@ -68,6 +69,9 @@ async function withdraw({ amount_btc }) {
         to: process.env.COINBASE_WITHDRAWAL_ADDRESS,
         type: 'send',
         to_financial_institution: false,
+    }
+    if (process.env.COINBASE_TOTP_SECRET) {
+        body.two_factor_code = totp(process.env.COINBASE_TOTP_SECRET)
     }
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
     headers['Content-Type'] = 'application/json'
