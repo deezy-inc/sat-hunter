@@ -1,10 +1,10 @@
 const axios = require('axios')
 const crypto = require('crypto')
 const totp = require("totp-generator")
-const BASE_URL = 'https://api.coinbase.com'
+const BASE_URL = 'https://api.exchange.coinbase.com'
 
 let BTC_ACCOUNT_ID = null
-const FEE_BUFFER = 0.0005 // We deduct a small amount from the withdrawal amount to cover the tx fee.
+
 function create_signature({ path, timestamp, method, body = ''}) {
     const data = `${timestamp}${method}${path}${body}`
     return crypto.createHmac('sha256', process.env.COINBASE_API_SECRET)
@@ -20,7 +20,7 @@ function create_headers({ path, timestamp, method, body = '' }) {
     }
 }
 async function get_btc_account_id() {
-    const path = '/v2/accounts'
+    const path = '/accounts'
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
     const headers = create_headers({ path, timestamp, method })
@@ -28,7 +28,7 @@ async function get_btc_account_id() {
         console.log(err)
         return {}
     })
-    const wallet_info = data.data.filter(it => it.name === 'BTC Wallet')
+    const wallet_info = data.filter(it => it.currency === 'BTC')
     return wallet_info[0].id
 }
 
@@ -39,7 +39,7 @@ async function get_btc_balance() {
     if (!BTC_ACCOUNT_ID) {
         BTC_ACCOUNT_ID = await get_btc_account_id()
     }
-    const path = `/v2/accounts/${BTC_ACCOUNT_ID}`
+    const path = `/accounts/${BTC_ACCOUNT_ID}`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
     const headers = create_headers({ path, timestamp, method })
@@ -47,7 +47,7 @@ async function get_btc_balance() {
         console.log(err)
         return {}
     })
-    return parseFloat(data.data.balance.amount)
+    return parseFloat(data.balance)
 }
 
 async function withdraw({ amount_btc }) {
@@ -60,18 +60,17 @@ async function withdraw({ amount_btc }) {
     if (!BTC_ACCOUNT_ID) {
         BTC_ACCOUNT_ID = await get_btc_account_id()
     }
-    const path = `/v2/accounts/${BTC_ACCOUNT_ID}/transactions`
+    const path = `/withdrawals/crypto`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
     const body = {
-        amount: `${amount_btc - FEE_BUFFER}`,
+        amount: `${amount_btc}`,
         currency: 'BTC',
-        to: process.env.COINBASE_WITHDRAWAL_ADDRESS,
-        type: 'send',
-        to_financial_institution: false,
-    }
-    if (process.env.COINBASE_TOTP_SECRET) {
-        body.two_factor_code = totp(process.env.COINBASE_TOTP_SECRET)
+        profile_id: BTC_ACCOUNT_ID,
+        crypto_address: process.env.COINBASE_WITHDRAWAL_ADDRESS,
+        add_network_fee_to_total: false,
+        two_factor_code: totp(process.env.COINBASE_TOTP_SECRET),
+        to_financial_institution: false
     }
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
     headers['Content-Type'] = 'application/json'
