@@ -109,7 +109,7 @@ async function fetch_most_recent_unconfirmed_send() {
         const tx_info = getrawtransaction({ txid: tx.txid, verbose: true })
         // Assumes one input
         const input = tx_info.vin[0]
-        const existing_fee_rate = fee / tx_info.vsize
+        const existing_fee_rate = (fee / tx_info.vsize).toFixed(1)
         return {
             existing_fee_rate,
             input_utxo: `${input.txid}:${input.vout}`,
