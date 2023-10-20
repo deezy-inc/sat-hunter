@@ -31,7 +31,10 @@ async function get_min_next_block_fee_rate() {
     if (FEE_PREF === 'high') slot = 3
     if (FEE_PREF === 'medium') slot = 2
     if (FEE_PREF === 'low') slot = 0
-    return Math.round(data[0].feeRange[slot] * 10) / 10
+    const our_fee = data[0].feeRange[slot]
+    const min_fee = data[0].feeRange[0]
+    const final_fee = Math.max(min_fee + 1.1, our_fee)
+    return Math.round(final_fee * 10) / 10
 }
 
 module.exports = {
