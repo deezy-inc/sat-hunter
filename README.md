@@ -3,16 +3,18 @@ Automated script to hunt for rare sats.
 
 ## Requirements
 - NodeJS
-- Bitcoin Core
+- An account on one of Coinbase, Kraken, Gemini, Bitfinex
+- Some Bitcoin
 
 ## Setup
-Install
+Install the Script
 ```agsl
 git clone https://github.com/deezy-inc/sat-hunter.git
 cd sat-hunter
 npm install
 ```
-Setup ENV variables
+
+Setup ENV Variables (you'll need to do some setup for the exchange you're using)
 ```agsl
 cp .env.example .env
 // Edit .env to match your setup.

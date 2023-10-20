@@ -12,31 +12,51 @@ const {BIP32Factory} = require('bip32')
 const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
+const { getAddressInfo } = require('bitcoin-address-validation');
 
 bitcoin.initEccLib(ecc)
 
 const MEMPOOL_API = 'https://mempool.space/api'
 const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
-let CHILD_XONLY_PUBKEY
-let TWEAKED_CHILD_NODE
+let local_wallet_type
+let child_xonly_pubkey
+let tweaked_child_node
+let root_hd_node
+let child_hd_node
+let derivation_path
 const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
 
 if (WALLET_TYPE === 'local') {
     // Check validity of seed
     const seed_phrase = process.env.LOCAL_WALLET_SEED
     const seed_buffer = bip39.mnemonicToSeedSync(seed_phrase)
-    const hd_node = bip32.fromSeed(seed_buffer)
-    const child = hd_node.derivePath(process.env.LOCAL_DERIVATION_PATH || "m/86'/0'/0'/0/0")
-    const childXOnlyPubKey = toXOnly(child.publicKey)
-    const { address } = bitcoin.payments.p2tr({ internalPubkey: childXOnlyPubKey })
+    root_hd_node = bip32.fromSeed(seed_buffer)
+
+    const addresss_info = getAddressInfo(process.env.LOCAL_WALLET_ADDRESS)
+    local_wallet_type = addresss_info.type
+    if (local_wallet_type !== 'p2tr' && local_wallet_type !== 'p2wpkh') {
+        throw new Error('Local wallet address must be p2tr or p2wpkh')
+    }
+    derivation_path = process.env.LOCAL_DERIVATION_PATH || `m/8${local_wallet_type === 'p2tr' ? '6' : '4'}'/0'/0'/0/0`
+    child_hd_node = root_hd_node.derivePath(derivation_path)
+    child_xonly_pubkey = toXOnly(child_hd_node.publicKey)
+    let address
+    if (local_wallet_type === 'p2tr') {
+        const p2tr_derived_info = bitcoin.payments.p2tr({ internalPubkey: child_xonly_pubkey })
+        address = p2tr_derived_info.address
+    } else {
+        const p2wpkh_derived_info = bitcoin.payments.p2wpkh({ pubkey: child_xonly_pubkey })
+        address = p2wpkh_derived_info.address
+    }
     if (address !== process.env.LOCAL_WALLET_ADDRESS) {
-        throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct and taproot is used')
+        throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct')
     } else {
         console.log(`Local wallet address: ${address}`)
-        TWEAKED_CHILD_NODE = child.tweak(
-            bitcoin.crypto.taggedHash('TapTweak', childXOnlyPubKey),
-        );
-        CHILD_XONLY_PUBKEY = childXOnlyPubKey
+        if (local_wallet_type === 'p2tr') {
+            tweaked_child_node = child_hd_node.tweak(
+                bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey),
+            );
+        }
     }
 }
 
@@ -70,11 +90,25 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
         return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt
     }
     let psbt_object = bitcoin.Psbt.fromBase64(psbt)
-    psbt_object.updateInput(0, {
-        tapInternalKey: CHILD_XONLY_PUBKEY,
-        witnessUtxo,
-    })
-    psbt_object = psbt_object.signInput(0, TWEAKED_CHILD_NODE, [bitcoin.Transaction.SIGHASH_ALL])
+    if (local_wallet_type === 'p2tr') {
+        psbt_object.updateInput(0, {
+            tapInternalKey: child_xonly_pubkey,
+            witnessUtxo,
+        })
+        psbt_object = psbt_object.signInput(0, tweaked_child_node, [bitcoin.Transaction.SIGHASH_ALL])
+    } else {
+        psbt_object.updateInput(0, {
+            bip32Derivation: [
+                {
+                    masterFingerprint: root_hd_node.fingerprint,
+                    path: derivation_path,
+                    pubkey: child_hd_node.publicKey
+                }
+            ]
+        })
+        psbt_object = psbt_object.signInputHD(0, root_hd_node, [bitcoin.Transaction.SIGHASH_ALL])
+    }
+
     return psbt_object.finalizeAllInputs().toBase64()
     // Note: assumes one input
 }
