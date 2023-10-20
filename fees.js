@@ -6,7 +6,7 @@ async function get_fee_rate() {
         console.error(err)
         return { data: {} }
     })
-    return ((data.halfHourFee + data.hourFee) / 2).toFixed(1)
+    return data.hourFee
 }
 
 module.exports = {
