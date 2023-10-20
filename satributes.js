@@ -6,6 +6,7 @@ const emojis_by_rarity = {
     "omega": "🅾️",
     "alpha": "🅰️",
     "prime": "🔱",
+    "palindrome": "♊",
     "digits_palindrome": "♊",
     "name_palindrome": "♏",
     "halfinney": "👨🏻"

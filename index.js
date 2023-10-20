@@ -103,6 +103,7 @@ async function run() {
         existing_fee_rate,
         input_utxo
     } = await fetch_most_recent_unconfirmed_send()
+    // TODO: fix this logic - there can only be one bump_utxo right now
     const bump_utxos = []
     if (input_utxo) {
         console.log(`Found existing unconfirmed send with fee rate of ${existing_fee_rate} sat/vbyte`)
