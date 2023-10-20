@@ -20,6 +20,14 @@ cp .env.example .env
 // Edit .env to match your setup.
 ```
 
+Contact the Exchange! Sat hunting looks very suspicious to the risk department of bitcoin exchanges, so it is important
+that you pre-emptively reach out to them and let them know what you're doing so your account does not get banned. All 
+it takes is emailing support saying: "Hello, I am going to do rare sat hunting on your platform which involves 
+withdrawing and depositing a high volume of the same coins over and over again. The activity may look suspicious so I
+wanted to flag it for you ahead of time. Rare sats are a new phenomenon on bitcoin and the ordinals protocol, and I am
+sifting through a large volume of coins in order to find them. Please reach out with any questions. The operation will 
+be mutually beneficial because I will be paying a lot of withdrawal fees on your platform. Thank you!"
+
 ## Usage
 ```agsl
 npm start
