@@ -130,6 +130,15 @@ async function broadcast_transaction({ hex }) {
     return txid
 }
 
+async function get_address_txs({ address }) {
+    const url = `${MEMPOOL_API}/address/${address}/txs`
+    const { data } = await axios.get(url).catch(err => {
+        console.error(err)
+        return {}
+    })
+    return data || []
+}
+
 async function fetch_most_recent_unconfirmed_send() {
     if (WALLET_TYPE === 'core') {
         const recent_transactions = listtransactions()
@@ -150,7 +159,26 @@ async function fetch_most_recent_unconfirmed_send() {
         }
     }
     console.log(`fetch_most_recent_unconfirmed_send not implemented for ${WALLET_TYPE}`)
-    return {}
+    const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
+    const unconfirmed_sends = txs.filter(it => {
+        // Hacky way to find which ones are ours...
+        if (it.status.confirmed) return false
+        if (it.vin.length !== 1) return false
+        for (const output of it.vout) {
+            if (output.scriptpubkey_address === process.env.LOCAL_WALLET_ADDRESS) {
+                return false
+            }
+        }
+        return true
+    })
+    console.log(`Found ${unconfirmed_sends.length} unconfirmed sends`)
+    // Sort by fee descending
+    const tx = unconfirmed_sends.sort((a, b) => b.fee - a.fee)[0]
+    const existing_fee_rate = (tx.fee / (tx.weight / 4)).toFixed(1)
+    return {
+        existing_fee_rate,
+        input_utxo: `${tx.vin[0].txid}:${tx.vin[0].vout}`,
+    }
 }
 
 module.exports = {
