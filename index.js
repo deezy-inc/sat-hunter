@@ -14,6 +14,9 @@ const {
     post_scan_request,
     get_scan_request
 } = require('./deezy')
+const {
+    generate_satributes_message
+} = require('./satributes')
 const TelegramBot = require('node-telegram-bot-api')
 let telegramBot = process.env.TELEGRAM_BOT_TOKEN ? new TelegramBot(process.env.TELEGRAM_BOT_TOKEN) : null
 const TELEGRAM_BOT_ENABLED = telegramBot && process.env.TELEGRAM_CHAT_ID
@@ -137,12 +140,7 @@ async function run() {
         }
         console.log(`Scan request with id: ${scan_request_id} is complete`)
         if (TELEGRAM_BOT_ENABLED) {
-            if (info.satributes.length === 0) {
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `No special sats found on this utxo`)
-            } else {
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Found ${info.satributes.length} special sats on this utxo`)
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, JSON.stringify(info.satributes, null, 2))
-            }
+            telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, generate_satributes_message(info.satributes))
         }
         console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
         // TODO: check for validity of PSBT.
