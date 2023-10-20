@@ -45,7 +45,7 @@ if (WALLET_TYPE === 'local') {
         const p2tr_derived_info = bitcoin.payments.p2tr({ internalPubkey: child_xonly_pubkey })
         address = p2tr_derived_info.address
     } else {
-        const p2wpkh_derived_info = bitcoin.payments.p2wpkh({ pubkey: child_xonly_pubkey })
+        const p2wpkh_derived_info = bitcoin.payments.p2wpkh({ pubkey: child_hd_node.publicKey })
         address = p2wpkh_derived_info.address
     }
     if (address !== process.env.LOCAL_WALLET_ADDRESS) {
