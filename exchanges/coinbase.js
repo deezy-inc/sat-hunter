@@ -64,7 +64,7 @@ async function withdraw({ amount_btc }) {
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
     const amount = (amount_btc - FEE_BUFFER).toFixed(8)
-    console.log(`Attempting to withdraw ${amount} BTC`
+    console.log(`Attempting to withdraw ${amount} BTC`)
     const body = {
         amount,
         currency: 'BTC',
