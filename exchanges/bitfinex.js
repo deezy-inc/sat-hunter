@@ -31,16 +31,16 @@ async function get_btc_balance() {
 
 async function withdraw({ amount_btc }) {
     check_api_key()
-    if (!process.env.BTC_WITHDRAW_ADDRESS) {
-        throw new Error('BTC_WITHDRAW_ADDRESS must be set')
+    if (!process.env.BFX_WITHDRAWAL_ADDRESS) {
+        throw new Error('BFX_WITHDRAWAL_ADDRESS must be set')
     }
-    console.log(`Withdrawing ${amount_btc} BTC to ${process.env.BTC_WITHDRAW_ADDRESS}`)
+    console.log(`Withdrawing ${amount_btc} BTC to ${process.env.BFX_WITHDRAWAL_ADDRESS}`)
     const path = 'v2/auth/w/withdraw';
     const post_data = {
         wallet: 'exchange',
         method: 'bitcoin',
         amount: `${amount_btc}`,
-        address: process.env.BTC_WITHDRAW_ADDRESS,
+        address: process.env.BFX_WITHDRAWAL_ADDRESS,
         fee_deduct: 1
     };
     const headers = generate_headers({ path, body: post_data })
