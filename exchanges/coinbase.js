@@ -63,8 +63,10 @@ async function withdraw({ amount_btc }) {
     const path = `/v2/accounts/${BTC_ACCOUNT_ID}/transactions`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
+    const amount = (amount_btc - FEE_BUFFER).toFixed(8)
+    console.log(`Attempting to withdraw ${amount} BTC`
     const body = {
-        amount: `${amount_btc - FEE_BUFFER}`,
+        amount,
         currency: 'BTC',
         to: process.env.COINBASE_WITHDRAWAL_ADDRESS,
         type: 'send',
