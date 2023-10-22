@@ -55,7 +55,7 @@ async function maybe_withdraw(exchange_name, exchange) {
     }
 }
 
-async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address }) {
+async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address, is_replacement }) {
     console.log(`Checking validity of psbt...`)
     console.log(psbt)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
@@ -86,9 +86,9 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Broadcasting transaction...`)
     const txid = await broadcast_transaction({ hex: final_hex})
     if (!txid) return
-    console.log(`Broadcasted transaction with txid: ${txid}`)
+    console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`)
     if (TELEGRAM_BOT_ENABLED) {
-        telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Broadcasted transaction: https://mempool.space/tx/${txid}`)
+        telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`)
     }
 }
 
@@ -120,9 +120,6 @@ async function run() {
             if (fee_rate - existing_fee_rate >= 1.09) {
                 const msg = `Existing transaction has fee rate of ${existing_fee_rate} sat/vbyte. Will replace with ${fee_rate} sat/vbyte`
                 console.log(msg)
-                if (TELEGRAM_BOT_ENABLED) {
-                    telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, msg)
-                }
                 bump_utxos.push(input_utxo)
             }
         }
@@ -186,7 +183,12 @@ async function run() {
         }
         console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
         // TODO: check for validity of PSBT.
-        await decode_sign_and_send_psbt({ psbt: info.extraction_psbt, exchange_address, rare_sat_address })
+        await decode_sign_and_send_psbt({
+            psbt: info.extraction_psbt,
+            exchange_address,
+            rare_sat_address,
+            is_replacement: rescan_request_ids.has(scan_request_id)
+        })
     }
 }
 
