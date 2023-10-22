@@ -81,7 +81,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     const final_hex = final_tx.toHex()
     const final_fee_rate = (final_fee / final_vbytes).toFixed(1)
     console.log(`Final fee rate of signed psbt is ~${final_fee_rate} sat/vbyte`)
-    if (final_fee_rate > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE) ) {
+    if (parseFloat(final_fee_rate) > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE) ) {
         throw new Error(`Fee rate is too high: ${final_fee_rate} sat/vbyte`)
     }
     console.log(final_hex)
