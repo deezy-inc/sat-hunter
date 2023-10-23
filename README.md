@@ -2,7 +2,7 @@
 Automated script to hunt for rare sats.
 
 ## Requirements
-- An account on one of Coinbase, Coinbase Exchange, Kraken, Gemini, Bitfinex, Binance (see Exchanges section below)
+- An account on one of Coinbase, Coinbase Exchange, Kraken, Gemini, Bitfinex, Binance (see [Exchanges section](https://github.com/deezy-inc/sat-hunter#exchanges))
 - Deezy API Token (email support@deezy.io to request one)
 - Some Bitcoin
 
