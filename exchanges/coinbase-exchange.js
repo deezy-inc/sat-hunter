@@ -14,6 +14,7 @@ function create_signature({ path, timestamp, method, body = ''}) {
 function create_headers({ path, timestamp, method, body = '' }) {
     return {
         'CB-ACCESS-KEY': process.env.COINBASE_EXCHANGE_API_KEY,
+        'CB-ACCESS-PASSPHRASE': process.env.COINBASE_EXCHANGE_API_PASSPHRASE,
         'CB-ACCESS-TIMESTAMP': timestamp,
         'CB-ACCESS-SIGN': create_signature({ path, timestamp, method, body }),
         'CB-VERSION': '2023-10-19'
@@ -33,8 +34,8 @@ async function get_btc_account_id() {
 }
 
 async function get_btc_balance() {
-    if (!process.env.COINBASE_EXCHANGE_API_KEY || !process.env.COINBASE_EXCHANGE_API_SECRET) {
-        throw new Error('COINBASE_EXCHANGE_API_KEY and COINBASE_EXCHANGE_API_SECRET must be set')
+    if (!process.env.COINBASE_EXCHANGE_API_KEY || !process.env.COINBASE_EXCHANGE_API_SECRET || !process.env.COINBASE_EXCHANGE_API_PASSPHRASE) {
+        throw new Error('COINBASE_EXCHANGE_API_KEY, COINBASE_EXCHANGE_API_SECRET, and COINBASE_EXCHANGE_API_PASSPHRASE must be set')
     }
     if (!BTC_ACCOUNT_ID) {
         BTC_ACCOUNT_ID = await get_btc_account_id()
@@ -69,7 +70,9 @@ async function withdraw({ amount_btc }) {
         profile_id: BTC_ACCOUNT_ID,
         crypto_address: process.env.COINBASE_EXCHANGE_WITHDRAWAL_ADDRESS,
         add_network_fee_to_total: false,
-        two_factor_code: totp(process.env.COINBASE_EXCHANGE_TOTP_SECRET)
+    }
+    if (process.env.COINBASE_EXCHANGE_TOTP_SECRET) {
+        body.two_factor_code = totp(process.env.COINBASE_EXCHANGE_TOTP_SECRET)
     }
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
     headers['Content-Type'] = 'application/json'
