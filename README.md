@@ -49,24 +49,24 @@ Setting up the telegram bot can give you real-time updates of your operation. Fo
 5) Message your bot on telegram (the botfather will have given you a t.me/yourbotname link)
 6) When your message goes through, your terminal window will show a TELEGRAM_CHAT_ID, add this to your `.env` (or Replit Secret) as well
 
-## Exchanges
-### Kraken
+# Exchanges
+## Kraken
 Kraken is well-tested and works well. You can email kraken support to get increased daily limits.
 
-### Gemini
+## Gemini
 Gemini is also well tested and works well, but adding a new withdrawal address requires a 7-day waiting period.
 
-### Bitfinex
+## Bitfinex
 Bitfinex should work but it not well-tested yet - just make sure you are NOT a US user and are prepared to KYC.
 
-### Coinbase
+## Coinbase
 Regular Coinbase accounts work OK, but withdrawals are often delayed and require additional KYC. Ideally upgrade to Coinbase Exchange for a better experience (below)
 
 ## Coinbase Exchange
 This is the upgraded version of Coinbase with more support for automation. This account type is recommended if you are able to get the upgrade.
 
-### Binance
+## Binance
 Binance should work but is not yet well-tested
 
-### MORE!!
+## MORE!!
 Help us add more exchanges - we want to add them all! Open an Issue in the Github to request a new one.
