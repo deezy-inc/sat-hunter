@@ -2,7 +2,7 @@
 Automated script to hunt for rare sats.
 
 ## Requirements
-- An account on one of Coinbase, Kraken, Gemini, Bitfinex, Binance (see Exchanges section below)
+- An account on one of Coinbase, Coinbase Exchange, Kraken, Gemini, Bitfinex, Binance (see Exchanges section below)
 - Deezy API Token (email support@deezy.io to request one)
 - Some Bitcoin
 
@@ -60,7 +60,10 @@ Gemini is also well tested and works well, but adding a new withdrawal address r
 Bitfinex should work but it not well-tested yet - just make sure you are NOT a US user and are prepared to KYC.
 
 ### Coinbase
-Currently support is for regular Coinbase accounts (NOT "Coinbase Exchange", but we will add that soon)
+Regular Coinbase accounts work OK, but withdrawals are often delayed and require additional KYC. Ideally upgrade to Coinbase Exchange for a better experience (below)
+
+## Coinbase Exchange
+This is the upgraded version of Coinbase with more support for automation. This account type is recommended if you are able to get the upgrade.
 
 ### Binance
 Binance should work but is not yet well-tested
