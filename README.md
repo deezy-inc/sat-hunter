@@ -2,7 +2,7 @@
 Automated script to hunt for rare sats.
 
 ## Requirements
-- An account on one of Coinbase, Kraken, Gemini, Bitfinex, Binance
+- An account on one of Coinbase, Kraken, Gemini, Bitfinex, Binance (see Exchanges section below)
 - Deezy API Token (email support@deezy.io to request one)
 - Some Bitcoin
 
@@ -48,3 +48,19 @@ Setting up the telegram bot can give you real-time updates of your operation. Fo
 4) Run the command `npm run setup-telegram` and leave the terminal window open
 5) Message your bot on telegram (the botfather will have given you a t.me/yourbotname link)
 6) When your message goes through, your terminal window will show a TELEGRAM_CHAT_ID, add this to your `.env` (or Replit Secret) as well
+
+## Exchanges
+### Kraken
+Kraken is well-tested and works well. You can email kraken support to get increased daily limits.
+
+### Gemini
+Gemini is also well tested and works well, but adding a new withdrawal address requires a 7-day waiting period.
+
+### Bitfinex
+Bitfinex should work but it not well-tested yet - just make sure you are NOT a US user and are prepared to KYC.
+
+### Coinbase
+Currently support is for regular Coinbase accounts (NOT "Coinbase Exchange", but we will add that soon)
+
+### Binance
+Binance should work but is not yet well-tested
