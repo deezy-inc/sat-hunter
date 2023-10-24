@@ -47,7 +47,7 @@ async function withdraw({ amount_btc }) {
     console.log(`Attempting to withdraw ${amount} BTC`)
     const body = {
         amt: amount,
-        fee: FEE_BUFFER,
+        fee: `${FEE_BUFFER}`,
         dest: 4,
         ccy: 'BTC',
         toAddr: process.env.OKX_WITHDRAWAL_ADDRESS
