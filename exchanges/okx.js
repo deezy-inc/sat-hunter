@@ -2,7 +2,7 @@ const axios = require('axios')
 const crypto = require('crypto')
 const BASE_URL = process.env.OKX_BASE_URL || 'https://www.okcoin.com'
 
-const FEE_BUFFER = 0.0005 // We deduct a small amount from the withdrawal amount to cover the tx fee.
+const FEE_BUFFER = 0.00014 // We deduct a small amount from the withdrawal amount to cover the tx fee.
 function create_signature({ path, timestamp, method, body = ''}) {
     const data = `${timestamp}${method}${path}${body}`
     return crypto.createHmac('sha256', process.env.OKX_API_SECRET)
