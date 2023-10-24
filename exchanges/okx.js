@@ -1,6 +1,6 @@
 const axios = require('axios')
 const crypto = require('crypto')
-const BASE_URL = process.env.OKX_BASE_URL || 'https://okcoin.com'
+const BASE_URL = process.env.OKX_BASE_URL || 'https://www.okcoin.com'
 
 const FEE_BUFFER = 0.0005 // We deduct a small amount from the withdrawal amount to cover the tx fee.
 function create_signature({ path, timestamp, method, body = ''}) {
@@ -54,7 +54,8 @@ async function withdraw({ amount_btc }) {
     }
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
     headers['Content-Type'] = 'application/json'
-    const { data } = await axios.post(`${BASE_URL}${path}`, body, { headers }).catch(err => {
+    const url = `${BASE_URL}${path}`
+    const { data } = await axios.post(url, body, { headers }).catch(err => {
         console.log(err.response.data)
         throw new Error(JSON.stringify(err.response.data, null, 2))
     })
