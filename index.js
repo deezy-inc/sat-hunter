@@ -90,7 +90,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     const txid = await broadcast_transaction({ hex: final_hex})
     if (!txid) return
     console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`)
-    if (TELEGRAM_BOT_ENABLED) {
+    if (TELEGRAM_BOT_ENABLED && !process.env.OMIT_BROADCAST_MESSAGE) {
         telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`)
     }
 }
