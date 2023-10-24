@@ -85,7 +85,9 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     const txid = await broadcast_transaction({ hex: final_hex})
     if (!txid) return;
     console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`);
-    if (!process.env.OMIT_BROADCAST_MESSAGE) sendNotifications(`Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`);
+    if (!process.env.ONLY_NOTIFY_ON_SATS) {
+        sendNotifications(`Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`);
+    }
 }
 
 async function run() {
@@ -164,7 +166,7 @@ async function run() {
     const rare_sat_address = process.env.RARE_SAT_ADDRESS
     for (const utxo of utxos) {
         console.log(`Preparing to scan: ${utxo}`)
-        if (!rescanned_utxos.has(utxo)) {
+        if (!rescanned_utxos.has(utxo) && !process.env.ONLY_NOTIFY_ON_SATS) {
             sendNotifications(`Initiating scan for: ${utxo}`);
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
