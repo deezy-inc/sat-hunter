@@ -18,14 +18,13 @@ const {
 const {
     generate_satributes_message
 } = require('./satributes')
-const TelegramBot = require('node-telegram-bot-api')
-let telegramBot = process.env.TELEGRAM_BOT_TOKEN ? new TelegramBot(process.env.TELEGRAM_BOT_TOKEN) : null
-const TELEGRAM_BOT_ENABLED = telegramBot && process.env.TELEGRAM_CHAT_ID
+const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
 
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
 const SCAN_MAX_RETRIES = 60
 let notified_bank_run = false
+let notified_withdrawal_disabled = false
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name, exchange) {
@@ -38,18 +37,14 @@ async function maybe_withdraw(exchange_name, exchange) {
     if (btc_balance > (process.env.WITHDRAWAL_THRESHOLD_BTC || 0)) {
         console.log(`Withdrawing from ${exchange_name}...`)
         const err = await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
-            if (TELEGRAM_BOT_ENABLED) {
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Error withdrawing from ${exchange_name}: ${err.message}`)
-            }
+            sendNotifications(`Error withdrawing from ${exchange_name}: ${err.message}`);
             console.error(err)
-            return err
+            return err;
         })
         if (!err) {
             const msg = `Withdrew ${btc_balance} BTC from ${exchange_name}`
             console.log(msg)
-            if (TELEGRAM_BOT_ENABLED) {
-                telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, msg)
-            }
+            sendNotifications(msg);
         }
     } else {
         console.log(`Not enough BTC to withdraw from ${exchange_name}`)
@@ -89,30 +84,42 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Broadcasting transaction...`)
     const txid = await broadcast_transaction({ hex: final_hex})
     if (!txid) return
-    console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`)
-    if (TELEGRAM_BOT_ENABLED) {
-        telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`)
-    }
+    console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`);
+    sendNotifications(`Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`);
 }
 
 async function run() {
-    const exchange_name = process.env.ACTIVE_EXCHANGE
+    const exchange_name = process.env.ACTIVE_EXCHANGE;
     if (!exchange_name) {
         throw new Error(`ACTIVE_EXCHANGE must be set in .env\nAvailable options are ${available_exchanges.join(', ')}`)
     }
+
     const exchange = exchanges[exchange_name]
     if (!exchange) {
         throw new Error(`${exchange_name} is not a valid exchange. Available options are ${available_exchanges.join(', ')}`)
     }
-    // Withdraw any funds on exchange
-    await maybe_withdraw(exchange_name, exchange)
 
-    if (process.env.BANK_RUN) {
-        console.log(`Bank run enabled. Not sending to exchange.`)
-        if (!notified_bank_run && TELEGRAM_BOT_ENABLED) {
-            telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Bank run enabled. Sending to exchange has been paused and we are now in withdraw-only mode.`)
-            notified_bank_run = true
-        }
+    const withdrawal_disabled = (process.env.DISABLE_WITHDRAWAL === '1');
+    const bank_run_enabled = (process.env.BANK_RUN === '1');
+
+    if (withdrawal_disabled && bank_run_enabled) {
+        throw new Error(`Incorrect configuration! Both DISABLE_WITHDRAWAL and BANK_RUN are configured. This disables deposits and withdrawals so no action can be taken.`);
+    }
+
+    if (!withdrawal_disabled) {
+        await maybe_withdraw(exchange_name, exchange);
+    }
+
+    if (withdrawal_disabled && !notified_withdrawal_disabled) {
+        console.log(`Withdrawal disabled. Not making any withdrawals from exchange.`);
+        sendNotifications(`Withdrawal is now disabled due to configuration. No withdrawals will be made from the exchange.`);
+        notified_withdrawal_disabled = true
+    }
+
+    if (bank_run_enabled) console.log(`Bank run enabled. Not sending to exchange.`);
+    if (bank_run_enabled && !notified_bank_run) {
+        sendNotifications(`Bank run enabled. Sending to exchange has been paused, no deposits will be made.`);
+        notified_bank_run = true
         return
     }
 
@@ -152,14 +159,13 @@ async function run() {
 
     // TODO: Check Deezy API for existing scan requests
 
-
     const scan_request_ids = []
     const exchange_address = await exchange.get_deposit_address()
     const rare_sat_address = process.env.RARE_SAT_ADDRESS
     for (const utxo of utxos) {
         console.log(`Preparing to scan: ${utxo}`)
-        if (TELEGRAM_BOT_ENABLED && !rescanned_utxos.has(utxo)) {
-            telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Initiating scan for: ${utxo}`)
+        if (!rescanned_utxos.has(utxo)) {
+            sendNotifications(`Initiating scan for: ${utxo}`);
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
         const scan_request = await post_scan_request({
@@ -190,8 +196,8 @@ async function run() {
             continue
         }
         console.log(`Scan request with id: ${scan_request_id} is complete`)
-        if (TELEGRAM_BOT_ENABLED && !rescan_request_ids.has(scan_request_id)) {
-            telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, generate_satributes_message(info.satributes))
+        if (!rescan_request_ids.has(scan_request_id)) {
+            sendNotifications(generate_satributes_message(info.satributes));
         }
         console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
         // TODO: check for validity of PSBT.
@@ -205,10 +211,10 @@ async function run() {
 }
 
 async function runLoop() {
-    if (TELEGRAM_BOT_ENABLED) {
-        console.log(`Telegram bot is enabled`)
-        telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`)
-    }
+    if (TELEGRAM_BOT_ENABLED) console.log(`Telegram bot is enabled`);
+    if (PUSHOVER_ENABLED) console.log(`Pushover bot is enabled`);
+    sendNotifications(`Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`);
+
     while (true) {
         await run().catch(err => {
             console.error(err)
