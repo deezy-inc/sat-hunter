@@ -25,6 +25,7 @@ const TELEGRAM_BOT_ENABLED = telegramBot && process.env.TELEGRAM_CHAT_ID
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
 const SCAN_MAX_RETRIES = 60
+let notified_bank_run = false
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name, exchange) {
@@ -105,6 +106,15 @@ async function run() {
     }
     // Withdraw any funds on exchange
     await maybe_withdraw(exchange_name, exchange)
+
+    if (process.env.BANK_RUN) {
+        console.log(`Bank run enabled. Not sending to exchange.`)
+        if (!notified_bank_run && TELEGRAM_BOT_ENABLED) {
+            telegramBot.sendMessage(process.env.TELEGRAM_CHAT_ID, `Bank run enabled. Sending to exchange has been paused and we are now in withdraw-only mode.`)
+            notified_bank_run = true
+        }
+        return
+    }
 
     let fee_rate = await get_fee_rate()
     fee_rate = Math.min(fee_rate, process.env.MAX_FEE_RATE || 99999999)
