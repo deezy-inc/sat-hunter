@@ -118,10 +118,12 @@ async function run() {
         notified_withdrawal_disabled = true
     }
 
-    if (bank_run_enabled) console.log(`Bank run enabled. Not sending to exchange.`);
-    if (bank_run_enabled && !notified_bank_run) {
-        sendNotifications(`Bank run enabled. Sending to exchange has been paused, no deposits will be made.`);
-        notified_bank_run = true
+    if (bank_run_enabled) {
+        console.log(`Bank run enabled. Not sending to exchange.`);
+        if (!notified_bank_run) {
+            sendNotifications(`Bank run enabled. Sending to exchange has been paused, no deposits will be made.`);
+            notified_bank_run = true
+        }
         return
     }
 
