@@ -83,9 +83,9 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(final_hex)
     console.log(`Broadcasting transaction...`)
     const txid = await broadcast_transaction({ hex: final_hex})
-    if (!txid) return
+    if (!txid) return;
     console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`);
-    sendNotifications(`Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`);
+    if (!process.env.OMIT_BROADCAST_MESSAGE) sendNotifications(`Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`);
 }
 
 async function run() {
