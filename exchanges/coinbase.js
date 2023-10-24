@@ -55,7 +55,7 @@ async function withdraw({ amount_btc }) {
         throw new Error('COINBASE_API_KEY and COINBASE_API_SECRET must be set')
     }
     if (!process.env.COINBASE_WITHDRAWAL_ADDRESS) {
-        throw new Error('COINBASE_WITHDRAW_ADDRESS must be set')
+        throw new Error('COINBASE_WITHDRAWAL_ADDRESS must be set')
     }
     if (!BTC_ACCOUNT_ID) {
         BTC_ACCOUNT_ID = await get_btc_account_id()
