@@ -206,7 +206,9 @@ async function run() {
         }
         console.log(`Scan request with id: ${scan_request_id} is complete`)
         if (!rescan_request_ids.has(scan_request_id)) {
-            sendNotifications(generate_satributes_message(info.satributes));
+            if (info.satributes.length > 0 || !process.env.ONLY_NOTIFY_ON_SATS) {
+                sendNotifications(generate_satributes_message(info.satributes));
+            }
         }
         console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
         // TODO: check for validity of PSBT.
