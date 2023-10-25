@@ -59,6 +59,9 @@ async function withdraw({ amount_btc }) {
         console.log(err.response.data)
         throw new Error(JSON.stringify(err.response.data, null, 2))
     })
+    if (data.code !== '0') {
+        throw new Error(JSON.stringify(data, null, 2))
+    }
     console.log(data)
 }
 

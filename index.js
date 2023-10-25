@@ -25,6 +25,7 @@ const FALLBACK_MAX_FEE_RATE = 200
 const SCAN_MAX_RETRIES = 60
 let notified_bank_run = false
 let notified_withdrawal_disabled = false
+let notified_error_withdrawing = false
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name, exchange) {
@@ -37,7 +38,10 @@ async function maybe_withdraw(exchange_name, exchange) {
     if (btc_balance > (process.env.WITHDRAWAL_THRESHOLD_BTC || 0)) {
         console.log(`Withdrawing from ${exchange_name}...`)
         const err = await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
-            sendNotifications(`Error withdrawing from ${exchange_name}: ${err.message}`);
+            if (!notified_error_withdrawing) {
+                sendNotifications(`Error withdrawing from ${exchange_name}: ${err.message}`);
+                notified_error_withdrawing = true
+            }
             console.error(err)
             return err;
         })
@@ -45,6 +49,7 @@ async function maybe_withdraw(exchange_name, exchange) {
             const msg = `Withdrew ${btc_balance} BTC from ${exchange_name}`
             console.log(msg)
             sendNotifications(msg);
+            notified_error_withdrawing = false
         }
     } else {
         console.log(`Not enough BTC to withdraw from ${exchange_name}`)
