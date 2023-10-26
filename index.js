@@ -39,7 +39,7 @@ async function maybe_withdraw(exchange_name, exchange) {
 
     if (btc_balance > (process.env.WITHDRAWAL_THRESHOLD_BTC || 0)) {
         console.log(`Withdrawing from ${exchange_name}...`)
-        const err = await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
+        const err = await exchange.withdraw({ amount_btc: btc_balance }).catch(async (err) => {
             if (!notified_error_withdrawing) {
                 await sendNotifications(`Error withdrawing from ${exchange_name}: ${err.message}`);
                 notified_error_withdrawing = true
