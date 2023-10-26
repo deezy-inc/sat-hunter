@@ -209,7 +209,10 @@ async function run() {
         console.log(`Scan request with id: ${scan_request_id} is complete`)
         if (!rescan_request_ids.has(scan_request_id)) {
             if (info.satributes.length > 0 || !process.env.ONLY_NOTIFY_ON_SATS) {
-                sendNotifications(generate_satributes_message(info.satributes));
+                const messages = generate_satributes_messages(info.satributes)
+                for (const msg of messages) {
+                    sendNotifications(msg);
+                }
             }
         }
         console.log(util.inspect(info, {showHidden: false, depth: null, colors: true}))
