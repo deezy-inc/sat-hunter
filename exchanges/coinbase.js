@@ -28,6 +28,7 @@ async function get_btc_account_id() {
         console.log(err)
         return {}
     })
+    if (!data) throw new Error('Error getting account id')
     const wallet_info = data.data.filter(it => it.name === 'BTC Wallet')
     return wallet_info[0].id
 }
