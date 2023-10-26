@@ -18,7 +18,7 @@ const {
     get_scan_request
 } = require('./deezy')
 const {
-    generate_satributes_message
+    generate_satributes_messages
 } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
 
