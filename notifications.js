@@ -16,11 +16,11 @@ const PUSHOVER_ENDPOINT = 'https://api.pushover.net/1/messages.json';
 const PUSHOVER_DEFAULT_PRIORITY = 0;
 const TELEGRAM_BOT_ENABLED = telegramBot && TELEGRAM_CHAT_ID;
 
-const trySendPushover = (message = undefined) => {
+const trySendPushover = async (message = undefined) => {
   if(!PUSHOVER_ENABLED || !message) return;
   const priority = PUSHOVER_PRIORITY ?? PUSHOVER_DEFAULT_PRIORITY;
   const headers = { 'Content-Type': 'application/json' };
-  axios.post(PUSHOVER_ENDPOINT, {
+  await axios.post(PUSHOVER_ENDPOINT, {
     token: PUSHOVER_TOKEN,
     user: PUSHOVER_USER,
     message,
@@ -28,15 +28,15 @@ const trySendPushover = (message = undefined) => {
   }, { headers });
 };
 
-const trySendTelegram = (message = undefined) => {
+const trySendTelegram = async (message = undefined) => {
   if(!TELEGRAM_BOT_ENABLED || !message) return;
-  telegramBot.sendMessage(TELEGRAM_CHAT_ID, message);
+  await telegramBot.sendMessage(TELEGRAM_CHAT_ID, message);
 };
 
 
-const sendNotifications = (message = undefined) => {
-  trySendPushover(message);
-  trySendTelegram(message);
+const sendNotifications = async (message = undefined) => {
+  await trySendPushover(message);
+  await trySendTelegram(message);
 };
 
 module.exports = {

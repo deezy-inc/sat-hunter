@@ -41,7 +41,7 @@ async function maybe_withdraw(exchange_name, exchange) {
         console.log(`Withdrawing from ${exchange_name}...`)
         const err = await exchange.withdraw({ amount_btc: btc_balance }).catch(err => {
             if (!notified_error_withdrawing) {
-                sendNotifications(`Error withdrawing from ${exchange_name}: ${err.message}`);
+                await sendNotifications(`Error withdrawing from ${exchange_name}: ${err.message}`);
                 notified_error_withdrawing = true
             }
             console.error(err)
@@ -50,7 +50,7 @@ async function maybe_withdraw(exchange_name, exchange) {
         if (!err) {
             const msg = `Withdrew ${btc_balance} BTC from ${exchange_name}`
             console.log(msg)
-            sendNotifications(msg);
+            await sendNotifications(msg);
             notified_error_withdrawing = false
         }
     } else {
@@ -93,7 +93,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     if (!txid) return;
     console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`);
     if (!process.env.ONLY_NOTIFY_ON_SATS) {
-        sendNotifications(`Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`);
+        await sendNotifications(`Broadcasted ${is_replacement ? 'replacement ' : ''}tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`);
     }
 }
 
@@ -121,14 +121,14 @@ async function run() {
 
     if (withdrawal_disabled && !notified_withdrawal_disabled) {
         console.log(`Withdrawal disabled. Not making any withdrawals from exchange.`);
-        sendNotifications(`Withdrawal is now disabled due to configuration. No withdrawals will be made from the exchange.`);
+        await sendNotifications(`Withdrawal is now disabled due to configuration. No withdrawals will be made from the exchange.`);
         notified_withdrawal_disabled = true
     }
 
     if (bank_run_enabled) {
         console.log(`Bank run enabled. Not sending to exchange.`);
         if (!notified_bank_run) {
-            sendNotifications(`Bank run enabled. Sending to exchange has been paused, no deposits will be made.`);
+            await sendNotifications(`Bank run enabled. Sending to exchange has been paused, no deposits will be made.`);
             notified_bank_run = true
         }
         return
@@ -176,7 +176,7 @@ async function run() {
     for (const utxo of utxos) {
         console.log(`Preparing to scan: ${utxo}`)
         if (!rescanned_utxos.has(utxo) && !process.env.ONLY_NOTIFY_ON_SATS) {
-            sendNotifications(`Initiating scan for: ${utxo}`);
+            await sendNotifications(`Initiating scan for: ${utxo}`);
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
         const scan_request = await post_scan_request({
@@ -211,7 +211,7 @@ async function run() {
             if (info.satributes.length > 0 || !process.env.ONLY_NOTIFY_ON_SATS) {
                 const messages = generate_satributes_messages(info.satributes)
                 for (const msg of messages) {
-                    sendNotifications(msg);
+                    await sendNotifications(msg);
                 }
             }
         }
@@ -229,7 +229,7 @@ async function run() {
 async function runLoop() {
     if (TELEGRAM_BOT_ENABLED) console.log(`Telegram bot is enabled`);
     if (PUSHOVER_ENABLED) console.log(`Pushover bot is enabled`);
-    sendNotifications(`Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`);
+    await sendNotifications(`Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`);
 
     while (true) {
         await run().catch(err => {
