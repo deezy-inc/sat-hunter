@@ -21,7 +21,7 @@ const {
     generate_satributes_messages
 } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
-
+const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
 const SCAN_MAX_RETRIES = 60
@@ -235,7 +235,7 @@ async function runLoop() {
         await run().catch(err => {
             console.error(err)
         })
-        await sleep(10000)
+        await sleep(LOOP_SECONDS * 1000)
     }
 }
 
