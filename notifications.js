@@ -15,7 +15,7 @@ const PUSHOVER_ENABLED = PUSHOVER_USER && PUSHOVER_TOKEN;
 const PUSHOVER_ENDPOINT = 'https://api.pushover.net/1/messages.json';
 const PUSHOVER_DEFAULT_PRIORITY = 0;
 const TELEGRAM_BOT_ENABLED = telegramBot && TELEGRAM_CHAT_ID;
-const TELEGRAM_CHAT_IDS = TELEGRAM_CHAT_ID.split(',');
+const TELEGRAM_CHAT_IDS = TELEGRAM_CHAT_ID ? TELEGRAM_CHAT_ID.split(',') || [];
 
 const trySendPushover = async (message = undefined) => {
   if(!PUSHOVER_ENABLED || !message) return;
