@@ -2,7 +2,6 @@ const axios = require('axios')
 const crypto = require('crypto')
 const BASE_URL = process.env.OKX_BASE_URL || 'https://www.okcoin.com'
 
-const FEE_BUFFER = 0.00014 // We deduct a small amount from the withdrawal amount to cover the tx fee.
 function create_signature({ path, timestamp, method, body = ''}) {
     const data = `${timestamp}${method}${path}${body}`
     return crypto.createHmac('sha256', process.env.OKX_API_SECRET)
@@ -33,6 +32,21 @@ async function get_btc_balance() {
     return parseFloat(data.data[0].availBal)
 }
 
+async function get_withdrawal_fee() {
+    if (!process.env.OKX_API_KEY || !process.env.OKX_API_SECRET) {
+        throw new Error('OKX_API_KEY and OKX_API_SECRET must be set')
+    }
+    const path = `/api/v5/asset/currencies?ccy=BTC`
+    const timestamp = (new Date()).toISOString()
+    const method = 'GET'
+    const headers = create_headers({ path, timestamp, method })
+    const { data } = await axios.get(`${BASE_URL}${path}`, { headers }).catch(err => {
+        console.log(err)
+        throw new Error('Could not get withdrawal fee')
+    })
+    return parseFloat(data.data.find(it => it.chain === 'BTC-Bitcoin').maxFee)
+}
+
 async function withdraw({ amount_btc }) {
     if (!process.env.OKX_API_KEY || !process.env.OKX_API_SECRET) {
         throw new Error('OKX_API_KEY and OKX_API_SECRET must be set')
@@ -40,14 +54,15 @@ async function withdraw({ amount_btc }) {
     if (!process.env.OKX_WITHDRAWAL_ADDRESS) {
         throw new Error('OKX_WITHDRAWAL_ADDRESS must be set')
     }
+    const fee = await get_withdrawal_fee()
     const path = `/api/v5/asset/withdrawal`
     const timestamp = (new Date()).toISOString()
     const method = 'POST'
-    const amount = (amount_btc - FEE_BUFFER).toFixed(8)
+    const amount = (amount_btc - fee).toFixed(8)
     console.log(`Attempting to withdraw ${amount} BTC`)
     const body = {
         amt: amount,
-        fee: `${FEE_BUFFER}`,
+        fee: fee,
         dest: 4,
         ccy: 'BTC',
         toAddr: process.env.OKX_WITHDRAWAL_ADDRESS
@@ -75,5 +90,6 @@ async function get_deposit_address() {
 module.exports = {
     get_btc_balance,
     withdraw,
-    get_deposit_address
+    get_deposit_address,
+    get_withdrawal_fee
 }
