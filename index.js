@@ -134,7 +134,9 @@ async function run() {
         return
     }
 
-    let fee_rate = await get_fee_rate()
+    let fee_rate = await get_fee_rate().catch(err => {
+        throw new Error(`Error getting fee rate: ${err.message}`)
+    })
     fee_rate = Math.min(fee_rate, process.env.MAX_FEE_RATE || 99999999)
 
     const bump_utxos = []
