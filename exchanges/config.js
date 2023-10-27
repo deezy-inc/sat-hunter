@@ -5,7 +5,8 @@ const coinbase_exchange = require('./coinbase-exchange')
 const gemini = require('./gemini')
 const binance = require('./binance')
 const okx = require('./okx')
+const bybit = require('./bybit')
 
 module.exports = {
-  bitfinex, kraken, coinbase, gemini, binance, coinbase_exchange, okx
+  bitfinex, kraken, coinbase, gemini, binance, coinbase_exchange, okx, bybit
 }
