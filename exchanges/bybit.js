@@ -9,8 +9,8 @@ function init_client() {
         throw new Error('BYBIT_API_KEY and BYBIT_API_SECRET must be set')
     }
     client = new RestClientV5({
-        key: API_KEY,
-        secret: API_SECRET
+        key: process.env.BYBIT_API_KEY,
+        secret: process.env.BYBIT_API_SECRET
     })
 }
 async function withdraw({ amount_btc }) {
