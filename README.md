@@ -16,8 +16,8 @@ sifting through a large volume of coins in order to find them. Please reach out 
 be mutually beneficial because I will be paying a lot of withdrawal fees on your platform. Thank you!"
 
 # No-Code Option - Replit:
-To run the automated hunter without touching any code, fork the project on Replit (https://replit.com/@DannyDiekroeger/sat-hunter)
-and add in all the required Secrets (tutorial coming soon!)
+[Follow This Guide](https://docs.google.com/document/d/17Psk_fY-mhDJ9oVYz2OwbMT1CjCvdOk6Ugqpf0-y_ds/edit#heading=h.a0btlgclkz18) to set up the automated hunter without touching any code
+The guide uses Replit (https://replit.com/@DannyDiekroeger/sat-hunter)
 
 # Self Hosted Option - Run on your own server:
 
