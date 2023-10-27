@@ -2,7 +2,7 @@
 Automated script to hunt for rare sats.
 
 ## Requirements
-- An account on one of Coinbase, Coinbase Exchange, Kraken, Gemini, Bitfinex, Binance (see [Exchanges section](https://github.com/deezy-inc/sat-hunter#exchanges))
+- An account on one of Coinbase, Coinbase Exchange, Kraken, Gemini, Bitfinex, Binance, Bybit (see [Exchanges section](https://github.com/deezy-inc/sat-hunter#exchanges))
 - Deezy API Token (email support@deezy.io to request one)
 - Some Bitcoin
 
@@ -67,6 +67,9 @@ This is the upgraded version of Coinbase with more support for automation. This 
 
 ## Binance
 Binance should work but is not yet well-tested
+
+## Bybit
+Bybit should work but they are known to shotgun-KYC (let you do a little activity then hold your funds unless your provide full KYC), so ensure that you are able to fully KYC according to their regulations
 
 ## MORE!!
 Help us add more exchanges - we want to add them all! Open an Issue in the Github to request a new one.
