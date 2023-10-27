@@ -20,7 +20,7 @@ function create_headers({ path, timestamp, method, body = '' }) {
     }
 }
 async function get_btc_account_id() {
-    const path = '/v2/accounts'
+    const path = '/v2/accounts/BTC'
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
     const headers = create_headers({ path, timestamp, method })
@@ -30,11 +30,7 @@ async function get_btc_account_id() {
     })
     if (!data) throw new Error('Error getting account id')
     console.log(data.data)
-    let wallet_info = data.data.filter(it => it.name === 'BTC Wallet')
-    if (wallet_info.length === 0) {
-        wallet_info = data.data.filter(it => it.name === 'My Wallet')
-    }
-    return wallet_info[0].id
+    return data.data.id
 }
 
 async function get_btc_balance() {
