@@ -30,7 +30,8 @@ async function withdraw({ amount_btc }) {
         console.log(err)
         return {}
     })
-    if (!retCode || retCode !== 0) {
+    if (retCode !== 0) {
+        console.log(result)
         throw new Error(`Error withdrawing from Bybit: ${result}`)
     }
     console.log(result)
@@ -43,7 +44,8 @@ async function get_btc_balance() {
         console.log(err)
         return {}
     })
-    if (!retCode || retCode !== 0) {
+    if (retCode !== 0) {
+        console.log({ result, retCode })
         throw new Error(`Error getting Bybit balance`)
     }
     return result.withdrawableAmount.FUND.withdrawableAmount
