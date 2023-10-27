@@ -26,13 +26,17 @@ const trySendPushover = async (message = undefined) => {
     user: PUSHOVER_USER,
     message,
     priority
-  }, { headers });
+  }, { headers }).catch(err => {
+    console.log(err);
+  });
 };
 
 const trySendTelegram = async (message = undefined) => {
   if(!TELEGRAM_BOT_ENABLED || !message) return;
   for (const chatId of TELEGRAM_CHAT_IDS) {
-    await telegramBot.sendMessage(chatId, message);
+    await telegramBot.sendMessage(chatId, message).catch(err => {
+        console.log(err);
+    });
   }
 };
 
