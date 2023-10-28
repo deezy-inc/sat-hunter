@@ -28,7 +28,7 @@ function generate_satributes_messages(satributes) {
         for (const inscription_id of satribute.inscriptions || []) {
             msg += `\n${INSCRIPTION_BASE_URL}/${inscription_id}`
         }
-        msg += `\n#${satribute.sat_number}${satribute.name ? `\nName: ${satribute.name}` : ''}${satribute.year ? `Year: ${satribute.year}` : ''}`
+        msg += `\n#${satribute.sat_number}${satribute.name ? `\nName: ${satribute.name}` : ''}${satribute.year ? `\nYear: ${satribute.year}` : ''}`
         messages.push(msg)
     }
     return messages
