@@ -29,11 +29,12 @@ async function withdraw({ amount_btc }) {
     if (!process.env.BINANCE_WITHDRAWAL_ADDRESS) {
         throw new Error('BINANCE_WITHDRAWAL_ADDRESS must be set')
     }
-    console.log(`Withdrawing ${amount_btc} to ${process.env.BINANCE_WITHDRAWAL_ADDRESS}`)
+    const amount = parseFloat(parseFloat(amount_btc).toFixed(8))
+    console.log(`Withdrawing ${amount} to ${process.env.BINANCE_WITHDRAWAL_ADDRESS}`)
     const { data } = await client.withdraw({
         coin: 'BTC',
         address: process.env.BINANCE_WITHDRAWAL_ADDRESS,
-        amount: parseFloat(parseFloat(amount_btc).toFixed(8))
+        amount
     }).catch(err => {
         console.log(err)
         throw new Error(err.message)
