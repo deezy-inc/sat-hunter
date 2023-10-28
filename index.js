@@ -50,7 +50,9 @@ async function maybe_withdraw(exchange_name, exchange) {
         if (!err) {
             const msg = `Withdrew ${btc_balance} BTC from ${exchange_name}`
             console.log(msg)
-            await sendNotifications(msg);
+            if (!process.env.ONLY_NOTIFY_ON_SATS) {
+                await sendNotifications(msg);
+            }
             notified_error_withdrawing = false
         }
     } else {
