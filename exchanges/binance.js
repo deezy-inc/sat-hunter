@@ -33,11 +33,8 @@ async function withdraw({ amount_btc }) {
         network: 'BTC'
     }).catch(err => {
         console.log(err)
-        return {}
+        throw new Error(err.message)
     })
-    if (!data) {
-        throw new Error('Withdrawal failed')
-    }
     console.log(data)
 }
 
