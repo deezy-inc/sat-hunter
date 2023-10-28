@@ -32,7 +32,7 @@ async function withdraw({ amount_btc }) {
     const { data } = await client.withdraw({
         coin: 'BTC',
         address: process.env.BINANCE_WITHDRAWAL_ADDRESS,
-        amount: `${amount_btc}`
+        amount: parseFloat(amount_btc.toFixed(8))
     }).catch(err => {
         console.log(err)
         throw new Error(err.message)
