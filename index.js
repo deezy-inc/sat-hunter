@@ -39,7 +39,11 @@ async function maybe_withdraw(exchange_name, exchange) {
 
     if (btc_balance > (process.env.WITHDRAWAL_THRESHOLD_BTC || 0)) {
         console.log(`Withdrawing from ${exchange_name}...`)
-        const err = await exchange.withdraw({ amount_btc: btc_balance }).catch(async (err) => {
+        let withdrawal_amount = btc_balance
+        if (process.env.MAX_WITHDRAWAL_BTC) {
+            withdrawal_amount = Math.min(withdrawal_amount, parseFloat(process.env.MAX_WITHDRAWAL_BTC))
+        }
+        const err = await exchange.withdraw({ amount_btc: withdrawal_amount }).catch(async (err) => {
             if (!notified_error_withdrawing) {
                 await sendNotifications(`Error withdrawing from ${exchange_name}: ${err.message}`);
                 notified_error_withdrawing = true
@@ -48,7 +52,7 @@ async function maybe_withdraw(exchange_name, exchange) {
             return err;
         })
         if (!err) {
-            const msg = `Withdrew ${btc_balance} BTC from ${exchange_name}`
+            const msg = `Withdrew ${withdrawal_amount} BTC from ${exchange_name}`
             console.log(msg)
             if (!process.env.ONLY_NOTIFY_ON_SATS) {
                 await sendNotifications(msg);
