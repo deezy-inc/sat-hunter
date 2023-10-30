@@ -205,11 +205,11 @@ async function run() {
         const info = await get_scan_request({ scan_request_id })
         if (info.status !== 'COMPLETED') {
             console.log(`Waiting for scan to complete: ${scan_request_id}...`)
-            await sleep(2000)
+            await sleep(1000)
             num_retries++
             if (num_retries > SCAN_MAX_RETRIES) {
-                console.log(`Scan seems stuck - aborting`)
-                return
+                console.log(`Scan seems stuck - will skip it`)
+                continue
             }
             i--
             continue
