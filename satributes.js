@@ -12,6 +12,7 @@ const emojis_by_rarity = {
     "name_palindrome": "♏",
     "halfinney": "👨🏻",
     "rare_inscription": "🖼",
+    "special_name": "🔤",
 }
 
 function generate_satributes_messages(satributes) {
