@@ -126,7 +126,7 @@ async function get_input_address_info(psbt_object) {
     }
     // WALLET_TYPE is wasabi!
     const input_utxo = psbt_object.txInputs[0]
-    const txid = input_utxo.hash.toString('hex')
+    const txid = input_utxo.hash.reverse().toString('hex')
     const index = input_utxo.index
     const info = await wasabi.get_address_info_for_utxo({ txid, index })
     return {
@@ -143,6 +143,14 @@ async function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
     }
     let psbt_object = bitcoin.Psbt.fromBase64(psbt)
     const input_address_info = await get_input_address_info(psbt_object)
+    let root_hd_node
+    if (WALLET_TYPE === 'wasabi') {
+        console.log(`Signing with Wasabi wallet seed`)
+        root_hd_node = create_root_node(process.env.WASABI_WALLET_SEED)
+    } else {
+        console.log(`Signing with Local wallet seed`)
+        root_hd_node = create_root_node(process.env.LOCAL_WALLET_SEED)
+    }
     const child_node = root_hd_node.derivePath(input_address_info.derivation_path)
     if (input_address_info.type === 'p2tr') {
         const child_xonly_pubkey = toXOnly(child_node.publicKey)

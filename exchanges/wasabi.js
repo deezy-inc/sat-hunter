@@ -35,6 +35,7 @@ async function withdraw({ amount_btc }) {
 }
 
 async function get_address_info_for_utxo({ txid, index }) {
+    console.log(`Getting address info for utxo ${txid}:${index}`)
     const unspents = await list_unspent_coins()
     const utxo = unspents.find(it => it.txid === txid && it.index === index)
     return {
