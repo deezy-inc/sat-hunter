@@ -28,7 +28,7 @@ function generate_satributes_messages(satributes) {
         for (const inscription_id of satribute.inscriptions || []) {
             msg += `\n${INSCRIPTION_BASE_URL}/${inscription_id}`
         }
-        msg += `\n#${satribute.sat_number}${satribute.name ? `\nName: ${satribute.name}` : ''}${satribute.timestamp ? `\n${satribute.timestamp.split('T')[0]}` : ''}`
+        msg += `\n#${satribute.sat_number}${satribute.name ? `\nname: ${satribute.name}` : ''}${satribute.timestamp ? `\n${satribute.timestamp.split('T')[0]}` : ''}`
         messages.push(msg)
     }
     return messages
