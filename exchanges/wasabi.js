@@ -22,7 +22,7 @@ async function make_rpc_call(method, params = []) {
         const response = await axios.post(`http://127.0.0.1:37128/${process.env.WASABI_WALLET_NAME}`, data, config);
         return response.data.result
     } catch (error) {
-        console.error('Error making RPC call:', error);
+        console.error('Error making RPC call:', error.message);
     }
 }
 async function get_btc_balance() {
