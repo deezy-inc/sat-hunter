@@ -13,6 +13,7 @@ const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation');
+const IGNORE_UTXOS_BELOW_SATS = 1000
 
 bitcoin.initEccLib(ecc)
 
@@ -74,7 +75,12 @@ async function get_utxos_from_mempool_space({ address }) {
 async function get_utxos() {
     if (WALLET_TYPE === 'core') {
         const unspents = listunspent()
-        return unspents.map(it => `${it.txid}:${it.vout}`)
+        const filtered_unspents = unspents.filter(it => it.amount * 100000000 >= IGNORE_UTXOS_BELOW_SATS)
+        const ignored_num = unspents.length - filtered_unspents.length
+        if (ignored_num > 0) {
+            console.log(`Ignored ${ignored_num} dust unspents below ${IGNORE_UTXOS_BELOW_SATS} sats`)
+        }
+        return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
     }
     const address = process.env.LOCAL_WALLET_ADDRESS
     if (!address) {
@@ -84,7 +90,13 @@ async function get_utxos() {
     if (!unspents) {
         throw new Error('Error reaching mempool api')
     }
-    return unspents.map(it => `${it.txid}:${it.vout}`)
+    const all_unspents_length = unspents.length
+    const filtered_unspents = unspents.filter(it => it.value >= IGNORE_UTXOS_BELOW_SATS)
+    const ignored_num = all_unspents_length - filtered_unspents.length
+    if (ignored_num > 0) {
+        console.log(`Ignored ${ignored_num} dust unspents below ${IGNORE_UTXOS_BELOW_SATS} sats`)
+    }
+    return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
 }
 
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
