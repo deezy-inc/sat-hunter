@@ -7,9 +7,10 @@ let BTC_ACCOUNT_ID = null
 
 function create_signature({ path, timestamp, method, body = ''}) {
     const data = `${timestamp}${method}${path}${body}`
-    return crypto.createHmac('sha256', process.env.COINBASE_EXCHANGE_API_SECRET)
+    const base64_key = Buffer.from(process.env.COINBASE_EXCHANGE_API_SECRET, 'base64')
+    return crypto.createHmac('sha256', base64_key)
         .update(data)
-        .digest('hex');
+        .digest('base64');
 }
 function create_headers({ path, timestamp, method, body = '' }) {
     return {
