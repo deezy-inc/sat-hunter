@@ -3,6 +3,7 @@ const axios = require('axios')
 const crypto = require("crypto");
 
 const API_BASE = 'https://api.gemini.com'
+const FEE_BUFFER = parseInt(process.env.GEMINI_FEE_BUFFER_SATS || 50000)
 function create_signature({ base64_body }) {
     return crypto.createHmac('sha384', process.env.GEMINI_API_SECRET)
         .update(base64_body)
@@ -42,7 +43,7 @@ async function withdraw({ amount_btc }) {
     const request = '/v1/withdraw/btc'
     const nonce = Math.floor(Date.now() / 1000)
     const address = process.env.GEMINI_WITHDRAWAL_ADDRESS
-    const amount = `${amount_btc}`
+    const amount = (amount_btc - (FEE_BUFFER / 100000000)).toFixed(8)
     const body = {
         request, nonce, address, amount
     }
