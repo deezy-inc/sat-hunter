@@ -1,4 +1,4 @@
-const INSCRIPTION_BASE_URL = 'https://ord.io'
+const INSCRIPTION_BASE_URL = 'https://ordinals.com/sat'
 const emojis_by_rarity = {
     "rare": "💍",
     "uncommon": "💎",
@@ -25,10 +25,11 @@ function generate_satributes_messages(satributes) {
             msg += `${emojis_by_rarity[rarity] || ''} `
         }
         for (const rarity of satribute.rarity_tags) {
-            msg += `${rarity.replaceAll('rare_inscription', 'inscription').replaceAll('_', ' ')} `
+            msg += `${rarity.replaceAll('rare_inscription', 'inscription').replaceAll('_', ' ')}`
         }
-        for (const inscription_id of satribute.inscriptions || []) {
-            msg += `\n${INSCRIPTION_BASE_URL}/${inscription_id}`
+        for (const inscription_group of satribute.inscriptions || []) {
+            msg += `\ncollection: ${inscription_group}`
+            msg += `\n${INSCRIPTION_BASE_URL}/${satribute.sat_number}`
         }
         msg += `\n#${satribute.sat_number}${satribute.name ? `\nname: ${satribute.name}` : ''}${satribute.timestamp ? `\n${satribute.timestamp.split('T')[0]}` : ''}`
         messages.push(msg)
