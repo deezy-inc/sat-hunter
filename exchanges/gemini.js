@@ -41,7 +41,7 @@ async function withdraw({ amount_btc }) {
         throw new Error('GEMINI_WITHDRAWAL_ADDRESS must be set and allowlisted within Gemini')
     }
     const request = '/v1/withdraw/btc'
-    const nonce = Math.floor(Date.now() / 1000)
+    const nonce = Math.floor(Date.now() / 1000 + 1.5) // The nonce cannot be same as previous call, so we add a little.
     const address = process.env.GEMINI_WITHDRAWAL_ADDRESS
     const amount = (amount_btc - (FEE_BUFFER / 100000000)).toFixed(8)
     const body = {
