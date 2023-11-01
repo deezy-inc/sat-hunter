@@ -3,6 +3,7 @@ const emojis_by_rarity = {
     "rare": "💍",
     "uncommon": "💎",
     "black uncommon": "♠️",
+    "black_uncommon": "♠️",
     "black rare": "🖤",
     "omega": "🅾️",
     "alpha": "🅰️",
