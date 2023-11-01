@@ -66,7 +66,7 @@ async function withdraw({ amount_btc }) {
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
     const body = {
-        amount: `${amount_btc}`,
+        amount: amount_btc.toFixed(8),
         currency: 'BTC',
         profile_id: BTC_ACCOUNT_ID,
         crypto_address: process.env.COINBASE_EXCHANGE_WITHDRAWAL_ADDRESS,
