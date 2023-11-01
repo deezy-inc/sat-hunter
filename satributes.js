@@ -25,7 +25,7 @@ function generate_satributes_messages(satributes) {
             msg += `${emojis_by_rarity[rarity] || ''} `
         }
         for (const rarity of satribute.rarity_tags) {
-            msg += `${rarity.replaceAll('rare_inscription', 'inscription').replaceAll('_', ' ')}`
+            msg += `${rarity.replaceAll('rare_inscription', 'inscription').replaceAll('_', ' ')} `
         }
         for (const inscription_group of satribute.inscriptions || []) {
             msg += `\ncollection: ${inscription_group}`
