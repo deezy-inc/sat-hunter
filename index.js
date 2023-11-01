@@ -203,6 +203,10 @@ async function run() {
         const scan_request_id = scan_request_ids[i]
         console.log(`Checking status of scan request with id: ${scan_request_id}`)
         const info = await get_scan_request({ scan_request_id })
+        if (info.status === 'FAILED') {
+            console.log(`Scan request with id: ${scan_request_id} failed`)
+            continue
+        }
         if (info.status !== 'COMPLETED') {
             console.log(`Waiting for scan to complete: ${scan_request_id}...`)
             await sleep(1000)
