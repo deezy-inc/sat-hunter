@@ -3,7 +3,7 @@ const axios = require('axios')
 const crypto = require("crypto");
 
 const API_BASE = 'https://api.gemini.com'
-const FEE_BUFFER = parseInt(process.env.GEMINI_FEE_BUFFER_SATS || 50000)
+const FEE_BUFFER = parseInt(process.env.GEMINI_FEE_BUFFER_SATS || 100000)
 function create_signature({ base64_body }) {
     return crypto.createHmac('sha384', process.env.GEMINI_API_SECRET)
         .update(base64_body)
