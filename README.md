@@ -56,7 +56,7 @@ Kraken is well-tested and works well. You can email kraken support to get increa
 Gemini is also well tested and works well, but adding a new withdrawal address requires a 7-day waiting period.
 
 ## Bitfinex
-Bitfinex should work but it not well-tested yet - just make sure you are NOT a US user and are prepared to KYC.
+Make sure you are NOT a US user and are prepared to KYC. API withdrawals without manual approval require some waiting: you need to enable 2fa and withdrawal address whitelisting and whitelist your withdrawal address and then wait 5 days.
 
 ## Coinbase
 Regular Coinbase accounts work OK, but withdrawals are often delayed and require additional KYC. Ideally upgrade to Coinbase Exchange for a better experience (below)
