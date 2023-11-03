@@ -198,7 +198,7 @@ async function run() {
             console.log(`Using excluded tags: ${excluded_tags}`)
             request_body.excluded_tags = excluded_tags
         }
-        const scan_request = await post_scan_request()
+        const scan_request = await post_scan_request(request_body)
         scan_request_ids.push(scan_request.id)
         if (rescanned_utxos.has(utxo)) {
             rescan_request_ids.add(scan_request.id)
