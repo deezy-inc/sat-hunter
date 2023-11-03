@@ -187,12 +187,18 @@ async function run() {
             await sendNotifications(`Initiating scan for: ${utxo}`);
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
-        const scan_request = await post_scan_request({
+        const request_body = {
             utxo,
             exchange_address,
             rare_sat_address,
-            extraction_fee_rate: fee_rate
-        })
+            extraction_fee_rate: fee_rate,
+        }
+        let excluded_tags = get_excluded_tags({ fee_rate })
+        if (excluded_tags) {
+            console.log(`Using excluded tags: ${excluded_tags}`)
+            request_body.excluded_tags = excluded_tags
+        }
+        const scan_request = await post_scan_request()
         scan_request_ids.push(scan_request.id)
         if (rescanned_utxos.has(utxo)) {
             rescan_request_ids.add(scan_request.id)
@@ -236,6 +242,21 @@ async function run() {
             is_replacement: rescan_request_ids.has(scan_request_id)
         })
     }
+}
+
+function get_excluded_tags({ fee_rate }) {
+    let configured_excluded_tags = process.env.EXCLUDE_TAGS
+    if (process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD)) {
+        configured_excluded_tags = process.env.EXCLUDE_TAGS_HIGH_FEE
+    }
+    if (configured_excluded_tags === "") {
+        // Explicitly set empty string means include all tags.
+        return []
+    }
+    if (!configured_excluded_tags) {
+        return null
+    }
+    return configured_excluded_tags.split(" ")
 }
 
 async function runLoop() {
