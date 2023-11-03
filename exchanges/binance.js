@@ -18,7 +18,6 @@ async function get_btc_balance() {
         console.log(err)
         return {}
     })
-    console.log(data)
     const wallet_info = data.balances.filter(it => it.asset === 'BTC')
     console.log(wallet_info[0])
     return parseFloat(wallet_info[0].free)
