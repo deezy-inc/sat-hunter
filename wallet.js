@@ -13,11 +13,12 @@ const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation');
+const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
 const IGNORE_UTXOS_BELOW_SATS = 1000
 
 bitcoin.initEccLib(ecc)
 
-const MEMPOOL_API = 'https://mempool.space/api'
+const MEMPOOL_API = `${MEMPOOL_URL}/api`
 const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
 let local_wallet_type
 let child_xonly_pubkey
