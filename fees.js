@@ -20,7 +20,7 @@ async function get_fee_rate() {
 }
 
 async function get_min_next_block_fee_rate() {
-    const { data } = await axios.get('https://mempool.space/api/v1/fees/mempool-blocks').catch(err => {
+    const { data } = await axios.get(`${MEMPOOL_URL}/api/v1/fees/mempool-blocks`).catch(err => {
         console.error(err)
         return { }
     })
