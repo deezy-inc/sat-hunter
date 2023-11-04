@@ -33,7 +33,7 @@ async function get_btc_balance() {
         throw new Error(err)
     })
     const btc_balance = data.find(({ currency }) => currency === 'BTC')
-    return btc_balance.amount
+    return btc_balance.availableForWithdrawal
 }
 
 async function withdraw({ amount_btc }) {
