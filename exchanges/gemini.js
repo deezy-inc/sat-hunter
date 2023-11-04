@@ -49,7 +49,7 @@ async function withdraw({ amount_btc }) {
     }
     const headers = create_headers({ body })
     const { data } = await axios.post(`${API_BASE}${request}`, null, { headers }).catch(err => {
-        console.log(err)
+        console.log(err.message)
         throw new Error(err)
     })
     console.log(data)
