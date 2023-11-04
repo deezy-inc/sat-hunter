@@ -4,6 +4,7 @@ const FEE_PREF = process.env.FEE_PREFERENCE || 'medium'
 if (FEE_PREF !== 'high' && FEE_PREF !== 'medium' && FEE_PREF !== 'low') {
     throw new Error('FEE_PREFERENCE must be one of: high, medium, low')
 }
+const MIN_FEE_BUFFER = parseFloat(process.env.MIN_FEE_BUFFER || 3)
 // Get fee rate from mempool.space
 async function get_fee_rate() {
     if (process.env.AUTO_RBF) {
@@ -28,7 +29,7 @@ async function get_min_next_block_fee_rate() {
         throw new Error('Could not get mempool blocks')
     }
     // We add 3 right now because we want to be sure we get into the next block.
-    return Math.round((data[0].feeRange[0] + 3) * 10) / 10
+    return Math.round((data[0].feeRange[0] + MIN_FEE_BUFFER) * 10) / 10
 }
 
 module.exports = {
