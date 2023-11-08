@@ -6,7 +6,12 @@
   "scripts": {
     "start": "node -r dotenv/config index.js",
     "setup-telegram": "node -r dotenv/config setup-telegram-bot.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
+  },
+  "jest": {
+    "setupFiles": [
+      "./jest.setup.js"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -23,5 +28,8 @@
     "node-telegram-bot-api": "^0.63.0",
     "tiny-secp256k1": "^2.2.3",
     "totp-generator": "^0.0.14"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
