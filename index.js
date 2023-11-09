@@ -83,6 +83,10 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(signed_psbt)
     const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt)
     const final_fee = final_signed_psbt.getFee()
+    if (final_fee > (process.env.MAX_FEE_SATS || 10000000)) {
+        console.log(`Fee of ${final_fee} is higher than configured max fee of ${process.env.MAX_FEE_SATS || 10000000} sats. Will not broadcast`)
+        return
+    }
     const final_tx = final_signed_psbt.extractTransaction()
     console.log(`Extracted transaction`)
     const final_vbytes = final_tx.virtualSize()
