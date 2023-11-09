@@ -2,17 +2,18 @@ const INSCRIPTION_BASE_URL = 'https://ordinals.com/sat'
 const emojis_by_rarity = {
     "rare": "💍",
     "uncommon": "💎",
-    "black uncommon": "♠️",
     "black_uncommon": "♠️",
     "black rare": "🖤",
     "omega": "🅾️",
     "alpha": "🅰️",
     "prime": "🔱",
     "palindrome": "♊",
+    "vintage": "🍷",
+    "block_9": "9️⃣",
     "digits_palindrome": "♊",
     "name_palindrome": "♏",
     "halfinney": "👨🏻",
-    "rare_inscription": "🖼",
+    "inscription": "🖼",
     "special_name": "🔤",
 }
 
@@ -25,7 +26,7 @@ function generate_satributes_messages(satributes) {
             msg += `${emojis_by_rarity[rarity] || ''} `
         }
         for (const rarity of satribute.rarity_tags) {
-            msg += `${rarity.replaceAll('rare_inscription', 'inscription').replaceAll('_', ' ')} `
+            msg += `${rarity} `
         }
         for (const inscription_group of satribute.inscriptions || []) {
             msg += `\ncollection: ${inscription_group}`
