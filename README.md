@@ -71,7 +71,10 @@ Binance should work but is not yet well-tested
 Bybit should work but they are known to shotgun-KYC (let you do a little activity then hold your funds unless your provide full KYC), so ensure that you are able to fully KYC according to their regulations
 
 ## OKX / OKCoin
-Should work!
+Works ok - kind of slow withdrawals from them.
+
+## Kucoin
+Newly added
 
 ## MORE!!
 Help us add more exchanges - we want to add them all! Open an Issue in the Github to request a new one.
