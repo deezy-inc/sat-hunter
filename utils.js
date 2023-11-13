@@ -26,7 +26,7 @@ function get_min_tag_sizes({ fee_rate }) {
     if (!configured_min_tag_sizes) {
         return null
     }
-    return configured_min_tag_sizes.trim().split(',').reduce((acc, tagSize) => {
+    return configured_min_tag_sizes.trim().split(' ').reduce((acc, tagSize) => {
         const [tag, size] = tagSize.trim().split(':');
         acc[tag] = parseInt(size);
         return acc;

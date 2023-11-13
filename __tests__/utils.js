@@ -50,13 +50,13 @@ describe('get_excluded_tags', () => {
 
 describe('get_min_tag_sizes', () => {
     test('should return correct format', () => {
-        process.env.MIN_TAG_SIZES = 'block_9:1000,block_78:2000'
+        process.env.MIN_TAG_SIZES = 'block_9:1000 block_78:2000'
         const result = get_min_tag_sizes({ fee_rate: 0 })
         expect(result).toEqual({ 'block_9': 1000, 'block_78': 2000 })
     })
 
     test('should trim leading and trailing spaces', () => {
-        process.env.MIN_TAG_SIZES = ' block_9:1000, block_78:2000 '
+        process.env.MIN_TAG_SIZES = ' block_9:1000 block_78:2000 '
         const result = get_min_tag_sizes({ fee_rate: 0 })
         expect(result).toEqual({ 'block_9': 1000, 'block_78': 2000 })
     })
@@ -69,16 +69,16 @@ describe('get_min_tag_sizes', () => {
     
     test('should use high fee min tag sizes when fee_rate is higher than MIN_TAG_SIZES_HIGH_FEE_THRESHOLD', () => {
         process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD = '10'
-        process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:2000,block_78:3000'
-        process.env.MIN_TAG_SIZES = 'block_9:1000,block_78:2000'
+        process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:2000 block_78:3000'
+        process.env.MIN_TAG_SIZES = 'block_9:1000 block_78:2000'
         const result = get_min_tag_sizes({ fee_rate: 20 })
         expect(result).toEqual({ 'block_9': 2000, 'block_78': 3000 })
     })
 
     test('should not use high fee min tag sizes when fee_rate is lower than MIN_TAG_SIZES_HIGH_FEE_THRESHOLD', () => {
         process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD = '10'
-        process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:2000,block_78:3000'
-        process.env.MIN_TAG_SIZES = 'block_9:1000,block_78:2000'
+        process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:2000 block_78:3000'
+        process.env.MIN_TAG_SIZES = 'block_9:1000 block_78:2000'
         const result = get_min_tag_sizes({ fee_rate: 5 })
         expect(result).toEqual({ 'block_9': 1000, 'block_78': 2000 })
     })
