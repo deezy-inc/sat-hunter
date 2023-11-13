@@ -17,6 +17,23 @@ function get_excluded_tags({ fee_rate }) {
         .map((tag) => tag.split('/'))
 }
 
+function get_min_tag_sizes({ fee_rate }) {
+    let configured_min_tag_sizes = process.env.MIN_TAG_SIZES
+    if (process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD)) {
+        console.log(`Using high fee min tag sizes`)
+        configured_min_tag_sizes = process.env.MIN_TAG_SIZES_HIGH_FEE
+    }
+    if (!configured_min_tag_sizes) {
+        return null
+    }
+    return configured_min_tag_sizes.trim().split(' ').reduce((acc, tagSize) => {
+        const [tag, size] = tagSize.trim().split(':');
+        acc[tag] = parseInt(size);
+        return acc;
+      }, {});
+}
+
 module.exports = {
-    get_excluded_tags
+    get_excluded_tags,
+    get_min_tag_sizes
 }
