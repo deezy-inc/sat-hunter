@@ -13,6 +13,11 @@
       "./jest.setup.js"
     ]
   },
+  "engines": {
+    "node": ">=18.x",
+    "npm": "9.x"
+  },
+  "engineStrict": true,
   "keywords": [],
   "author": "",
   "license": "ISC",
