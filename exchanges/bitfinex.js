@@ -8,7 +8,7 @@ function generate_headers({ path, body }) {
     return {
         'bfx-nonce': nonce,
         'bfx-signature': signature,
-        'bfx-apikey': process.env.BTC_API_KEY,
+        'bfx-apikey': process.env.BFX_API_KEY || process.env.BTC_API_KEY, // fallback to when there was a bug here
         'content-type': 'application/json'
     };
 }
