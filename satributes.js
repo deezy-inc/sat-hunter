@@ -9,6 +9,7 @@ const emojis_by_rarity = {
     "prime": "🔱",
     "palindrome": "♊",
     "vintage": "🍷",
+    "vintage_nakamoto": "🍷🧘🏽",
     "block_9": "9️⃣",
     "digits_palindrome": "♊",
     "name_palindrome": "♏",
