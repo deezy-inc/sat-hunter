@@ -152,6 +152,9 @@ async function get_address_txs({ address }) {
         console.error(err)
         return {}
     })
+    if (process.env.DEBUG) {
+        console.log(data)
+    }
     return data || []
 }
 
