@@ -148,13 +148,12 @@ async function broadcast_transaction({ hex }) {
 
 async function get_address_txs({ address }) {
     const url = `${MEMPOOL_API}/address/${address}/txs`
-    const { data } = await axios.get(url).catch(err => {
+    const { data } = await axios.get(url, {
+        maxContentLength: Math.MAX_SAFE_INTEGER,
+    }).catch(err => {
         console.error(err)
         return {}
     })
-    if (process.env.DEBUG) {
-        console.log(data)
-    }
     return data || []
 }
 
