@@ -3,6 +3,9 @@ function get_excluded_tags({ fee_rate }) {
     if (process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD)) {
         console.log(`Using high fee excluded tags`)
         configured_excluded_tags = process.env.EXCLUDE_TAGS_HIGH_FEE
+    } else if (process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD && fee_rate > parseFloat(process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD)) {
+        console.log(`Using medium fee excluded tags`)
+        configured_excluded_tags = process.env.EXCLUDE_TAGS_MEDIUM_FEE
     }
     if (configured_excluded_tags === '') {
         // Explicitly set empty string means include all tags.
@@ -22,6 +25,9 @@ function get_min_tag_sizes({ fee_rate }) {
     if (process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD)) {
         console.log(`Using high fee min tag sizes`)
         configured_min_tag_sizes = process.env.MIN_TAG_SIZES_HIGH_FEE
+    } else if (process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD && fee_rate > parseFloat(process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD)) {
+        console.log(`Using medium fee min tag sizes`)
+        configured_min_tag_sizes = process.env.MIN_TAG_SIZES_MEDIUM_FEE
     }
     if (!configured_min_tag_sizes) {
         return null
