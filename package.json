@@ -30,6 +30,7 @@
     "bitcoinjs-lib": "^6.1.5",
     "bybit-api": "^3.7.3",
     "dotenv": "^16.3.1",
+    "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.63.0",
     "tiny-secp256k1": "^2.2.3",
     "totp-generator": "^0.0.14"
