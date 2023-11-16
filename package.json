@@ -23,7 +23,7 @@
   "license": "ISC",
   "dependencies": {
     "@binance/connector": "^3.0.0",
-    "axios": "^1.5.1",
+    "axios": "^1.6.2",
     "bip32": "^4.0.0",
     "bip39": "^3.1.0",
     "bitcoin-address-validation": "^2.2.3",
