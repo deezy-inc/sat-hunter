@@ -148,27 +148,16 @@ async function broadcast_transaction({ hex }) {
 
 async function get_address_txs({ address }) {
     const url = `${MEMPOOL_API}/address/${address}/txs`
-    // We stream the data because it's often very big.
-    const resp = await axios.get(url, {
-        responseType: 'stream'
+    const { data } = await axios.get(url, {
+        maxContentLength: Math.MAX_SAFE_INTEGER,
     }).catch(err => {
         console.error(err)
         return {}
     })
-    const stream = resp.data
-    let data = ''
-    let finished = false
-    stream.on('data', (chunk) => {
-        data += chunk.toString()
-    })
-    stream.on('end', () => {
-        finished = true
-    })
-    while (!finished) {
-        await new Promise(resolve => setTimeout(resolve, 50))
+    if (process.env.DEBUG) {
+        console.log(data)
     }
-    if (!data) return []
-    return JSON.parse(data)
+    return data || []
 }
 
 async function fetch_most_recent_unconfirmed_send() {
