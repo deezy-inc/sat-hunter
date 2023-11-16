@@ -7,8 +7,6 @@ const {
     getrawtransaction
 } = require('./bitcoin')
 const axios = require('axios')
-// Fetch requires this funky import for commonJS: https://www.npmjs.com/package/node-fetch#commonjs
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const ecc = require('tiny-secp256k1')
 const {BIP32Factory} = require('bip32')
 const bip32 = BIP32Factory(ecc)
@@ -150,12 +148,12 @@ async function broadcast_transaction({ hex }) {
 
 async function get_address_txs({ address }) {
     const url = `${MEMPOOL_API}/address/${address}/txs`
-    const resp = await fetch(url).catch(err => {
+    const { data } = await axios.get(url, {
+        maxContentLength: Math.MAX_SAFE_INTEGER,
+    }).catch(err => {
         console.error(err)
-        return null
+        return {}
     })
-    if (!resp) return []
-    const data = await resp.json()
     if (process.env.DEBUG) {
         console.log(data)
     }
