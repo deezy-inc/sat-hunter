@@ -28,6 +28,8 @@ describe('get_excluded_tags', () => {
     test('should use high fee excluded tags when fee_rate is higher than EXCLUDE_TAGS_HIGH_FEE_THRESHOLD', () => {
         process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD = '10'
         process.env.EXCLUDE_TAGS_HIGH_FEE = 'alpha/pizza'
+        process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD = '5'
+        process.env.EXCLUDE_TAGS_MEDIUM_FEE = 'special_name'
         process.env.EXCLUDE_TAGS = 'omega alpha pizza/omega'
         const result = get_excluded_tags({ fee_rate: 20 })
         expect(result).toEqual([['alpha', 'pizza']])
@@ -39,6 +41,16 @@ describe('get_excluded_tags', () => {
         process.env.EXCLUDE_TAGS = 'omega alpha pizza/omega'
         const result = get_excluded_tags({ fee_rate: 5 })
         expect(result).toEqual([['omega'], ['alpha'], ['pizza', 'omega']])
+    })
+
+    test('should use medium fee excluded tags when fee_rate is in the middle', () => {
+        process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD = '20'
+        process.env.EXCLUDE_TAGS_HIGH_FEE = 'omega/pizza'
+        process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD = '10'
+        process.env.EXCLUDE_TAGS_MEDIUM_FEE = 'special_name'
+        process.env.EXCLUDE_TAGS = 'omega alpha pizza/omega'
+        const result = get_excluded_tags({ fee_rate: 15 })
+        expect(result).toEqual([['special_name']])
     })
 
     test('should return correct format when tags contain multiple slashes', () => {
@@ -66,7 +78,7 @@ describe('get_min_tag_sizes', () => {
         const result = get_min_tag_sizes({ fee_rate: 0 })
         expect(result).toBeNull()
     })
-    
+
     test('should use high fee min tag sizes when fee_rate is higher than MIN_TAG_SIZES_HIGH_FEE_THRESHOLD', () => {
         process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD = '10'
         process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:2000 block_78:3000'
