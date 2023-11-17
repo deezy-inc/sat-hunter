@@ -21,11 +21,6 @@ bitcoin.initEccLib(ecc)
 
 const MEMPOOL_API = `${MEMPOOL_URL}/api`
 let local_wallet_type
-let child_xonly_pubkey
-let tweaked_child_node
-let root_hd_node
-let child_hd_node
-let derivation_path
 let WALLET_TYPE
 if (process.env.ACTIVE_EXCHANGE === 'wasabi') {
     WALLET_TYPE = 'wasabi'
