@@ -6,6 +6,7 @@ const {
     listtransactions,
     getrawtransaction
 } = require('./bitcoin')
+const wasabi = require('./exchanges/wasabi')
 const axios = require('axios')
 const ecc = require('tiny-secp256k1')
 const {BIP32Factory} = require('bip32')
@@ -19,50 +20,60 @@ const IGNORE_UTXOS_BELOW_SATS = 1000
 bitcoin.initEccLib(ecc)
 
 const MEMPOOL_API = `${MEMPOOL_URL}/api`
-const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
 let local_wallet_type
 let child_xonly_pubkey
 let tweaked_child_node
 let root_hd_node
 let child_hd_node
 let derivation_path
+let WALLET_TYPE
+if (process.env.ACTIVE_EXCHANGE === 'wasabi') {
+    WALLET_TYPE = 'wasabi'
+} else {
+    WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
+}
+
 const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
 
+function create_root_node(seed_phrase) {
+    const seed_buffer = bip39.mnemonicToSeedSync(seed_phrase)
+    return bip32.fromSeed(seed_buffer)
+}
+
+
+function get_local_derivation_path() {
+    const local_wallet_type = getAddressInfo(process.env.LOCAL_ADDRESS).type
+    return process.env.LOCAL_DERIVATION_PATH || `m/8${local_wallet_type === 'p2tr' ? '6' : '4'}'/0'/0'/0/0`
+}
+
+function validate_seed(seed_phrase, address, derivation_path) {
+    const root_node = create_root_node(seed_phrase)
+    const address_type = getAddressInfo(address).type
+    const child_node = root_node.derivePath(derivation_path)
+    const child_xonly_pubkey = toXOnly(child_node.publicKey)
+    let derived_address
+    if (address_type === 'p2tr') {
+        const p2tr_derived_info = bitcoin.payments.p2tr({ internalPubkey: child_xonly_pubkey })
+        derived_address = p2tr_derived_info.address
+    } else {
+        const p2wpkh_derived_info = bitcoin.payments.p2wpkh({ pubkey: child_node.publicKey })
+        derived_address = p2wpkh_derived_info.address
+    }
+    if (address !== derived_address) {
+        throw new Error('Local address does not match expected')
+    } else {
+        console.log(`Validated wallet address: ${address}`)
+    }
+}
+
+// Validate seed phrase
 if (WALLET_TYPE === 'local') {
     if (!process.env.LOCAL_WALLET_SEED || !process.env.LOCAL_WALLET_ADDRESS) {
         throw new Error('LOCAL_WALLET_SEED and LOCAL_WALLET_ADDRESS must be set')
     }
-    // Check validity of seed
-    const seed_phrase = process.env.LOCAL_WALLET_SEED
-    const seed_buffer = bip39.mnemonicToSeedSync(seed_phrase)
-    root_hd_node = bip32.fromSeed(seed_buffer)
-
-    const addresss_info = getAddressInfo(process.env.LOCAL_WALLET_ADDRESS)
-    local_wallet_type = addresss_info.type
-    if (local_wallet_type !== 'p2tr' && local_wallet_type !== 'p2wpkh') {
-        throw new Error('Local wallet address must be p2tr or p2wpkh')
-    }
-    derivation_path = process.env.LOCAL_DERIVATION_PATH || `m/8${local_wallet_type === 'p2tr' ? '6' : '4'}'/0'/0'/0/0`
-    child_hd_node = root_hd_node.derivePath(derivation_path)
-    child_xonly_pubkey = toXOnly(child_hd_node.publicKey)
-    let address
-    if (local_wallet_type === 'p2tr') {
-        const p2tr_derived_info = bitcoin.payments.p2tr({ internalPubkey: child_xonly_pubkey })
-        address = p2tr_derived_info.address
-    } else {
-        const p2wpkh_derived_info = bitcoin.payments.p2wpkh({ pubkey: child_hd_node.publicKey })
-        address = p2wpkh_derived_info.address
-    }
-    if (address !== process.env.LOCAL_WALLET_ADDRESS) {
-        throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct')
-    } else {
-        console.log(`Local wallet address: ${address}`)
-        if (local_wallet_type === 'p2tr') {
-            tweaked_child_node = child_hd_node.tweak(
-                bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey),
-            );
-        }
-    }
+    validate_seed(process.env.LOCAL_WALLET_SEED, process.env.LOCAL_WALLET_ADDRESS, process.env.LOCAL_DERIVATION_PATH, local_wallet_type)
+} else if (WALLET_TYPE === 'wasabi') {
+    console.log(`Skipping validation of Wasabi Seed`)
 }
 
 async function get_utxos_from_mempool_space({ address }) {
@@ -83,6 +94,10 @@ async function get_utxos() {
         }
         return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
     }
+    if (WALLET_TYPE === 'wasabi') {
+        const unspents = await wasabi.list_unspent_coins()
+        return unspents.map(it => `${it.txid}:${it.index}`)
+    }
     const address = process.env.LOCAL_WALLET_ADDRESS
     if (!address) {
         throw new Error('LOCAL_WALLET_ADDRESS must be set')
@@ -100,25 +115,52 @@ async function get_utxos() {
     return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
 }
 
-function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
+async function get_input_address_info(psbt_object) {
+    if (WALLET_TYPE === 'local') {
+        const type = getAddressInfo(process.env.LOCAL_WALLET_ADDRESS).type
+        return {
+            type,
+            address: process.env.LOCAL_WALLET_ADDRESS,
+            derivation_path: get_local_derivation_path()
+        }
+    }
+    // WALLET_TYPE is wasabi!
+    const input_utxo = psbt_object.txInputs[0]
+    const txid = input_utxo.hash.toString('hex')
+    const index = input_utxo.index
+    const info = await wasabi.get_address_info_for_utxo({ txid, index })
+    return {
+        type: info.type,
+        address: info.address,
+        derivation_path: info.derivation_path,
+    }
+}
+
+async function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
     if (WALLET_TYPE === 'core') {
         const processed_psbt = walletprocesspsbt({ psbt }).psbt
         return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt
     }
     let psbt_object = bitcoin.Psbt.fromBase64(psbt)
-    if (local_wallet_type === 'p2tr') {
+    const input_address_info = await get_input_address_info(psbt_object)
+    const child_node = root_hd_node.derivePath(input_address_info.derivation_path)
+    if (input_address_info.type === 'p2tr') {
+        const child_xonly_pubkey = toXOnly(child_node.publicKey)
         psbt_object.updateInput(0, {
             tapInternalKey: child_xonly_pubkey,
             witnessUtxo,
         })
+        const tweaked_child_node = child_node.tweak(
+            bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey),
+        );
         psbt_object = psbt_object.signInput(0, tweaked_child_node, [bitcoin.Transaction.SIGHASH_ALL])
     } else {
         psbt_object.updateInput(0, {
             bip32Derivation: [
                 {
                     masterFingerprint: root_hd_node.fingerprint,
-                    path: derivation_path,
-                    pubkey: child_hd_node.publicKey
+                    path: input_address_info.derivation_path,
+                    pubkey: child_node.publicKey
                 }
             ]
         })
@@ -178,6 +220,8 @@ async function fetch_most_recent_unconfirmed_send() {
             existing_fee_rate,
             input_utxo: `${input.txid}:${input.vout}`,
         }
+    } else if (WALLET_TYPE === 'wasabi') {
+        throw new Error('Wasabi not supported yet for fetch_most_recent_unconfirmed_send')
     }
     const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
     const unconfirmed_sends = txs.filter(it => {

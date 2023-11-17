@@ -1,10 +1,17 @@
 require('dotenv').config({
     override: true
 })
+const fs = require('fs')
 const util = require('util')
 const ecc = require('tiny-secp256k1')
 const bitcoin = require('bitcoinjs-lib')
 bitcoin.initEccLib(ecc)
+if (!fs.existsSync('./data')) {
+    fs.mkdirSync('./data')
+}
+if (!fs.existsSync('./data/empty-utxos')) {
+    fs.mkdirSync('./data/empty-utxos')
+}
 const exchanges = require('./exchanges/config.js')
 const {
     get_utxos,
@@ -32,7 +39,10 @@ async function maybe_withdraw(exchange_name, exchange) {
         return 0
     })
     console.log(`BTC balance on ${exchange_name}: ${btc_balance}`)
-
+    if (exchange_name === 'wasabi') {
+        console.log(`No withdraws from Wasabi`)
+        return
+    }
     if (btc_balance > (process.env.WITHDRAWAL_THRESHOLD_BTC || 0)) {
         console.log(`Withdrawing from ${exchange_name}...`)
         let withdrawal_amount = btc_balance
@@ -60,12 +70,12 @@ async function maybe_withdraw(exchange_name, exchange) {
     }
 }
 
-async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address, is_replacement }) {
+async function decode_sign_and_send_psbt({ psbt, exchange_addresses, rare_sat_address, is_replacement }) {
     console.log(`Checking validity of psbt...`)
     console.log(psbt)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
     for (const output of decoded_psbt.txOutputs) {
-        if (output.address !== exchange_address && output.address !== rare_sat_address) {
+        if (!exchange_addresses.includes(output.address) && output.address !== rare_sat_address) {
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
         }
     }
@@ -156,7 +166,10 @@ async function run() {
 
     const bump_utxos = []
     if (process.env.AUTO_RBF) {
-        const { existing_fee_rate, input_utxo } = await fetch_most_recent_unconfirmed_send()
+        if (exchange_name === 'wasabi') {
+            throw new Error('AUTO_RBF is not yet supported for wasabi')
+        }
+        const { existing_fee_rate, input_utxo} = await fetch_most_recent_unconfirmed_send()
         // TODO: fix this logic - there can only be one bump_utxo right now
         if (input_utxo) {
             console.log(`Found existing unconfirmed send with fee rate of ${existing_fee_rate} sat/vbyte`)
@@ -180,22 +193,28 @@ async function run() {
     if (utxos.length === 0) {
         return
     }
-    console.log(utxos)
+    // console.log(utxos)
 
     // TODO: Check Deezy API for existing scan requests
 
     const scan_request_ids = []
-    const exchange_address = await exchange.get_deposit_address()
+    const exchange_addresses = []
     const rare_sat_address = process.env.RARE_SAT_ADDRESS
     for (const utxo of utxos) {
+        if (fs.existsSync(`./data/empty-utxos/${utxo}`)) {
+            // console.log(`Skipping ${utxo} because it is already scanned and empty`)
+            continue
+        }
         console.log(`Preparing to scan: ${utxo}`)
         if (!rescanned_utxos.has(utxo) && !process.env.ONLY_NOTIFY_ON_SATS) {
             await sendNotifications(`Initiating scan for: ${utxo}`)
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
+        const exchange_address = await exchange.get_deposit_address()
+        exchange_addresses.push(exchange_address)
         const request_body = {
             utxo,
-            exchange_address,
+            exchange_addresses,
             rare_sat_address,
             extraction_fee_rate: fee_rate
         }
@@ -245,10 +264,14 @@ async function run() {
             }
         }
         console.log(util.inspect(info, { showHidden: false, depth: null, colors: true }))
-        // TODO: check for validity of PSBT.
+        if (exchange_name === 'wasabi' && info.satributes.length === 0) {
+            console.log(`No sats found, skipping transaction spend for wasabi`)
+            fs.writeFileSync(`./data/empty-utxos/${info.utxo}`, '')
+            continue
+        }
         await decode_sign_and_send_psbt({
             psbt: info.extraction_psbt,
-            exchange_address,
+            exchange_addresses,
             rare_sat_address,
             is_replacement: rescan_request_ids.has(scan_request_id)
         })
