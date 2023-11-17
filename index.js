@@ -214,7 +214,7 @@ async function run() {
         exchange_addresses.push(exchange_address)
         const request_body = {
             utxo,
-            exchange_addresses,
+            exchange_address,
             rare_sat_address,
             extraction_fee_rate: fee_rate
         }
