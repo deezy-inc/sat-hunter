@@ -76,7 +76,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     }
 
     console.log(`Signing psbt...`)
-    const signed_psbt = sign_and_finalize_transaction({
+    const signed_psbt = await sign_and_finalize_transaction({
         psbt: psbt,
         witnessUtxo
     })
