@@ -34,6 +34,9 @@ function generate_satributes_messages(satributes) {
             msg += `\n${INSCRIPTION_BASE_URL}/${satribute.sat_number}`
         }
         msg += `\n#${satribute.sat_number}${satribute.name ? `\nname: ${satribute.name}` : ''}${satribute.timestamp ? `\n${satribute.timestamp.split('T')[0]}` : ''}`
+        if (satribute.size > 1) {
+            msg += `\nsize: ${satribute.size}`
+        }
         messages.push(msg)
     }
     return messages
