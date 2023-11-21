@@ -15,7 +15,8 @@ const {
 const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
-const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
+const { sendNotifications, PUSHOVER_ENABLED } = require('./notifications.js')
+const { TELEGRAM_BOT_ENABLED, initCommands } = require('./telegram.js')
 const { get_excluded_tags, get_min_tag_sizes } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
@@ -256,7 +257,10 @@ async function run() {
 }
 
 async function runLoop() {
-    if (TELEGRAM_BOT_ENABLED) console.log(`Telegram bot is enabled`)
+    if (TELEGRAM_BOT_ENABLED) {
+        console.log(`Telegram bot is enabled`)
+        await initCommands()
+    }
     if (PUSHOVER_ENABLED) console.log(`Pushover bot is enabled`)
     await sendNotifications(`Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`)
 

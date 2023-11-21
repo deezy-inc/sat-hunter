@@ -1,22 +1,19 @@
 const {
   PUSHOVER_USER,
   PUSHOVER_TOKEN,
-  PUSHOVER_PRIORITY,
-  TELEGRAM_BOT_TOKEN,
-  TELEGRAM_CHAT_ID
+  PUSHOVER_PRIORITY
 } = process.env;
 
-const axios = require('axios');
+const {
+    TELEGRAM_BOT_ENABLED,
+    trySendTelegramMessage
+} = require('./telegram');
 
-const TelegramBot = require('node-telegram-bot-api');
-const telegramBot = TELEGRAM_BOT_TOKEN ? new TelegramBot(TELEGRAM_BOT_TOKEN) : null;
+const axios = require('axios');
 
 const PUSHOVER_ENABLED = PUSHOVER_USER && PUSHOVER_TOKEN;
 const PUSHOVER_ENDPOINT = 'https://api.pushover.net/1/messages.json';
 const PUSHOVER_DEFAULT_PRIORITY = 0;
-const TELEGRAM_BOT_ENABLED = telegramBot && TELEGRAM_CHAT_ID;
-const TELEGRAM_CHAT_IDS = TELEGRAM_CHAT_ID ? TELEGRAM_CHAT_ID.split(',') : [];
-
 const trySendPushover = async (message = undefined) => {
   if(!PUSHOVER_ENABLED || !message) return;
   const priority = PUSHOVER_PRIORITY ?? PUSHOVER_DEFAULT_PRIORITY;
@@ -31,31 +28,13 @@ const trySendPushover = async (message = undefined) => {
   });
 };
 
-const trySendTelegram = async (message = undefined) => {
-  if(!TELEGRAM_BOT_ENABLED || !message) return;
-  for (const chatId of TELEGRAM_CHAT_IDS) {
-    let success = false
-    let retries = 0
-    while (!success && retries < 5) {
-      try {
-        await telegramBot.sendMessage(chatId, message)
-        success = true
-      } catch (err) {
-        console.log(err)
-        retries++
-      }
-    }
-  }
-};
-
 
 const sendNotifications = async (message = undefined) => {
   await trySendPushover(message);
-  await trySendTelegram(message);
+  await trySendTelegramMessage(message);
 };
 
 module.exports = {
   PUSHOVER_ENABLED,
-  TELEGRAM_BOT_ENABLED,
   sendNotifications
 };
