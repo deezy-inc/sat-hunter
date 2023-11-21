@@ -20,6 +20,12 @@ be mutually beneficial because I will be paying a lot of withdrawal fees on your
 
 # Self Hosted Option - Run on your own server:
 
+## Overview
+The self hosted option requires you to run either of the following:
+- Local wallet (e.g. Sparrow): You can use whichever wallet you want as long as you can find your wallet seed, derivation path, and a wallet address (see .env.sample). We strongly recommend Sparrow. See below for Sparrow setup instructions.
+- Bitcoin Core: For those not familiar, this is not as intimidating as it sounds. This does NOT mean you need to start a mining operation. See Bitcoin Core section below for more info
+
+
 ## Setup
 Install the Script
 ```agsl
@@ -34,10 +40,27 @@ cp .env.example .env
 // Edit .env to match your setup.
 ```
 
+
+
 ## Usage
 ```agsl
 npm start
 ```
+
+## Sparrow
+We recommend using Sparrow unless you're running an instance of Bitcoin Core. For security purposes we recommend creating a new wallet for sat hunting even if you already use Sparrow for other activities.
+1) Download Sparrow from https://sparrowwallet.com/download/
+2) Open Sparrow, click File, New Wallet.
+3) Name your wallet, click Create Vault
+4) Native Segwit is the default script type – use this option.
+5) Click New or Imported Software Wallet
+6) From the dropdown menu select Use 12 Words
+7) Generate new
+8) Write down these words in a safe place. You will need the seed words for .env file configuration.
+9) Create Keystore -> Import Keystore -> Apply
+10) The tabs on the left will turn blue.
+11) Go to the receive tab. You will need this address for .env file configuration.
+
 
 ## Telegram Bot
 Setting up the telegram bot can give you real-time updates of your operation. Follow these instructions:
@@ -49,6 +72,8 @@ Setting up the telegram bot can give you real-time updates of your operation. Fo
 6) When your message goes through, your terminal window will show a TELEGRAM_CHAT_ID, add this to your `.env` (or Replit Secret) as well
 
 # Exchanges
+Note: see .env.sample for the fields you'll need for each exchange.
+
 ## Kraken
 Kraken is well-tested and works well. You can email kraken support to get increased daily limits.
 
@@ -78,3 +103,7 @@ Newly added
 
 ## MORE!!
 Help us add more exchanges - we want to add them all! Open an Issue in the Github to request a new one.
+
+
+
+## Bitcoin Core
