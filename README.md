@@ -78,3 +78,18 @@ Newly added
 
 ## MORE!!
 Help us add more exchanges - we want to add them all! Open an Issue in the Github to request a new one.
+
+# Trustless Options
+## Wasabi
+[Wasabi Wallet](https://wasabiwallet.io/) is a wallet that implements automatic CoinJoins. You can hunt for sats in Wasabi CoinJoins, with the following steps:
+
+1. Download Wasabi Wallet: https://wasabiwallet.io/index.html#download
+2. Open it and create a wallet - don't have any spaces in your wallet name - keep track of 12 word seed
+3. Configure in CoinJoin Settings -> Custom -> Anonymity Score Target 300 (or highest available option)
+4. Turn Automatically Start CoinJoin On
+4. Configure the RPC server (note Config.json is at `~/.walletwasabi/client/Config.json`) https://docs.wasabiwallet.io/using-wasabi/RPC.html#configure-rpc
+5. Restart Wasabi
+6. Set up Sat Hunter env params: `WASABI_WALLET_NAME`, `WASABI_RPC_USER`, `WASABI_RPC_PASSWORD`, `WASABI_WALLET_SEED`
+7. Set `ACTIVE_EXCHANGE=wasabi`
+8. Keep Wasabi Wallet open and running, and run sat hunter!
+9. Once you deposit to wasabi, coins will be scanned, rare sats extracted, and then change coins re-mixed!
