@@ -138,11 +138,23 @@ async function broadcast_to_mempool_space({ hex }) {
     return data
 }
 
+async function broadcast_to_blockstream({ hex}) {
+    const url = `https://blockstream.info/api/tx`
+    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
+        console.error(err)
+        return {}
+    })
+    return data
+}
+
 async function broadcast_transaction({ hex }) {
     if (WALLET_TYPE === 'core') {
         return sendrawtransaction({ hex })
     }
     const txid = await broadcast_to_mempool_space({ hex })
+    if (process.env.BROADCAST_TO_BLOCKSTREAM) {
+        await broadcast_to_blockstream({ hex })
+    }
     return txid
 }
 
