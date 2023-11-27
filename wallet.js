@@ -143,7 +143,7 @@ async function broadcast_to_blockstream({ hex}) {
     const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
         console.error(err)
         return {}
-    }
+    })
     return data
 }
 
