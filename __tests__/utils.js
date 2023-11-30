@@ -1,4 +1,4 @@
-const { get_excluded_tags, get_min_tag_sizes } = require('../utils') // replace with your actual file path
+const { get_excluded_tags, get_min_tag_sizes, get_included_tags } = require('../utils') // replace with your actual file path
 
 describe('get_excluded_tags', () => {
     test('should return correct format', () => {
@@ -93,5 +93,37 @@ describe('get_min_tag_sizes', () => {
         process.env.MIN_TAG_SIZES = 'block_9:1000 block_78:2000'
         const result = get_min_tag_sizes({ fee_rate: 5 })
         expect(result).toEqual({ 'block_9': 1000, 'block_78': 2000 })
+    })
+})
+
+describe('get_included_tags', () => {
+    test('should return correct format', () => {
+        process.env.INCLUDE_TAGS = 'omega alpha pizza/omega omega/alpha/pizza'
+        const result = get_included_tags()
+        expect(result).toEqual([['omega'], ['alpha'], ['pizza', 'omega'], ['omega', 'alpha', 'pizza']])
+    })
+
+    test('should trim leading and trailing spaces', () => {
+        process.env.INCLUDE_TAGS = ' omega alpha pizza/omega '
+        const result = get_included_tags()
+        expect(result).toEqual([['omega'], ['alpha'], ['pizza', 'omega']])
+    })
+
+    test('should return empty array when INCLUDE_TAGS is empty string', () => {
+        process.env.INCLUDE_TAGS = ''
+        const result = get_included_tags()
+        expect(result).toEqual([])
+    })
+
+    test('should return empty array when INCLUDE_TAGS is not set', () => {
+        delete process.env.INCLUDE_TAGS
+        const result = get_included_tags()
+        expect(result).toEqual([])
+    })
+
+    test('should return correct format when tags contain multiple slashes', () => {
+        process.env.INCLUDE_TAGS = 'omega/alpha/pizza'
+        const result = get_included_tags()
+        expect(result).toEqual([['omega', 'alpha', 'pizza']])
     })
 })
