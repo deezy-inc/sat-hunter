@@ -41,7 +41,7 @@ async function post_scan_request({ utxo, exchange_address, rare_sat_address, ext
         }
         body.split_trigger = process.env.SPLIT_TRIGGER
         body.split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS)
-        console.log(`Using split_trigger: ${body.split_trigger} with utxo size target: ${body.split_utxo_size_sats / 100000000} BTC`)
+        console.log(`Using split_trigger: ${body.split_trigger} with utxo size target: ${body.split_target_size_sats / 100000000} BTC`)
     }
     const { data } = await axios.post(url, body, { headers: { 'x-api-token': process.env.DEEZY_API_KEY } }).catch(err => {
         console.error(err)
