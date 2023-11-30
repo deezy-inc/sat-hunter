@@ -39,7 +39,20 @@ function get_min_tag_sizes({ fee_rate }) {
       }, {});
 }
 
+function get_included_tags() {
+    let configured_included_tags = process.env.INCLUDE_TAGS
+    if (!configured_included_tags || configured_included_tags.trim() === '') {
+        // Explicitly set empty string means excluded_tags has priority.
+        return []
+    }
+    return configured_included_tags
+        .trim()
+        .split(' ')
+        .map((tag) => tag.split('/'))
+}
+
 module.exports = {
     get_excluded_tags,
-    get_min_tag_sizes
+    get_min_tag_sizes,
+    get_included_tags
 }

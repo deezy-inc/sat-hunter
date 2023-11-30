@@ -204,6 +204,7 @@ async function run() {
             console.log(`Using excluded tags: ${excluded_tags}`)
             request_body.excluded_tags = excluded_tags
         }
+        request_body.included_tags = get_included_tags()
         let min_tag_sizes = get_min_tag_sizes({ fee_rate })
         if (min_tag_sizes) {
             console.log(`Using min tag sizes: ${min_tag_sizes}`)
