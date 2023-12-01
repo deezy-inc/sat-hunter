@@ -72,9 +72,29 @@ function get_included_tags({ fee_rate }) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+function get_split_config({ fee_rate }) {
+    let split_trigger = null
+    let split_target_size_sats = null
+    if (process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD)) {
+        console.log(`Using high fee split trigger`)
+        split_trigger = process.env.SPLIT_TRIGGER_HIGH_FEE
+        split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE || 0)
+    } else if (process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD && fee_rate > parseFloat(process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD)) {
+        console.log(`Using medium fee split trigger`)
+        split_trigger = process.env.SPLIT_TRIGGER_MEDIUM_FEE
+        split_target_size_sats =parseInt(process.env.SPLIT_UTXO_SIZE_SATS_MEDIUM_FEE || 0)
+    } else if (process.env.SPLIT_TRIGGER) {
+        console.log(`Using normal split trigger`)
+        split_trigger = process.env.SPLIT_TRIGGER
+        split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS || 0)
+    }
+    return { split_trigger, split_target_size_sats }
+}
+
 module.exports = {
     get_excluded_tags,
     get_min_tag_sizes,
+    get_split_config,
     get_included_tags,
     get_tag_by_address,
     sleep

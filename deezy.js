@@ -1,5 +1,6 @@
 const axios = require('axios')
 
+const { get_split_config } = require('./utils')
 const BASE_URL = 'https://api.deezy.io/v1'
 
 const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
@@ -38,16 +39,12 @@ async function post_scan_request({ utxo, exchange_address, rare_sat_address, ext
     if (tag_by_address) {
         body.tag_by_address = tag_by_address
     }
-    if (process.env.SPLIT_TRIGGER) {
-        if (!VALID_SPLIT_TRIGGERS.includes(process.env.SPLIT_TRIGGER)) {
-            throw new Error(`Invalid SPLIT_TRIGGER: ${process.env.SPLIT_TRIGGER}, must be one of ${VALID_SPLIT_TRIGGERS.join(', ')}`)
-        }
-        if (!process.env.SPLIT_UTXO_SIZE_SATS) {
-            throw new Error('SPLIT_UTXO_SIZE_SATS must be set')
-        }
-        body.split_trigger = process.env.SPLIT_TRIGGER
-        body.split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS)
-        console.log(`Using split_trigger: ${body.split_trigger} with utxo size target: ${body.split_target_size_sats / 100000000} BTC`)
+    const { split_trigger, split_target_size_sats } = get_split_config({ fee_rate: extraction_fee_rate })
+    if (split_trigger) {
+        body.split_trigger = split_trigger
+    }
+    if (split_target_size_sats) {
+        body.split_target_size_sats = split_target_size_sats
     }
     const { data } = await axios.post(url, body, { headers: { 'x-api-token': process.env.DEEZY_API_KEY } }).catch(err => {
         console.error(err)
