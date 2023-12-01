@@ -1,6 +1,7 @@
 require('dotenv').config({
     override: true
 })
+const fs = require('fs')
 const util = require('util')
 const ecc = require('tiny-secp256k1')
 const bitcoin = require('bitcoinjs-lib')

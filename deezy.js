@@ -39,7 +39,7 @@ async function post_scan_request({ utxo, exchange_address, rare_sat_address, ext
     if (tag_by_address) {
         body.tag_by_address = tag_by_address
     }
-    const { split_trigger, split_target_size_sats } = get_split_config({ fee_rate: extraction_fee_rate })
+    const { split_trigger, split_target_size_sats } = get_split_config({ utxo, fee_rate: extraction_fee_rate })
     if (split_trigger) {
         body.split_trigger = split_trigger
     }

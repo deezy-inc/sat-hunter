@@ -1,3 +1,8 @@
+const {
+    get_existing_split_config_by_utxo,
+    save_split_config
+} = require('./storage')
+
 function get_excluded_tags({ fee_rate }) {
     let configured_excluded_tags = process.env.EXCLUDE_TAGS
     if (process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD)) {
@@ -72,7 +77,12 @@ function get_included_tags({ fee_rate }) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-function get_split_config({ fee_rate }) {
+function get_split_config({ utxo, fee_rate }) {
+    const existing_config = get_existing_split_config_by_utxo({ utxo })
+    if (existing_config) {
+        console.log(`Using existing split config for ${utxo}`)
+        return existing_config
+    }
     let split_trigger = null
     let split_target_size_sats = null
     if (process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD)) {
@@ -88,7 +98,10 @@ function get_split_config({ fee_rate }) {
         split_trigger = process.env.SPLIT_TRIGGER
         split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS || 0)
     }
-    return { split_trigger, split_target_size_sats }
+    const split_config = { split_trigger, split_target_size_sats }
+    console.log(`Saving split config for ${utxo}`)
+    save_split_config({ utxo, config: split_config })
+    return split_config
 }
 
 module.exports = {
