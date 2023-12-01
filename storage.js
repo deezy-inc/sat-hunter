@@ -21,7 +21,16 @@ function save_split_config({ utxo, config }) {
     fs.writeFileSync(file, JSON.stringify(config))
 }
 
+function delete_split_configs() {
+    const dir = './data/split-configs'
+    if (fs.existsSync(dir)) {
+        fs.rmdirSync(dir, { recursive: true })
+    }
+    fs.mkdirSync(dir)
+}
+
 module.exports = {
     get_existing_split_config_by_utxo,
-    save_split_config
+    save_split_config,
+    delete_split_configs
 }
