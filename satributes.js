@@ -1,9 +1,11 @@
 const INSCRIPTION_BASE_URL = 'https://ordinals.com/sat'
 const emojis_by_rarity = {
-    "rare": "💍",
+    "legendary": "🤯🤯🤯🤯🤯🤯🤯",
+    "epic": "💫⭐✨💫⭐✨💫⭐✨💫⭐✨",
+    "rare": "💍🔥💍🔥💍🔥💍",
     "uncommon": "💎",
     "black_uncommon": "♠️",
-    "black rare": "🖤",
+    "black_rare": "🖤💍",
     "omega": "🅾️",
     "alpha": "🅰️",
     "prime": "🔱",
@@ -11,6 +13,9 @@ const emojis_by_rarity = {
     "vintage": "🍷",
     "vintage_nakamoto": "🍷🧘🏽",
     "block_9": "9️⃣",
+    "block 9": "9️⃣",
+    "block_78": "7️⃣8️⃣",
+    "block 78": "7️⃣8️⃣",
     "digits_palindrome": "♊",
     "name_palindrome": "♏",
     "halfinney": "👨🏻",
