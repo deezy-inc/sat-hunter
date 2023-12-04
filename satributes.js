@@ -8,6 +8,7 @@ const emojis_by_rarity = {
     "black_rare": "🖤💍",
     "omega": "🅾️",
     "alpha": "🅰️",
+    "pizza": "🍕",
     "prime": "🔱",
     "palindrome": "♊",
     "vintage": "🍷",
