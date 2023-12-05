@@ -1,4 +1,4 @@
-const { get_excluded_tags, get_min_tag_sizes } = require('../utils') // replace with your actual file path
+const { get_excluded_tags, get_min_tag_sizes, get_included_tags } = require('../utils')
 
 describe('get_excluded_tags', () => {
     test('should return correct format', () => {
@@ -87,11 +87,81 @@ describe('get_min_tag_sizes', () => {
         expect(result).toEqual({ 'block_9': 2000, 'block_78': 3000 })
     })
 
+    test('should use medium fee min tag sizes when fee_rate is higher than MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD but lower than MIN_TAG_SIZES_HIGH_FEE_THRESHOLD', () => {
+        process.env.MIN_TAG_SIZES = "vintage_nakamoto:1000 block_78:2000"
+        process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD = 20
+        process.env.MIN_TAG_SIZES_MEDIUM_FEE = "vintage_nakamoto:5000 block_78:5000"
+        process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD = 50
+        process.env.MIN_TAG_SIZES_HIGH_FEE = "vintage_nakamoto:10000 block_78:10000"
+        const result = get_min_tag_sizes({ fee_rate: 30 })
+        expect(result).toEqual({ 'vintage_nakamoto': 5000, 'block_78': 5000 })
+    })
+
     test('should not use high fee min tag sizes when fee_rate is lower than MIN_TAG_SIZES_HIGH_FEE_THRESHOLD', () => {
         process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD = '10'
         process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:2000 block_78:3000'
         process.env.MIN_TAG_SIZES = 'block_9:1000 block_78:2000'
         const result = get_min_tag_sizes({ fee_rate: 5 })
         expect(result).toEqual({ 'block_9': 1000, 'block_78': 2000 })
+    })
+})
+
+describe('get_included_tags', () => {
+    test('should return correct format', () => {
+        process.env.INCLUDE_TAGS = 'omega alpha pizza/omega omega/alpha/pizza'
+        const result = get_included_tags({ fee_rate: 0 })
+        expect(result).toEqual([['omega'], ['alpha'], ['pizza', 'omega'], ['omega', 'alpha', 'pizza']])
+    })
+
+    test('should trim leading and trailing spaces', () => {
+        process.env.INCLUDE_TAGS = ' omega alpha pizza/omega '
+        const result = get_included_tags({ fee_rate: 0 })
+        expect(result).toEqual([['omega'], ['alpha'], ['pizza', 'omega']])
+    })
+
+    test('should return empty array when INCLUDE_TAGS is empty string', () => {
+        process.env.INCLUDE_TAGS = ''
+        const result = get_included_tags({ fee_rate: 0 })
+        expect(result).toEqual([])
+    })
+
+    test('should return empty array when INCLUDE_TAGS is not set', () => {
+        delete process.env.INCLUDE_TAGS
+        const result = get_included_tags({ fee_rate: 0 })
+        expect(result).toEqual([])
+    })
+
+    test('should return correct format when tags contain multiple slashes', () => {
+        process.env.INCLUDE_TAGS = 'omega/alpha/pizza'
+        const result = get_included_tags({ fee_rate: 0 })
+        expect(result).toEqual([['omega', 'alpha', 'pizza']])
+    })
+
+    test('should use high fee included tags when fee_rate is higher than INCLUDE_TAGS_HIGH_FEE_THRESHOLD', () => {
+        process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD = '10'
+        process.env.INCLUDE_TAGS_HIGH_FEE = 'alpha/pizza'
+        process.env.INCLUDE_TAGS_MEDIUM_FEE_THRESHOLD = '5'
+        process.env.INCLUDE_TAGS_MEDIUM_FEE = 'special_name'
+        process.env.INCLUDE_TAGS = 'omega alpha pizza/omega'
+        const result = get_included_tags({ fee_rate: 20 })
+        expect(result).toEqual([['alpha', 'pizza']])
+    })
+
+    test('should not use high fee included tags when fee_rate is lower than INCLUDE_TAGS_HIGH_FEE_THRESHOLD', () => {
+        process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD = '10'
+        process.env.INCLUDE_TAGS_HIGH_FEE = 'omega/pizza'
+        process.env.INCLUDE_TAGS = 'omega alpha pizza/omega'
+        const result = get_included_tags({ fee_rate: 5 })
+        expect(result).toEqual([['omega'], ['alpha'], ['pizza', 'omega']])
+    })
+
+    test('should use medium fee included tags when fee_rate is in the middle', () => {
+        process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD = '20'
+        process.env.INCLUDE_TAGS_HIGH_FEE = 'omega/pizza'
+        process.env.INCLUDE_TAGS_MEDIUM_FEE_THRESHOLD = '10'
+        process.env.INCLUDE_TAGS_MEDIUM_FEE = 'special_name'
+        process.env.INCLUDE_TAGS = 'omega alpha pizza/omega'
+        const result = get_included_tags({ fee_rate: 15 })
+        expect(result).toEqual([['special_name']])
     })
 })
