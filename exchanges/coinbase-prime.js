@@ -51,7 +51,7 @@ async function set_btc_wallet_id() {
 }
 
 async function get_btc_balance() {
-    if (!process.env.COINBASE_PRIME_API_KEY || !process.env.COINBASE_PRIME_SIGNING_KEY || !process.env.COINBASE_PRIME_API_PASSPHRASE) {
+    if (!process.env.COINBASE_PRIME_ACCESS_KEY || !process.env.COINBASE_PRIME_SIGNING_KEY || !process.env.COINBASE_PRIME_API_PASSPHRASE) {
         throw new Error('COINBASE_PRIME_ACCESS_KEY, COINBASE_PRIME_SIGNING_KEY, and COINBASE_PRIME_API_PASSPHRASE must be set')
     }
     if (!PORTFOLIO_ID || !ENTITY_ID) {
