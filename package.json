@@ -29,10 +29,12 @@
     "bitcoin-address-validation": "^2.2.3",
     "bitcoinjs-lib": "^6.1.5",
     "bybit-api": "^3.7.3",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.3.1",
     "node-telegram-bot-api": "^0.63.0",
     "tiny-secp256k1": "^2.2.3",
-    "totp-generator": "^0.0.14"
+    "totp-generator": "^0.0.14",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "jest": "^29.7.0"
