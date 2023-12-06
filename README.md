@@ -1,6 +1,8 @@
 # Automated Sat Hunter
 Automated script to hunt for rare sats.
 
+[![codecov](https://codecov.io/gh/deezy-inc/sat-hunter/graph/badge.svg?token=Z6LUE3D7FQ)](https://codecov.io/gh/deezy-inc/sat-hunter)
+
 ## Requirements
 - An account on one of Coinbase, Coinbase Exchange, Kraken, Gemini, Bitfinex, Binance, Bybit (see [Exchanges section](https://github.com/deezy-inc/sat-hunter#exchanges))
 - Deezy API Token (email support@deezy.io to request one)

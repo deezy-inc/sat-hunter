@@ -16,7 +16,7 @@ const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
-const { get_excluded_tags, get_min_tag_sizes } = require('./utils.js')
+const { get_excluded_tags, get_included_tags, get_min_tag_sizes } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -203,6 +203,11 @@ async function run() {
         if (excluded_tags) {
             console.log(`Using excluded tags: ${excluded_tags}`)
             request_body.excluded_tags = excluded_tags
+        }
+        let included_tags = get_included_tags({ fee_rate })
+        if (included_tags) {
+            console.log(`Using included tags: ${included_tags}`)
+            request_body.included_tags = included_tags
         }
         let min_tag_sizes = get_min_tag_sizes({ fee_rate })
         if (min_tag_sizes) {
