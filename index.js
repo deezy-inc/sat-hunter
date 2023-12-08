@@ -16,7 +16,8 @@ const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
-const { get_excluded_tags, get_included_tags, get_min_tag_sizes, satoshi_to_BTC } = require('./utils.js')
+const { get_excluded_tags, get_included_tags, get_min_tag_sizes, sleep, get_tag_by_address, satoshi_to_BTC } = require('./utils.js')
+
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -25,7 +26,6 @@ let notified_bank_run = false
 let notified_withdrawal_disabled = false
 let notified_error_withdrawing = false
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name, exchange) {
     const btc_balance = await exchange.get_btc_balance().catch((err) => {
         console.error(err)
@@ -212,6 +212,11 @@ async function run() {
         if (min_tag_sizes) {
             console.log(`Using min tag sizes: ${min_tag_sizes}`)
             request_body.min_tag_sizes = min_tag_sizes
+        }
+        let tag_by_address = get_tag_by_address()
+        if (tag_by_address) {
+            console.log(`Using tag by address: ${Object.entries(tag_by_address).map(([tag, address]) => `${tag}:${address}`).join(' ')}`)
+            request_body.tag_by_address = tag_by_address
         }
         const scan_request = await post_scan_request(request_body)
         scan_request_ids.push(scan_request.id)

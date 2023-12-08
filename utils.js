@@ -19,6 +19,7 @@ function get_excluded_tags({ fee_rate }) {
         .split(' ')
         .map((tag) => tag.split('/'))
 }
+
 function get_min_tag_sizes({ fee_rate }) {
     let configured_min_tag_sizes = process.env.MIN_TAG_SIZES
     if (process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD && fee_rate >= parseFloat(process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD)) {
@@ -34,6 +35,18 @@ function get_min_tag_sizes({ fee_rate }) {
     return configured_min_tag_sizes.trim().split(' ').reduce((acc, tagSize) => {
         const [tag, size] = tagSize.trim().split(':');
         acc[tag] = parseInt(size);
+        return acc;
+    }, {});
+}
+
+function get_tag_by_address() {
+    let configured_tag_by_address = process.env.TAG_BY_ADDRESS
+    if (!configured_tag_by_address || configured_tag_by_address.trim() === '') {
+        return null
+    }
+    return configured_tag_by_address.trim().split(' ').reduce((acc, pair_tag_by_address) => {
+        const [tag, address] = pair_tag_by_address.trim().split(':');
+        acc[tag] = address;
         return acc;
     }, {});
 }
@@ -59,9 +72,13 @@ function get_included_tags({ fee_rate }) {
 
 const satoshi_to_BTC = (satoshi) => parseFloat((satoshi / 100000000).toFixed(8));
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
 module.exports = {
     get_excluded_tags,
     get_min_tag_sizes,
     get_included_tags,
-    satoshi_to_BTC
+    satoshi_to_BTC,
+    get_tag_by_address,
+    sleep
 }

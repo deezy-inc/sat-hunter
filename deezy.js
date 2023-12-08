@@ -9,7 +9,7 @@ function check_api_key() {
         throw new Error('DEEZY_API_KEY must be set')
     }
 }
-async function post_scan_request({ utxo, exchange_address, rare_sat_address, extraction_fee_rate, excluded_tags = null, included_tags = null, min_tag_sizes = null }) {
+async function post_scan_request({ utxo, exchange_address, rare_sat_address, extraction_fee_rate, excluded_tags = null, included_tags = null, min_tag_sizes = null, tag_by_address = null }) {
     check_api_key()
     if (!process.env.RARE_SAT_ADDRESS) {
         throw new Error('RARE_SAT_ADDRESS must be set')
@@ -34,6 +34,9 @@ async function post_scan_request({ utxo, exchange_address, rare_sat_address, ext
     }
     if (min_tag_sizes) {
         body.min_tag_sizes = min_tag_sizes
+    }
+    if (tag_by_address) {
+        body.tag_by_address = tag_by_address
     }
     if (process.env.SPLIT_TRIGGER) {
         if (!VALID_SPLIT_TRIGGERS.includes(process.env.SPLIT_TRIGGER)) {
