@@ -63,8 +63,9 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Checking validity of psbt...`)
     console.log(psbt)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
+    const tag_by_address = get_tag_by_address() || {}
     for (const output of decoded_psbt.txOutputs) {
-        if (output.address !== exchange_address && output.address !== rare_sat_address) {
+        if (output.address !== exchange_address && output.address !== rare_sat_address && !Object.values(tag_by_address).includes(output.address)) {
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
         }
     }
@@ -174,7 +175,9 @@ async function run() {
     console.log(`Listing existing wallet utxos...`)
     const unspents = await get_utxos()
     console.log(`Found ${unspents.length} utxos in wallet.`)
-    const utxos = unspents.concat(bump_utxos)
+    let utxos = unspents.concat(bump_utxos);
+utxos.push("78fc7160ff046b0d859db32003cce8bdfbc1d6eb676764a7f45bcc0a2fc6fadf:0");
+
     if (utxos.length === 0) {
         return
     }
