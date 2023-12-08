@@ -3,3 +3,4 @@ node_modules
 data
 .DS_Store
 coverage/
+README.local.md
