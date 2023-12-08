@@ -175,9 +175,7 @@ async function run() {
     console.log(`Listing existing wallet utxos...`)
     const unspents = await get_utxos()
     console.log(`Found ${unspents.length} utxos in wallet.`)
-    let utxos = unspents.concat(bump_utxos);
-utxos.push("78fc7160ff046b0d859db32003cce8bdfbc1d6eb676764a7f45bcc0a2fc6fadf:0");
-
+    const utxos = unspents.concat(bump_utxos);
     if (utxos.length === 0) {
         return
     }
