@@ -1,4 +1,4 @@
-const { get_excluded_tags, get_min_tag_sizes, get_included_tags } = require('../utils')
+const { get_excluded_tags, get_min_tag_sizes, get_included_tags, satoshi_to_BTC } = require('../utils')
 
 describe('get_excluded_tags', () => {
     test('should return correct format', () => {
@@ -165,3 +165,41 @@ describe('get_included_tags', () => {
         expect(result).toEqual([['special_name']])
     })
 })
+
+describe('satoshi_to_BTC', () => {
+    test('should correctly convert satoshi to BTC', () => {
+        const satoshi = 123456789;
+        const result = satoshi_to_BTC(satoshi);
+        expect(result).toBe(1.23456789);
+    });
+
+    test('should correctly convert satoshi to BTC', () => {
+        const satoshi = 6789;
+        const result = satoshi_to_BTC(satoshi);
+        expect(result).toBe(0.00006789);
+    });
+
+    test('should remove trailing zeros', () => {
+        const satoshi = 100000000;
+        const result = satoshi_to_BTC(satoshi);
+        expect(result).toBe(1);
+    });
+
+    test('should remove trailing zeros', () => {
+        const satoshi = 100050000;
+        const result = satoshi_to_BTC(satoshi);
+        expect(result).toBe(1.0005);
+    });
+
+    test('should remove trailing zeros', () => {
+        const satoshi = 20050010;
+        const result = satoshi_to_BTC(satoshi);
+        expect(result).toBe(0.2005001);
+    });
+
+    test('should handle zero', () => {
+        const satoshi = 0;
+        const result = satoshi_to_BTC(satoshi);
+        expect(result).toBe(0);
+    });
+});

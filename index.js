@@ -13,10 +13,10 @@ const {
     fetch_most_recent_unconfirmed_send
 } = require('./wallet')
 const { get_fee_rate } = require('./fees')
-const { post_scan_request, get_scan_request } = require('./deezy')
+const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
-const { get_excluded_tags, get_included_tags, get_min_tag_sizes } = require('./utils.js')
+const { get_excluded_tags, get_included_tags, get_min_tag_sizes, satoshi_to_BTC } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -103,8 +103,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`)
     if (!process.env.ONLY_NOTIFY_ON_SATS) {
         await sendNotifications(
-            `Broadcasted ${
-                is_replacement ? 'replacement ' : ''
+            `Broadcasted ${is_replacement ? 'replacement ' : ''
             }tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`
         )
     }
@@ -225,6 +224,22 @@ async function run() {
         const scan_request_id = scan_request_ids[i]
         console.log(`Checking status of scan request with id: ${scan_request_id}`)
         const info = await get_scan_request({ scan_request_id })
+        if (info.status === 'FAILED_LIMITS_EXCEEDED') {
+            const {
+                payment_address,
+                amount,
+                days,
+                one_time_cost,
+            } = await get_user_limits()
+            const allowed_volume = satoshi_to_BTC(amount) // We are using satoshis in the DB as default
+            const msg = `
+            Sat Hunting limits exceeded. To purchase more scans, you can send BTC to the following address: ${payment_address}.
+            Your plan allows for ${allowed_volume} BTC every ${days} days, and allows purchasing additional volume at a rate of ${one_time_cost} satoshis per 1 BTC of scan volume.
+            Contact help@deezy.io for questions or to change your plan.`
+            console.log(`Scan request with id: ${scan_request_id} failed`)
+            console.log(msg)
+            continue
+        }
         if (info.status === 'FAILED') {
             console.log(`Scan request with id: ${scan_request_id} failed`)
             continue
