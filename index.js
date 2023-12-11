@@ -267,6 +267,9 @@ Contact help@deezy.io for questions or to change your plan.
 `
             console.log(`Scan request with id: ${scan_request_id} failed`)
             console.log(msg)
+            if (TELEGRAM_BOT_ENABLED) {
+            await sendNotifications(msg)
+            }
             continue
         }
         if (info.status === 'FAILED') {
