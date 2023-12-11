@@ -5,7 +5,7 @@ const fs = require('fs')
 const util = require('util')
 const ecc = require('tiny-secp256k1')
 const bitcoin = require('bitcoinjs-lib')
-const { delete_split_configs } = require('./storage')
+const { delete_scan_configs } = require('./storage')
 bitcoin.initEccLib(ecc)
 const exchanges = require('./exchanges/config.js')
 const {
@@ -170,7 +170,7 @@ async function run() {
             }
         } else {
             console.log(`No existing unconfirmed sends found`)
-            delete_split_configs()
+            delete_scan_configs()
         }
     }
 
