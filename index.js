@@ -19,7 +19,6 @@ const { post_scan_request, get_scan_request } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
 const { sleep, get_tag_by_address, get_scan_config } = require('./utils.js')
-const {get_split_config} = require("./utils");
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
