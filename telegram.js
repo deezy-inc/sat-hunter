@@ -19,8 +19,6 @@ async function initCommands() {
     }])
     telegramBot.onText(/\/limits/, async (msg) => {
 
-        console.log("!!!!!")
-
         const chatId = msg.chat.id
 
         const { payment_details, payment_address } = await get_payment_details()

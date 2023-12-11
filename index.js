@@ -16,9 +16,8 @@ const {
 const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
-const { sendNotifications, PUSHOVER_ENABLED } = require('./notifications.js')
+const { sendNotifications, initNotifications } = require('./notifications.js')
 const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC } = require('./utils.js')
-const { initCommands, TELEGRAM_BOT_ENABLED } = require('./telegram.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -267,9 +266,9 @@ Contact help@deezy.io for questions or to change your plan.
 `
             console.log(`Scan request with id: ${scan_request_id} failed`)
             console.log(msg)
-            if (TELEGRAM_BOT_ENABLED) {
-                await sendNotifications(msg)
-            }
+
+            await sendNotifications(msg)
+
             continue
         }
         if (info.status === 'FAILED') {
@@ -308,13 +307,7 @@ Contact help@deezy.io for questions or to change your plan.
 }
 
 async function runLoop() {
-    if (TELEGRAM_BOT_ENABLED) {
-        console.log(`Telegram bot is enabled`)
-        await initCommands()
-    }
-    if (PUSHOVER_ENABLED) console.log(`Pushover bot is enabled`)
-    await sendNotifications(`Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`)
-
+    await initNotifications()
     while (true) {
         await run().catch((err) => {
             console.error(err)
