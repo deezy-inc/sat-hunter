@@ -2,6 +2,7 @@ const {
     get_existing_scan_config_by_utxo,
     save_scan_config
 } = require('./storage')
+const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
 
 function get_excluded_tags({ fee_rate }) {
     let configured_excluded_tags = process.env.EXCLUDE_TAGS
@@ -92,6 +93,11 @@ function get_split_config({ utxo, fee_rate }) {
         console.log(`Using normal split trigger`)
         split_trigger = process.env.SPLIT_TRIGGER
         split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS || 0)
+    }
+    if (split_trigger) {
+        if (!VALID_SPLIT_TRIGGERS.includes(process.env.SPLIT_TRIGGER)) {
+            throw new Error(`Invalid SPLIT_TRIGGER: ${process.env.SPLIT_TRIGGER}, must be one of ${VALID_SPLIT_TRIGGERS.join(', ')}`)
+        }
     }
     return { split_trigger, split_target_size_sats }
 }

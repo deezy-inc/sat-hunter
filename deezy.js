@@ -1,9 +1,6 @@
 const axios = require('axios')
 
-const { get_split_config } = require('./utils')
 const BASE_URL = 'https://api.deezy.io/v1'
-
-const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
 
 function check_api_key() {
     if (!process.env.DEEZY_API_KEY) {
