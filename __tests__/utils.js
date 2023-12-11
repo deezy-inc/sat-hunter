@@ -1,4 +1,4 @@
-const { get_excluded_tags, get_min_tag_sizes, get_included_tags } = require('../utils')
+const { get_excluded_tags, get_min_tag_sizes, get_included_tags, get_tag_by_address, sleep } = require('../utils')
 
 describe('get_excluded_tags', () => {
     test('should return correct format', () => {
@@ -163,5 +163,50 @@ describe('get_included_tags', () => {
         process.env.INCLUDE_TAGS = 'omega alpha pizza/omega'
         const result = get_included_tags({ fee_rate: 15 })
         expect(result).toEqual([['special_name']])
+    })
+})
+
+describe('get_tag_by_address', () => {
+    test('should return correct format', () => {
+        process.env.TAG_BY_ADDRESS = 'tag1:address1 tag2:address2'
+        const result = get_tag_by_address()
+        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2' })
+    })
+
+    test('should trim leading and trailing spaces', () => {
+        process.env.TAG_BY_ADDRESS = ' tag1:address1      tag2:address2 '
+        const result = get_tag_by_address()
+        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2' })
+    })
+
+    test('should return null when TAG_BY_ADDRESS is not set', () => {
+        delete process.env.TAG_BY_ADDRESS
+        const result = get_tag_by_address()
+        expect(result).toBeNull()
+    })
+
+    test('should return null when TAG_BY_ADDRESS is empty', () => {
+        process.env.TAG_BY_ADDRESS = ' '
+        const result = get_tag_by_address()
+        expect(result).toBeNull()
+    })
+
+    test('should handle multiple tag-address pairs', () => {
+        process.env.TAG_BY_ADDRESS = 'tag1:address1 tag2:address2 tag3:address3'
+        const result = get_tag_by_address()
+        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2', 'tag3': 'address3' })
+    })
+})
+
+describe('sleep', () => {
+    test('should wait for the specified amount of time', async () => {
+        const startTime = Date.now()
+        await sleep(1000) // wait for 1 second
+        const endTime = Date.now()
+
+        // Check if the difference between the start and end times is close to 1000 milliseconds
+        // We use toBeGreaterThanOrEqual and toBeLessThan to account for slight variations in timing
+        expect(endTime - startTime).toBeGreaterThanOrEqual(1000)
+        expect(endTime - startTime).toBeLessThan(1010)
     })
 })

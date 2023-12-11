@@ -16,7 +16,7 @@ const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
-const { get_excluded_tags, get_included_tags, get_min_tag_sizes } = require('./utils.js')
+const { get_excluded_tags, get_included_tags, get_min_tag_sizes, sleep, get_tag_by_address } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -25,7 +25,6 @@ let notified_bank_run = false
 let notified_withdrawal_disabled = false
 let notified_error_withdrawing = false
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 async function maybe_withdraw(exchange_name, exchange) {
     const btc_balance = await exchange.get_btc_balance().catch((err) => {
         console.error(err)
@@ -64,8 +63,9 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Checking validity of psbt...`)
     console.log(psbt)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
+    const tag_by_address = get_tag_by_address() || {}
     for (const output of decoded_psbt.txOutputs) {
-        if (output.address !== exchange_address && output.address !== rare_sat_address) {
+        if (output.address !== exchange_address && output.address !== rare_sat_address && !Object.values(tag_by_address).includes(output.address)) {
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
         }
     }
@@ -103,8 +103,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`)
     if (!process.env.ONLY_NOTIFY_ON_SATS) {
         await sendNotifications(
-            `Broadcasted ${
-                is_replacement ? 'replacement ' : ''
+            `Broadcasted ${is_replacement ? 'replacement ' : ''
             }tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`
         )
     }
@@ -176,7 +175,7 @@ async function run() {
     console.log(`Listing existing wallet utxos...`)
     const unspents = await get_utxos()
     console.log(`Found ${unspents.length} utxos in wallet.`)
-    const utxos = unspents.concat(bump_utxos)
+    const utxos = unspents.concat(bump_utxos);
     if (utxos.length === 0) {
         return
     }
@@ -213,6 +212,11 @@ async function run() {
         if (min_tag_sizes) {
             console.log(`Using min tag sizes: ${min_tag_sizes}`)
             request_body.min_tag_sizes = min_tag_sizes
+        }
+        let tag_by_address = get_tag_by_address()
+        if (tag_by_address) {
+            console.log(`Using tag by address: ${Object.entries(tag_by_address).map(([tag, address]) => `${tag}:${address}`).join(' ')}`)
+            request_body.tag_by_address = tag_by_address
         }
         const scan_request = await post_scan_request(request_body)
         scan_request_ids.push(scan_request.id)
