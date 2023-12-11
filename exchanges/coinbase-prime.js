@@ -58,7 +58,7 @@ async function set_btc_wallet_id() {
     BTC_WALLET_ID = data.wallets[0].id
 }
 
-async function get_btc_balance() {
+async function check_and_set_credentials() {
     if (!process.env.COINBASE_PRIME_ACCESS_KEY || !process.env.COINBASE_PRIME_SIGNING_KEY || !process.env.COINBASE_PRIME_API_PASSPHRASE) {
         throw new Error('COINBASE_PRIME_ACCESS_KEY, COINBASE_PRIME_SIGNING_KEY, and COINBASE_PRIME_API_PASSPHRASE must be set')
     }
@@ -68,6 +68,10 @@ async function get_btc_balance() {
     if (!BTC_WALLET_ID) {
         await set_btc_wallet_id()
     }
+}
+
+async function get_btc_balance() {
+    await check_and_set_credentials()
     const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets/${BTC_WALLET_ID}/balance`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
@@ -81,19 +85,8 @@ async function get_btc_balance() {
 }
 
 async function withdraw({ amount_btc }) {
-    if (!process.env.COINBASE_PRIME_ACCESS_KEY || !process.env.COINBASE_PRIME_SIGNING_KEY || !process.env.COINBASE_PRIME_API_PASSPHRASE) {
-        throw new Error('COINBASE_PRIME_ACCESS_KEY, COINBASE_PRIME_SIGNING_KEY, and COINBASE_PRIME_API_PASSPHRASE must be set')
-    }
-    if (!process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS) {
-        throw new Error('COINBASE_WITHDRAW_ADDRESS must be set')
-    }
-    if (!PORTFOLIO_ID || !ENTITY_ID) {
-        await set_coinbase_ids()
-    }
-    if (!BTC_WALLET_ID) {
-        await set_btc_wallet_id()
-    }
-    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets/${BTC_WALLET_ID}/withdrawals`
+    await check_and_set_credentials()
+    const path = `/withdrawals/crypto`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
     const body = {
