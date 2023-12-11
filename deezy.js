@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-const BASE_URL = 'https://api.deezy.io/v1'
+const BASE_URL = process.env.DEEZY_BASE_URL || 'https://api.deezy.io/v1'
 
 const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
 

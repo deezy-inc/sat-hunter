@@ -229,6 +229,7 @@ async function run() {
         const scan_request_id = scan_request_ids[i]
         console.log(`Checking status of scan request with id: ${scan_request_id}`)
         const info = await get_scan_request({ scan_request_id })
+        console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`)
         if (info.status === 'FAILED_LIMITS_EXCEEDED') {
             const {
                 payment_address,
@@ -238,9 +239,13 @@ async function run() {
             } = await get_user_limits()
             const allowed_volume = satoshi_to_BTC(amount) // We are using satoshis in the DB as default
             const msg = `
-            Sat Hunting limits exceeded. To purchase more scans, you can send BTC to the following address: ${payment_address}.
-            Your plan allows for ${allowed_volume} BTC every ${days} days, and allows purchasing additional volume at a rate of ${one_time_cost} satoshis per 1 BTC of scan volume.
-            Contact help@deezy.io for questions or to change your plan.`
+--------------------------
+Sat Hunting limits exceeded.
+To purchase more scans, you can send BTC to the following address: ${payment_address}.
+Your plan allows for ${allowed_volume} BTC every ${days} days, and allows purchasing additional volume at a rate of ${one_time_cost} satoshis per 1 BTC of scan volume.
+Contact help@deezy.io for questions or to change your plan.
+--------------------------
+`
             console.log(`Scan request with id: ${scan_request_id} failed`)
             console.log(msg)
             continue
