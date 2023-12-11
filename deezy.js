@@ -27,25 +27,6 @@ async function post_scan_request({ utxo, exchange_address, rare_sat_address, ext
         ],
         extraction_fee_rate,
     }
-    if (excluded_tags) {
-        body.excluded_tags = excluded_tags
-    }
-    if (included_tags) {
-        body.included_tags = included_tags
-    }
-    if (min_tag_sizes) {
-        body.min_tag_sizes = min_tag_sizes
-    }
-    if (tag_by_address) {
-        body.tag_by_address = tag_by_address
-    }
-    const { split_trigger, split_target_size_sats } = get_split_config({ utxo, fee_rate: extraction_fee_rate })
-    if (split_trigger) {
-        body.split_trigger = split_trigger
-    }
-    if (split_target_size_sats) {
-        body.split_target_size_sats = split_target_size_sats
-    }
     const { data } = await axios.post(url, body, { headers: { 'x-api-token': process.env.DEEZY_API_KEY } }).catch(err => {
         console.error(err)
         return { data: {} }

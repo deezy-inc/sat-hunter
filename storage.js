@@ -3,26 +3,25 @@ const fs = require('fs')
 if (!fs.existsSync('./data')) {
     fs.mkdirSync('./data')
 }
-if (!fs.existsSync('./data/split-configs')) {
-    fs.mkdirSync('./data/split-configs')
+if (!fs.existsSync('./data/scan-configs')) {
+    fs.mkdirSync('./data/scan-configs')
 }
 
-
-function get_existing_split_config_by_utxo({ utxo }) {
-    const file = `./data/split-configs/${utxo}.json`
+function get_existing_scan_config_by_utxo({ utxo }) {
+    const file = `./data/scan-configs/${utxo}.json`
     if (!fs.existsSync(file)) {
         return null
     }
     return JSON.parse(fs.readFileSync(file))
 }
 
-function save_split_config({ utxo, config }) {
-    const file = `./data/split-configs/${utxo}.json`
+function save_scan_config({ utxo, config }) {
+    const file = `./data/scan-configs/${utxo}.json`
     fs.writeFileSync(file, JSON.stringify(config))
 }
 
-function delete_split_configs() {
-    const dir = './data/split-configs'
+function delete_scan_configs() {
+    const dir = './data/scan-configs'
     if (fs.existsSync(dir)) {
         fs.rmdirSync(dir, { recursive: true })
     }
@@ -30,7 +29,7 @@ function delete_split_configs() {
 }
 
 module.exports = {
-    get_existing_split_config_by_utxo,
-    save_split_config,
-    delete_split_configs
+    get_existing_scan_config_by_utxo,
+    save_scan_config,
+    delete_scan_configs,
 }

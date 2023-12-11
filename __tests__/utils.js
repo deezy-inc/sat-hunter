@@ -5,15 +5,16 @@ const {
     get_included_tags,
     get_tag_by_address,
     sleep,
-    get_split_config,
+    get_scan_config,
 } = require('../utils')
 
 const {
-    delete_split_configs
+    delete_scan_configs
 } = require('../storage')
 
 describe('get_excluded_tags', () => {
     test('should return correct format', () => {
+        delete_scan_configs()
         process.env.EXCLUDE_TAGS = 'omega alpha pizza/omega omega/alpha/pizza'
         const result = get_excluded_tags({ fee_rate: 0 })
         expect(result).toEqual([['omega'], ['alpha'], ['pizza', 'omega'], ['omega', 'alpha', 'pizza']])
@@ -223,16 +224,16 @@ describe('sleep', () => {
 
     })
 })
-describe('get_split_config', () => {
+describe('get_scan_config', () => {
     test('should return null when SPLIT_TRIGGER is not set', () => {
-        delete_split_configs()
+        delete_scan_configs()
         delete process.env.SPLIT_TRIGGER
-        const result = get_split_config({ fee_rate: 0 })
-        expect(result).toEqual({ split_trigger: null, split_target_size_sats: null })
+        const result = get_scan_config({ fee_rate: 0 })
+        expect(result.split_config).toEqual({ split_trigger: null, split_target_size_sats: null })
     })
 
     test('should return normal config when below medium fee threshold', () => {
-        delete_split_configs()
+        delete_scan_configs()
         process.env.SPLIT_TRIGGER = 'ALWAYS'
         process.env.SPLIT_UTXO_SIZE_SATS = '10000000'
         process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD = '20'
@@ -241,12 +242,12 @@ describe('get_split_config', () => {
         process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD = '40'
         process.env.SPLIT_TRIGGER_HIGH_FEE = 'NEVER'
         process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE = '50000000'
-        const result = get_split_config({ fee_rate: 5 })
-        expect(result).toEqual({ split_trigger: 'ALWAYS', split_target_size_sats: 10000000 })
+        const result = get_scan_config({ fee_rate: 5 })
+        expect(result.split_config).toEqual({ split_trigger: 'ALWAYS', split_target_size_sats: 10000000 })
     })
 
     test('should return medium fee', () => {
-        delete_split_configs()
+        delete_scan_configs()
         process.env.SPLIT_TRIGGER = 'ALWAYS'
         process.env.SPLIT_UTXO_SIZE_SATS = '10000000'
         process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD = '20'
@@ -255,12 +256,12 @@ describe('get_split_config', () => {
         process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD = '40'
         process.env.SPLIT_TRIGGER_HIGH_FEE = 'NEVER'
         process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE = '50000000'
-        const result = get_split_config({ fee_rate: 25 })
-        expect(result).toEqual({ split_trigger: 'NO_SATS', split_target_size_sats: 20000000 })
+        const result = get_scan_config({ fee_rate: 25 })
+        expect(result.split_config).toEqual({ split_trigger: 'NO_SATS', split_target_size_sats: 20000000 })
     })
 
     test('should return high fee', () => {
-        delete_split_configs()
+        delete_scan_configs()
         process.env.SPLIT_TRIGGER = 'ALWAYS'
         process.env.SPLIT_UTXO_SIZE_SATS = '10000000'
         process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD = '20'
@@ -269,12 +270,12 @@ describe('get_split_config', () => {
         process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD = '40'
         process.env.SPLIT_TRIGGER_HIGH_FEE = 'NEVER'
         process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE = '50000000'
-        const result = get_split_config({ fee_rate: 45 })
-        expect(result).toEqual({ split_trigger: 'NEVER', split_target_size_sats: 50000000 })
+        const result = get_scan_config({ fee_rate: 45 })
+        expect(result.split_config).toEqual({ split_trigger: 'NEVER', split_target_size_sats: 50000000 })
     })
 
     test('should return normal config when no fee thresholds set', () => {
-        delete_split_configs()
+        delete_scan_configs()
         process.env.SPLIT_TRIGGER = 'ALWAYS'
         process.env.SPLIT_UTXO_SIZE_SATS = '10000000'
         delete process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD
@@ -283,12 +284,12 @@ describe('get_split_config', () => {
         delete process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD
         delete process.env.SPLIT_TRIGGER_HIGH_FEE
         delete process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE
-        const result = get_split_config({ fee_rate: 45 })
-        expect(result).toEqual({ split_trigger: 'ALWAYS', split_target_size_sats: 10000000 })
+        const result = get_scan_config({ fee_rate: 45 })
+        expect(result.split_config).toEqual({ split_trigger: 'ALWAYS', split_target_size_sats: 10000000 })
     })
 
     test('should use saved split configs when fee increases past original threshold', () => {
-        delete_split_configs()
+        delete_scan_configs()
         process.env.SPLIT_TRIGGER = 'ALWAYS'
         process.env.SPLIT_UTXO_SIZE_SATS = '10000000'
         process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD = '20'
@@ -297,9 +298,68 @@ describe('get_split_config', () => {
         process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD = '40'
         process.env.SPLIT_TRIGGER_HIGH_FEE = 'NEVER'
         process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE = '50000000'
-        const result = get_split_config({ fee_rate: 19 })
-        expect(result).toEqual({ split_trigger: 'ALWAYS', split_target_size_sats: 10000000 })
-        const result2 = get_split_config({ fee_rate: 21 })
-        expect(result2).toEqual({ split_trigger: 'ALWAYS', split_target_size_sats: 10000000 })
+        const result = get_scan_config({ fee_rate: 19 })
+        expect(result.split_config).toEqual({ split_trigger: 'ALWAYS', split_target_size_sats: 10000000 })
+        const result2 = get_scan_config({ fee_rate: 21 })
+        expect(result2.split_config).toEqual({ split_trigger: 'ALWAYS', split_target_size_sats: 10000000 })
+    })
+
+    test('all combinations persist across thresholds', () => {
+        delete_scan_configs()
+
+        process.env.TAG_BY_ADDRESS = 'tag1:address1 tag2:address2'
+        process.env.SPLIT_TRIGGER = 'ALWAYS'
+        process.env.SPLIT_UTXO_SIZE_SATS = '10000000'
+        process.env.EXCLUDE_TAGS = 'omega'
+        process.env.MIN_TAG_SIZES = 'block_9:1000'
+        process.env.INCLUDE_TAGS = 'special_name uncommon rare'
+
+        process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD = '20'
+        process.env.SPLIT_TRIGGER_MEDIUM_FEE = 'NO_SATS'
+        process.env.SPLIT_UTXO_SIZE_SATS_MEDIUM_FEE = '20000000'
+        process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD = '5'
+        process.env.EXCLUDE_TAGS_MEDIUM_FEE = 'omega alpha'
+        process.env.MIN_TAG_SIZES_MEDIUM_FEE = 'block_9:5000'
+        process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD = '10'
+        process.env.INCLUDE_TAGS_MEDIUM_FEE = 'uncommon rare'
+        process.env.INCLUDE_TAGS_MEDIUM_FEE_THRESHOLD = '15'
+
+
+        process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD = '40'
+        process.env.SPLIT_TRIGGER_HIGH_FEE = 'NEVER'
+        process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE = '50000000'
+        process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD = '10'
+        process.env.EXCLUDE_TAGS_HIGH_FEE = 'omega alpha pizza'
+        process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:20000'
+        process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD = '30'
+        process.env.INCLUDE_TAGS_HIGH_FEE = 'rare'
+        process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD = '25'
+
+        const expected_result = {
+            tag_by_address: {tag1: 'address1', tag2: 'address2'},
+            excluded_tags: [['omega']],
+            min_tag_sizes: {block_9: 1000},
+            included_tags: [['special_name'], ['uncommon'], ['rare']],
+            split_config: {split_trigger: 'ALWAYS', split_target_size_sats: 10000000}
+        }
+        expect(get_scan_config({ fee_rate: 4 })).toEqual(expected_result)
+        // Cached result should be saved, so we should get the same result at higher fee levels.
+        expect(get_scan_config({ fee_rate: 6 })).toEqual(expected_result)
+        expect(get_scan_config({ fee_rate: 14 })).toEqual(expected_result)
+        expect(get_scan_config({ fee_rate: 17 })).toEqual(expected_result)
+        expect(get_scan_config({ fee_rate: 21 })).toEqual(expected_result)
+        expect(get_scan_config({ fee_rate: 26 })).toEqual(expected_result)
+        expect(get_scan_config({ fee_rate: 35 })).toEqual(expected_result)
+        expect(get_scan_config({ fee_rate: 50 })).toEqual(expected_result)
+
+        // Now if we delete the cached config, we'll get fresh ones.
+        delete_scan_configs()
+        expect(get_scan_config({ fee_rate: 50 })).toEqual({
+            tag_by_address: {tag1: 'address1', tag2: 'address2'},
+            excluded_tags: [['omega'], ['alpha'], ['pizza']],
+            min_tag_sizes: {block_9: 20000},
+            included_tags: [['rare']],
+            split_config: {split_trigger: 'NEVER', split_target_size_sats: 50000000}
+        })
     })
 })

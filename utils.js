@@ -1,6 +1,6 @@
 const {
-    get_existing_split_config_by_utxo,
-    save_split_config
+    get_existing_scan_config_by_utxo,
+    save_scan_config
 } = require('./storage')
 
 function get_excluded_tags({ fee_rate }) {
@@ -78,11 +78,6 @@ function get_included_tags({ fee_rate }) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function get_split_config({ utxo, fee_rate }) {
-    const existing_config = get_existing_split_config_by_utxo({ utxo })
-    if (existing_config) {
-        console.log(`Using existing split config for ${utxo}`)
-        return existing_config
-    }
     let split_trigger = null
     let split_target_size_sats = null
     if (process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD)) {
@@ -98,10 +93,27 @@ function get_split_config({ utxo, fee_rate }) {
         split_trigger = process.env.SPLIT_TRIGGER
         split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS || 0)
     }
-    const split_config = { split_trigger, split_target_size_sats }
-    console.log(`Saving split config for ${utxo}`)
-    save_split_config({ utxo, config: split_config })
-    return split_config
+    return { split_trigger, split_target_size_sats }
+}
+
+function get_scan_config({ fee_rate, utxo }) {
+    // Check if existing saved config
+    const existing_config = get_existing_scan_config_by_utxo({ utxo })
+    if (existing_config) {
+        console.log(`Using existing scan config for ${utxo}`)
+        return existing_config
+    }
+    console.log(`No existing scan config for ${utxo} - getting fresh config`)
+    const config = {
+        excluded_tags: get_excluded_tags({ fee_rate, utxo }),
+        included_tags: get_included_tags({ fee_rate, utxo }),
+        min_tag_sizes: get_min_tag_sizes({ fee_rate, utxo }),
+        tag_by_address: get_tag_by_address({ fee_rate, utxo }),
+        split_config: get_split_config({ fee_rate, utxo })
+    }
+    console.log(`Saving scan config for ${utxo}`)
+    save_scan_config({ utxo, config })
+    return config
 }
 
 module.exports = {
@@ -110,5 +122,6 @@ module.exports = {
     get_split_config,
     get_included_tags,
     get_tag_by_address,
-    sleep
+    sleep,
+    get_scan_config
 }
