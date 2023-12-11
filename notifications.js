@@ -1,9 +1,11 @@
 const {
-  trySendTelegramMessage
+  trySendTelegramMessage,
+  TELEGRAM_BOT_ENABLED
 } = require('./telegram');
 
 const {
-  trySendPushover
+  trySendPushover,
+  PUSHOVER_ENABLED
 } = require('./pushover');
 
 const sendNotifications = async (message = undefined) => {
@@ -12,5 +14,7 @@ const sendNotifications = async (message = undefined) => {
 };
 
 module.exports = {
-  sendNotifications
+  sendNotifications,
+  TELEGRAM_BOT_ENABLED,
+  PUSHOVER_ENABLED
 };

@@ -1,12 +1,21 @@
 const axios = require('axios');
 const deezy = require('./../deezy');
-jest.mock('axios');
+jest.mock('axios', () => ({
+    post: jest.fn(() => {
+
+        if (!process.env.DEEZY_API_KEY) {
+            throw new Error('DEEZY_API_KEY must be set');
+        } else if (!process.env.RARE_SAT_ADDRESS) {
+            throw new Error('RARE_SAT_ADDRESS must be set');
+        }
+
+        Promise.resolve({ data: {} })
+
+    }),
+    get: jest.fn(() => Promise.resolve({ data: {} })),
+}));
 
 describe('deezy', () => {
-
-    beforeEach(() => {
-        process.env.DEEZY_API_KEY = "00000000000000000000000000000000"
-    });
 
     afterEach(() => {
         jest.clearAllMocks();
@@ -22,6 +31,7 @@ describe('deezy', () => {
 
     it('should throw an error when RARE_SAT_ADDRESS is not set', async () => {
         delete process.env.RARE_SAT_ADDRESS;
+        process.env.DEEZY_API_KEY = "00000000000000000000000000000000"
 
         await expect(deezy.post_scan_request({ utxo: 'mockUtxo' })).rejects.toThrow('RARE_SAT_ADDRESS must be set');
     });

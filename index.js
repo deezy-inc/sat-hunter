@@ -16,9 +16,9 @@ const {
 const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
-const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
+const { sendNotifications, PUSHOVER_ENABLED } = require('./notifications.js')
 const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC } = require('./utils.js')
-const { initCommands } = require('./telegram.js')
+const { initCommands, TELEGRAM_BOT_ENABLED } = require('./telegram.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
