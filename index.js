@@ -1,7 +1,6 @@
 require('dotenv').config({
     override: true
 })
-const fs = require('fs')
 const util = require('util')
 const ecc = require('tiny-secp256k1')
 const bitcoin = require('bitcoinjs-lib')
@@ -19,6 +18,7 @@ const { post_scan_request, get_scan_request, get_user_limits } = require('./deez
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
 const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC } = require('./utils.js')
+const { initCommands } = require('./telegram.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -200,8 +200,8 @@ async function run() {
         const request_body = {
             utxo_to_scan: utxo,
             extract: true,
-            regular_funds_addresses: [ exchange_address ],
-            special_sat_addresses: [ rare_sat_address ],
+            regular_funds_addresses: [exchange_address],
+            special_sat_addresses: [rare_sat_address],
             extraction_fee_rate: fee_rate
         }
         const {
@@ -268,7 +268,7 @@ Contact help@deezy.io for questions or to change your plan.
             console.log(`Scan request with id: ${scan_request_id} failed`)
             console.log(msg)
             if (TELEGRAM_BOT_ENABLED) {
-            await sendNotifications(msg)
+                await sendNotifications(msg)
             }
             continue
         }
@@ -308,7 +308,10 @@ Contact help@deezy.io for questions or to change your plan.
 }
 
 async function runLoop() {
-    if (TELEGRAM_BOT_ENABLED) console.log(`Telegram bot is enabled`)
+    if (TELEGRAM_BOT_ENABLED) {
+        console.log(`Telegram bot is enabled`)
+        await initCommands()
+    }
     if (PUSHOVER_ENABLED) console.log(`Pushover bot is enabled`)
     await sendNotifications(`Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`)
 
