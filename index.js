@@ -220,7 +220,7 @@ async function run() {
             request_body.included_tags = included_tags
         }
         if (min_tag_sizes) {
-            console.log(`Using min tag sizes: ${min_tag_sizes}`)
+            console.log(`Using min tag sizes: ${JSON.stringify(min_tag_sizes)}`)
             request_body.min_tag_sizes = min_tag_sizes
         }
         if (tag_by_address) {
