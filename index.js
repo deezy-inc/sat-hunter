@@ -1,9 +1,11 @@
 require('dotenv').config({
     override: true
 })
+const fs = require('fs')
 const util = require('util')
 const ecc = require('tiny-secp256k1')
 const bitcoin = require('bitcoinjs-lib')
+const { delete_scan_configs } = require('./storage')
 bitcoin.initEccLib(ecc)
 const exchanges = require('./exchanges/config.js')
 const {
@@ -16,7 +18,7 @@ const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
-const { get_excluded_tags, get_included_tags, get_min_tag_sizes, sleep, get_tag_by_address } = require('./utils.js')
+const { sleep, get_tag_by_address, get_scan_config } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
@@ -165,6 +167,9 @@ async function run() {
                 console.log(msg)
                 bump_utxos.push(input_utxo)
             }
+        } else {
+            console.log(`No existing unconfirmed sends found`)
+            delete_scan_configs()
         }
     }
 
@@ -193,30 +198,44 @@ async function run() {
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
         const request_body = {
-            utxo,
-            exchange_address,
-            rare_sat_address,
+            utxo_to_scan: utxo,
+            extract: true,
+            regular_funds_addresses: [ exchange_address ],
+            special_sat_addresses: [ rare_sat_address ],
             extraction_fee_rate: fee_rate
         }
-        let excluded_tags = get_excluded_tags({ fee_rate })
+        const {
+            excluded_tags,
+            included_tags,
+            min_tag_sizes,
+            tag_by_address,
+            split_config
+        } = get_scan_config({ fee_rate, utxo })
         if (excluded_tags) {
             console.log(`Using excluded tags: ${excluded_tags}`)
             request_body.excluded_tags = excluded_tags
         }
-        let included_tags = get_included_tags({ fee_rate })
         if (included_tags) {
             console.log(`Using included tags: ${included_tags}`)
             request_body.included_tags = included_tags
         }
-        let min_tag_sizes = get_min_tag_sizes({ fee_rate })
         if (min_tag_sizes) {
-            console.log(`Using min tag sizes: ${min_tag_sizes}`)
+            console.log(`Using min tag sizes: ${JSON.stringify(min_tag_sizes)}`)
             request_body.min_tag_sizes = min_tag_sizes
         }
-        let tag_by_address = get_tag_by_address()
         if (tag_by_address) {
             console.log(`Using tag by address: ${Object.entries(tag_by_address).map(([tag, address]) => `${tag}:${address}`).join(' ')}`)
             request_body.tag_by_address = tag_by_address
+        }
+        if (split_config) {
+            console.log(`Using split config: ${JSON.stringify(split_config)}`)
+            const { split_trigger, split_target_size_sats } = split_config
+            if (split_trigger) {
+                request_body.split_trigger = split_trigger
+            }
+            if (split_target_size_sats) {
+                request_body.split_target_size_sats = split_target_size_sats
+            }
         }
         const scan_request = await post_scan_request(request_body)
         scan_request_ids.push(scan_request.id)
