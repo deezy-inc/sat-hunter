@@ -1,25 +1,33 @@
 const axios = require('axios')
 const crypto = require('crypto')
 const totp = require("totp-generator")
-const BASE_URL = 'https://api.prime.coinbase.com/'
+const CryptoJS = require('crypto-js');
+const uuid = require('uuid');
+
+const BASE_URL = 'https://api.prime.coinbase.com'
 
 let BTC_WALLET_ID = null
 let PORTFOLIO_ID = null
 let ENTITY_ID = null
 
-function create_signature({ path, timestamp, method, body = ''}) {
-    const data = `${timestamp}${method}${path}${body}`
-    const base64_key = Buffer.from(process.env.COINBASE_PRIME_SIGNING_KEY, 'base64')
-    return crypto.createHmac('sha256', base64_key)
-        .update(data)
-        .digest('base64');
+function sign(str, secret) {
+    const hash = CryptoJS.HmacSHA256(str, secret);
+    return hash.toString(CryptoJS.enc.Base64);
 }
+function buildPayload(ts, method, requestPath, body) {
+    return `${ts}${method}${requestPath}${body}`;
+}
+
 function create_headers({ path, timestamp, method, body = '' }) {
+    const strToSign = buildPayload(timestamp, method, path, body);
+    const sig = sign(strToSign, process.env.COINBASE_PRIME_SIGNING_KEY);
+
     return {
+        'Content-Type': 'application/json',
         'X-CB-ACCESS-KEY': process.env.COINBASE_PRIME_ACCESS_KEY,
         'X-CB-ACCESS-PASSPHRASE': process.env.COINBASE_PRIME_API_PASSPHRASE,
         'X-CB-ACCESS-TIMESTAMP': timestamp,
-        'X-CB-ACCESS-SIGNATURE': create_signature({ path, timestamp, method, body })
+        'X-CB-ACCESS-SIGNATURE': sig
     }
 }
 
@@ -38,7 +46,7 @@ async function set_coinbase_ids() {
 }
 
 async function set_btc_wallet_id() {
-    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets?type=TRADING&symbol=BTC`
+    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets` // ?type=TRADING&symbol=BTC
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
     const headers = create_headers({ path, timestamp, method })
@@ -64,7 +72,7 @@ async function check_and_set_credentials() {
 
 async function get_btc_balance() {
     await check_and_set_credentials()
-    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets/${BTC_WALLET_ID}`
+    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets/${BTC_WALLET_ID}/balance`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
     const headers = create_headers({ path, timestamp, method })
@@ -83,10 +91,15 @@ async function withdraw({ amount_btc }) {
     const method = 'POST'
     const body = {
         amount: amount_btc.toFixed(8),
-        currency: 'BTC',
-        profile_id: BTC_ACCOUNT_ID,
-        crypto_address: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS,
-        add_network_fee_to_total: false,
+        currency_symbol: 'BTC',
+        portfolio_id: PORTFOLIO_ID,
+        wallet_id: BTC_WALLET_ID,
+        idempotency_key: uuid.v4(),
+        destination_type: 'DESTINATION_BLOCKCHAIN',
+        blockchain_address: {
+            address: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS,
+            account_identifier: 'trezor-sat-hunter'
+        }
     }
     if (process.env.COINBASE_PRIME_TOTP_SECRET) {
         body.two_factor_code = totp(process.env.COINBASE_PRIME_TOTP_SECRET)

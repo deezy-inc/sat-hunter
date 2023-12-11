@@ -1,3 +1,5 @@
 .env
 node_modules
 data
+.DS_Store
+coverage/
