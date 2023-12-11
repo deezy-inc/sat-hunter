@@ -10,24 +10,10 @@ function check_api_key() {
         throw new Error('DEEZY_API_KEY must be set')
     }
 }
-async function post_scan_request({ utxo, exchange_address, rare_sat_address, extraction_fee_rate, excluded_tags = null, included_tags = null, min_tag_sizes = null, tag_by_address = null }) {
+async function post_scan_request(request_body) {
     check_api_key()
-    if (!process.env.RARE_SAT_ADDRESS) {
-        throw new Error('RARE_SAT_ADDRESS must be set')
-    }
     const url = `${BASE_URL}/sat-hunting/scan`
-    const body = {
-        utxo_to_scan: utxo,
-        extract: true,
-        special_sat_addresses: [
-            rare_sat_address
-        ],
-        regular_funds_addresses: [
-            exchange_address
-        ],
-        extraction_fee_rate,
-    }
-    const { data } = await axios.post(url, body, { headers: { 'x-api-token': process.env.DEEZY_API_KEY } }).catch(err => {
+    const { data } = await axios.post(url, request_body, { headers: { 'x-api-token': process.env.DEEZY_API_KEY } }).catch(err => {
         console.error(err)
         return { data: {} }
     })

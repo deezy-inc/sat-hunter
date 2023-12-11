@@ -199,9 +199,10 @@ async function run() {
         }
         console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
         const request_body = {
-            utxo,
-            exchange_address,
-            rare_sat_address,
+            utxo_to_scan: utxo,
+            extract: true,
+            regular_funds_addresses: [ exchange_address ],
+            special_sat_addresses: [ rare_sat_address ],
             extraction_fee_rate: fee_rate
         }
         const {
