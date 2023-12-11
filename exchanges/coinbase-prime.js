@@ -1,8 +1,6 @@
 const axios = require('axios')
 const crypto = require('crypto')
 const totp = require("totp-generator")
-const CryptoJS = require('crypto-js');
-const uuid = require('uuid');
 
 const BASE_URL = 'https://api.prime.coinbase.com'
 
@@ -11,9 +9,11 @@ let PORTFOLIO_ID = null
 let ENTITY_ID = null
 
 function sign(str, secret) {
-    const hash = CryptoJS.HmacSHA256(str, secret);
-    return hash.toString(CryptoJS.enc.Base64);
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(str);
+    return hmac.digest('base64');
 }
+
 function buildPayload(ts, method, requestPath, body) {
     return `${ts}${method}${requestPath}${body}`;
 }
@@ -94,7 +94,7 @@ async function withdraw({ amount_btc }) {
         currency_symbol: 'BTC',
         portfolio_id: PORTFOLIO_ID,
         wallet_id: BTC_WALLET_ID,
-        idempotency_key: uuid.v4(),
+        idempotency_key: crypto.randomUUID(),
         destination_type: 'DESTINATION_BLOCKCHAIN',
         blockchain_address: {
             address: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS,
