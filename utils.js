@@ -98,6 +98,9 @@ function get_split_config({ utxo, fee_rate }) {
         if (!VALID_SPLIT_TRIGGERS.includes(process.env.SPLIT_TRIGGER)) {
             throw new Error(`Invalid SPLIT_TRIGGER: ${process.env.SPLIT_TRIGGER}, must be one of ${VALID_SPLIT_TRIGGERS.join(', ')}`)
         }
+        if (split_trigger !== 'NEVER' && !split_target_size_sats) {
+            throw new Error(`SPLIT_TRIGGER is set but SPLIT_UTXO_SIZE_SATS is not set properly for fee rate ${fee_rate}`)
+        }
     }
     return { split_trigger, split_target_size_sats }
 }
