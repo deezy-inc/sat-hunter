@@ -238,6 +238,9 @@ async function run() {
             }
         }
         const scan_request = await post_scan_request(request_body)
+        if (!scan_request.id) {
+            throw new Error('Failed to initiate scan request')
+        }
         scan_request_ids.push(scan_request.id)
         if (rescanned_utxos.has(utxo)) {
             rescan_request_ids.add(scan_request.id)
