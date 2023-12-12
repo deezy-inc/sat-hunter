@@ -3,14 +3,35 @@ const bip39 = require('bip39')
 
 const { encrypt, decrypt } = require('../encryption')
 async function run() {
-    const { seed_phrase } = await prompts({
-        type: 'text',
-        name: 'seed_phrase',
-        message: 'Enter the 12 or 24 word seed phrase you want to encrypt:',
+    const { seed_input } = await prompts({
+        type: 'select',
+        name: 'seed_input',
+        message: 'What seed would you like to encrypt?',
+        choices: [
+            { title: 'I want to enter a new seed phrase here', value: 'ENTER' },
+            { title: 'I want to use the LOCAL_WALLET_SEED that is already in my .env file', value: 'LOCAL'},
+        ]
     })
+    let seed_phrase
+    if (seed_input === 'LOCAL') {
+        if (!process.env.LOCAL_WALLET_SEED) {
+            console.error('No LOCAL_WALLET_SEED found - make sure you run this command with "node -r dotenv/config" to load the .env')
+            return
+        }
+        seed_phrase = process.env.LOCAL_WALLET_SEED
+    } else {
+        const { input_seed_phrase } = await prompts({
+            type: 'text',
+            name: 'input_seed_phrase',
+            message: 'Enter the 12 or 24 word seed phrase you want to encrypt:',
+        })
+        seed_phrase = input_seed_phrase
+    }
+
     const is_valid = bip39.validateMnemonic(seed_phrase)
     if (!is_valid) {
-        throw new Error('Invalid seed phrase')
+        console.error('Invalid seed phrase')
+        return
     }
     const { password } = await prompts({
         type: 'password',
@@ -23,14 +44,16 @@ async function run() {
         message: 'Enter the password again:',
     })
     if (password !== password_confirm) {
-        throw new Error('Passwords do not match')
+        console.error('Passwords do not match')
+        return
     }
     const encrypted = encrypt(seed_phrase, password)
     const decrypted = decrypt(encrypted, password)
     if (decrypted !== seed_phrase) {
-        throw new Error('Decrypted seed phrase does not match original')
+        console.error('Decrypted seed phrase does not match original')
+        return
     }
-    console.log('Successfully encrypted seed phrase, add the following line to your .env file and remove LOCAL_WALLET_SEED:\n')
+    console.log(`Successfully encrypted seed phrase, add the following line to your .env file${seed_input === 'LOCAL' ? 'and remove LOCAL_WALLET_SEED': ''}:\n`)
     console.log(`LOCAL_WALLET_SEED_ENCRYPTED=${encrypted}\n`)
 }
 
