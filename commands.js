@@ -22,8 +22,8 @@ const get_payment_details = async () => {
     const payment_details = `
 Your current limits and payment info:
 
-BTC Volume Permitted Every ${days} Days: ${amount}.
-Subscription Cost: ${subscription_cost}.
+Volume Permitted Every ${days} Days: ${amount} BTC.
+Subscription Cost: ${subscription_cost} BTC.
 Cost to purchase 1 additional BTC in scan volume: ${one_time_cost} satoshis.
 You have scanned ${user_volume} BTC so far this billing period.
 Payment Address: 

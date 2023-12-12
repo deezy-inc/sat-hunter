@@ -1,5 +1,6 @@
 const {
   trySendTelegramMessage,
+  initCommands,
   TELEGRAM_BOT_ENABLED
 } = require('./telegram');
 
