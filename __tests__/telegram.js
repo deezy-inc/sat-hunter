@@ -1,7 +1,7 @@
 process.env.TELEGRAM_BOT_ENABLED = 'true';
 process.env.TELEGRAM_BOT_TOKEN = 'test_token';
 
-const telegram = require('./../telegram');
+const telegram = require('./../notifications/telegram');
 const TelegramBot = require('node-telegram-bot-api');
 
 jest.mock('node-telegram-bot-api');

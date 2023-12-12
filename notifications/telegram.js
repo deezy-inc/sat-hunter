@@ -4,7 +4,7 @@ const {
 } = process.env;
 
 const TelegramBot = require('node-telegram-bot-api');
-const { get_payment_details } = require('./commands');
+const { get_payment_details } = require('../commands');
 const telegramBot = TELEGRAM_BOT_TOKEN ? new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true }) : null;
 
 const TELEGRAM_BOT_ENABLED = telegramBot && TELEGRAM_CHAT_ID;
