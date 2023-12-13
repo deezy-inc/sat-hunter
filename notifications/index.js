@@ -9,9 +9,15 @@ const {
   PUSHOVER_ENABLED
 } = require('./pushover');
 
-const sendNotifications = async (message = undefined) => {
-  await trySendPushover(message);
-  await trySendTelegramMessage(message);
+let lastSentMessage = '';
+
+const sendNotifications = async (message = undefined, type = undefined) => {
+  // Do not send duplicate payment required messages
+  if (type !== 'payment_req' || message !== lastSentMessage) {
+    await trySendPushover(message);
+    await trySendTelegramMessage(message);
+    lastSentMessage = message;
+  }
 };
 
 const initNotifications = async () => {

@@ -19,6 +19,7 @@ const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, initNotifications } = require('./notifications')
 const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
+const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
 const SCAN_MAX_RETRIES = 180
@@ -256,19 +257,20 @@ async function run() {
                 one_time_cost,
             } = await get_user_limits()
             const allowed_volume = satoshi_to_BTC(amount) // We are using satoshis in the DB as default
+            const tier_info = allowed_volume > 0 ? ` allows ${allowed_volume} BTC per ${days} days and ` : ''
             const msg = `
 --------------------------
 Sat Hunting limits exceeded.
 To purchase more scans, you can send BTC to the following address: ${payment_address}.
-Your plan allows for ${allowed_volume} BTC every ${days} days, and allows purchasing additional volume at a rate of ${one_time_cost} satoshis per 1 BTC of scan volume.
+Your plan${tier_info}allows purchasing additional volume at a rate of ${one_time_cost} satoshis per 1 BTC of scan volume.
 Contact help@deezy.io for questions or to change your plan.
 --------------------------
 `
             console.log(`Scan request with id: ${scan_request_id} failed`)
             console.log(msg)
 
-            await sendNotifications(msg)
-
+            await sendNotifications(msg, 'payment_req')
+            sleep(PAYMENT_LOOP_SECONDS * 1000)
             continue
         }
         if (info.status === 'FAILED') {

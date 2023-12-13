@@ -8,7 +8,7 @@ const get_payment_details = async () => {
         days = "...",
         subscription_cost: _subscription_cost = "0",
         one_time_cost = "0",
-        user_volume: _user_volume = "0",
+        remaining_volume: _remaining_volume = "0",
     } = await get_user_limits()
 
     if (payment_address === "...") {
@@ -16,17 +16,20 @@ const get_payment_details = async () => {
     }
 
     const subscription_cost = satoshi_to_BTC(_subscription_cost)
-    const user_volume = satoshi_to_BTC(_user_volume)
+    const remaining_volume = satoshi_to_BTC(_remaining_volume)
     const amount = satoshi_to_BTC(_amount)
 
-    const payment_details = `
-Your current limits and payment info:
+    const unlimitedTier = amount < 0
+    const relevantTier = amount > 0
 
-Volume Permitted Every ${days} Days: ${amount} BTC.
-Subscription Cost: ${subscription_cost} BTC.
-Cost to purchase 1 additional BTC in scan volume: ${one_time_cost} satoshis.
-You have scanned ${user_volume} BTC so far this billing period.
-Payment Address: 
+    const amountText = unlimitedTier ? 'unlimited' : amount
+    const scanVolumeText = !unlimitedTier ? `Scan Volume Remaining: ${remaining_volume} BTC\nPrice: ${one_time_cost} sats / BTC\n` : ''
+    const tierText = relevantTier ? `Tier: ${amountText} BTC per ${days} days\nSubscription Cost: ${subscription_cost} BTC\n` : ''
+
+    const payment_details = `
+${scanVolumeText}
+${tierText}
+Payment Address:
 `
 
     return {
