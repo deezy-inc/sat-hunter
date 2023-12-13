@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node -r dotenv/config index.js",
     "setup-telegram": "node -r dotenv/config setup-telegram-bot.js",
+    "encrypt-seed": "node -r dotenv/config scripts/encrypt-seed.js",
     "test": "jest",
     "coverage": "jest --coverage",
     "report": "jest --coverage && open coverage/lcov-report/index.html",

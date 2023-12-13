@@ -30,14 +30,14 @@ The self hosted option requires you to run either of the following:
 
 ## Setup
 Install the Script
-```agsl
+```
 git clone https://github.com/deezy-inc/sat-hunter.git
 cd sat-hunter
 npm install
 ```
 
 Setup Environment Variables (you'll need to do some setup for the exchange you're using like getting API keys and allowlisting the withdrawal address)
-```agsl
+```
 cp .env.example .env
 // Edit .env to match your setup.
 ```
@@ -45,7 +45,7 @@ cp .env.example .env
 
 
 ## Usage
-```agsl
+```
 npm start
 ```
 
@@ -65,8 +65,8 @@ We recommend using Sparrow unless you're running an instance of Bitcoin Core. Fo
 
 ### Encrypting the wallet seed
 To encrypt the wallet seed run:
-```agsl
-node -r dotenv/config scripts/encrypt-seed.js
+```
+npm run encrypt-seed
 ```
 This will require you to enter a password to unlock the bot every time it starts up.
 
