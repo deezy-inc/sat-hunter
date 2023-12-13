@@ -15,7 +15,7 @@ async function run() {
     let seed_phrase
     if (seed_input === 'LOCAL') {
         if (!process.env.LOCAL_WALLET_SEED) {
-            console.error('No LOCAL_WALLET_SEED found - make sure you run this command with "node -r dotenv/config" to load the .env')
+            console.error('No LOCAL_WALLET_SEED found - make sure you have it set in your .env file')
             return
         }
         seed_phrase = process.env.LOCAL_WALLET_SEED
