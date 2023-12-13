@@ -50,11 +50,10 @@ function get_tag_by_address() {
     if (!configured_tag_by_address || configured_tag_by_address.trim() === '') {
         return null
     }
-    return configured_tag_by_address.trim().split(' ').reduce((acc, pair_tag_by_address) => {
+    return configured_tag_by_address.trim().split(' ').filter(s => s).map(pair_tag_by_address => {
         const [tag, address] = pair_tag_by_address.trim().split(':');
-        acc[tag] = address;
-        return acc;
-    }, {});
+        return { tag, address };
+    });
 }
 
 function get_included_tags({ fee_rate }) {
@@ -88,7 +87,7 @@ function get_split_config({ utxo, fee_rate }) {
     } else if (process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD && fee_rate > parseFloat(process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD)) {
         console.log(`Using medium fee split trigger`)
         split_trigger = process.env.SPLIT_TRIGGER_MEDIUM_FEE
-        split_target_size_sats =parseInt(process.env.SPLIT_UTXO_SIZE_SATS_MEDIUM_FEE || 0)
+        split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS_MEDIUM_FEE || 0)
     } else if (process.env.SPLIT_TRIGGER) {
         console.log(`Using normal split trigger`)
         split_trigger = process.env.SPLIT_TRIGGER
@@ -114,7 +113,7 @@ function get_scan_config({ fee_rate, utxo }) {
         excluded_tags: get_excluded_tags({ fee_rate, utxo }),
         included_tags: get_included_tags({ fee_rate, utxo }),
         min_tag_sizes: get_min_tag_sizes({ fee_rate, utxo }),
-        tag_by_address: get_tag_by_address({ fee_rate, utxo }),
+        tag_by_address: get_tag_by_address(),
         split_config: get_split_config({ fee_rate, utxo })
     }
     console.log(`Saving scan config for ${utxo}`)

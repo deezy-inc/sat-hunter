@@ -183,13 +183,19 @@ describe('get_tag_by_address', () => {
     test('should return correct format', () => {
         process.env.TAG_BY_ADDRESS = 'tag1:address1 tag2:address2'
         const result = get_tag_by_address()
-        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2' })
+        expect(result).toEqual([{ "address": "address1", "tag": "tag1" }, { "address": "address2", "tag": "tag2" }])
+    })
+
+    test('should return correct order', () => {
+        process.env.TAG_BY_ADDRESS = 'uncommon:a1 black_uncommon:a2 rare:a3 black_rare:a3 block_9:a3 block_78:a4 nakamoto:a5 pizza:a6 palindrome:a7 name_palindrome:a7 special_name:a8 alpha:a9 omega:a10'
+        const result = get_tag_by_address()
+        expect(result).toEqual([{ "address": "a1", "tag": "uncommon" }, { "address": "a2", "tag": "black_uncommon" }, { "address": "a3", "tag": "rare" }, { "address": "a3", "tag": "black_rare" }, { "address": "a3", "tag": "block_9" }, { "address": "a4", "tag": "block_78" }, { "address": "a5", "tag": "nakamoto" }, { "address": "a6", "tag": "pizza" }, { "address": "a7", "tag": "palindrome" }, { "address": "a7", "tag": "name_palindrome" }, { "address": "a8", "tag": "special_name" }, { "address": "a9", "tag": "alpha" }, { "address": "a10", "tag": "omega" }])
     })
 
     test('should trim leading and trailing spaces', () => {
         process.env.TAG_BY_ADDRESS = ' tag1:address1      tag2:address2 '
         const result = get_tag_by_address()
-        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2' })
+        expect(result).toEqual([{ "address": "address1", "tag": "tag1" }, { "address": "address2", "tag": "tag2" }])
     })
 
     test('should return null when TAG_BY_ADDRESS is not set', () => {
@@ -207,7 +213,7 @@ describe('get_tag_by_address', () => {
     test('should handle multiple tag-address pairs', () => {
         process.env.TAG_BY_ADDRESS = 'tag1:address1 tag2:address2 tag3:address3'
         const result = get_tag_by_address()
-        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2', 'tag3': 'address3' })
+        expect(result).toEqual([{ "address": "address1", "tag": "tag1" }, { "address": "address2", "tag": "tag2" }, { "address": "address3", "tag": "tag3" }])
     })
 })
 
@@ -307,7 +313,7 @@ describe('get_scan_config', () => {
     test('all combinations persist across thresholds', () => {
         delete_scan_configs()
 
-        process.env.TAG_BY_ADDRESS = 'tag1:address1 tag2:address2'
+        process.env.TAG_BY_ADDRESS = 'tag2:address2 tag1:address1'
         process.env.SPLIT_TRIGGER = 'ALWAYS'
         process.env.SPLIT_UTXO_SIZE_SATS = '10000000'
         process.env.EXCLUDE_TAGS = 'omega'
@@ -336,11 +342,11 @@ describe('get_scan_config', () => {
         process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD = '25'
 
         const expected_result = {
-            tag_by_address: {tag1: 'address1', tag2: 'address2'},
+            tag_by_address: [{ address: 'address2', tag: 'tag2' }, { address: 'address1', tag: 'tag1' }],
             excluded_tags: [['omega']],
-            min_tag_sizes: {block_9: 1000},
+            min_tag_sizes: { block_9: 1000 },
             included_tags: [['special_name'], ['uncommon'], ['rare']],
-            split_config: {split_trigger: 'ALWAYS', split_target_size_sats: 10000000}
+            split_config: { split_trigger: 'ALWAYS', split_target_size_sats: 10000000 }
         }
         expect(get_scan_config({ fee_rate: 4 })).toEqual(expected_result)
         // Cached result should be saved, so we should get the same result at higher fee levels.
@@ -355,11 +361,11 @@ describe('get_scan_config', () => {
         // Now if we delete the cached config, we'll get fresh ones.
         delete_scan_configs()
         expect(get_scan_config({ fee_rate: 50 })).toEqual({
-            tag_by_address: {tag1: 'address1', tag2: 'address2'},
+            tag_by_address: [{ address: 'address2', tag: 'tag2' }, { address: 'address1', tag: 'tag1' }],
             excluded_tags: [['omega'], ['alpha'], ['pizza']],
-            min_tag_sizes: {block_9: 20000},
+            min_tag_sizes: { block_9: 20000 },
             included_tags: [['rare']],
-            split_config: {split_trigger: 'NEVER', split_target_size_sats: 50000000}
+            split_config: { split_trigger: 'NEVER', split_target_size_sats: 50000000 }
         })
     })
 })
