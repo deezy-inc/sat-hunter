@@ -76,6 +76,8 @@ function get_included_tags({ fee_rate }) {
         .map((tag) => tag.split('/'))
 }
 
+const satoshi_to_BTC = (satoshi) => parseFloat((satoshi / 100000000).toFixed(8));
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function get_split_config({ utxo, fee_rate }) {
@@ -127,6 +129,7 @@ module.exports = {
     get_min_tag_sizes,
     get_split_config,
     get_included_tags,
+    satoshi_to_BTC,
     get_tag_by_address,
     sleep,
     get_scan_config

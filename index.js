@@ -1,7 +1,6 @@
 require('dotenv').config({
     override: true
 })
-const fs = require('fs')
 const util = require('util')
 const ecc = require('tiny-secp256k1')
 const bitcoin = require('bitcoinjs-lib')
@@ -15,11 +14,12 @@ const {
     fetch_most_recent_unconfirmed_send
 } = require('./wallet')
 const { get_fee_rate } = require('./fees')
-const { post_scan_request, get_scan_request } = require('./deezy')
+const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
-const { sendNotifications, TELEGRAM_BOT_ENABLED, PUSHOVER_ENABLED } = require('./notifications.js')
-const { sleep, get_tag_by_address, get_scan_config } = require('./utils.js')
+const { sendNotifications, initNotifications } = require('./notifications')
+const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
+const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
 const SCAN_MAX_RETRIES = 180
@@ -200,8 +200,8 @@ async function run() {
         const request_body = {
             utxo_to_scan: utxo,
             extract: true,
-            regular_funds_addresses: [ exchange_address ],
-            special_sat_addresses: [ rare_sat_address ],
+            regular_funds_addresses: [exchange_address],
+            special_sat_addresses: [rare_sat_address],
             extraction_fee_rate: fee_rate
         }
         const {
@@ -251,6 +251,31 @@ async function run() {
         const scan_request_id = scan_request_ids[i]
         console.log(`Checking status of scan request with id: ${scan_request_id}`)
         const info = await get_scan_request({ scan_request_id })
+        console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`)
+        if (info.status === 'FAILED_LIMITS_EXCEEDED') {
+            const {
+                payment_address,
+                amount,
+                days,
+                one_time_cost,
+            } = await get_user_limits()
+            const allowed_volume = satoshi_to_BTC(amount) // We are using satoshis in the DB as default
+            const tier_info = allowed_volume > 0 ? ` allows ${allowed_volume} BTC per ${days} days and ` : ''
+            const msg = `
+--------------------------
+Sat Hunting limits exceeded.
+To purchase more scans, you can send BTC to the following address: ${payment_address}.
+Your plan${tier_info}allows purchasing additional volume at a rate of ${one_time_cost} satoshis per 1 BTC of scan volume.
+Contact help@deezy.io for questions or to change your plan.
+--------------------------
+`
+            console.log(`Scan request with id: ${scan_request_id} failed`)
+            console.log(msg)
+
+            await sendNotifications(msg, 'payment_req')
+            sleep(PAYMENT_LOOP_SECONDS * 1000)
+            continue
+        }
         if (info.status === 'FAILED') {
             console.log(`Scan request with id: ${scan_request_id} failed`)
             continue
@@ -287,10 +312,7 @@ async function run() {
 }
 
 async function runLoop() {
-    if (TELEGRAM_BOT_ENABLED) console.log(`Telegram bot is enabled`)
-    if (PUSHOVER_ENABLED) console.log(`Pushover bot is enabled`)
-    await sendNotifications(`Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`)
-
+    await initNotifications()
     while (true) {
         await run().catch((err) => {
             console.error(err)
