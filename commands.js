@@ -20,15 +20,18 @@ const get_payment_details = async () => {
     const amount = satoshi_to_BTC(_amount)
 
     const unlimitedTier = amount < 0
+    const remainingAmountText = unlimitedTier ? 'unlimited' : remaining_volume
+    const amountText = unlimitedTier ? 'unlimited' : amount
     const relevantTier = amount > 0
 
-    const amountText = unlimitedTier ? 'unlimited' : amount
-    const scanVolumeText = !unlimitedTier ? `Scan Volume Remaining: ${remaining_volume} BTC\nPrice: ${one_time_cost} sats / BTC\n` : ''
-    const tierText = relevantTier ? `Tier: ${amountText} BTC per ${days} days\nSubscription Cost: ${subscription_cost} BTC\n` : ''
+    const scanVolumeText = `Scan Volume Remaining: ${remainingAmountText} BTC\n`
+    const priceText = !unlimitedTier ? `Price: ${one_time_cost} sats / BTC\n` : ''
+    const tierText = relevantTier ? `Tier: ${amountText} BTC per ${days} days\n` : ''
+    const subscriptionText = relevantTier ? `Subscription Cost: ${subscription_cost} BTC\n` : ''
 
     const payment_details = `
-${scanVolumeText}
-${tierText}
+${scanVolumeText}${priceText}
+${tierText}${subscriptionText}
 Payment Address:
 `
 
