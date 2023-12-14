@@ -6,7 +6,8 @@ const {
     get_tag_by_address,
     sleep,
     get_scan_config,
-    satoshi_to_BTC
+    satoshi_to_BTC,
+    get_max_tag_ages
 } = require('../utils')
 
 const {
@@ -374,12 +375,15 @@ describe('get_scan_config', () => {
         process.env.INCLUDE_TAGS_HIGH_FEE = 'rare'
         process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD = '25'
 
+        process.env.MAX_TAG_AGES = 'alpha:2009'
+
         const expected_result = {
-            tag_by_address: {tag1: 'address1', tag2: 'address2'},
+            tag_by_address: { tag1: 'address1', tag2: 'address2' },
             excluded_tags: [['omega']],
-            min_tag_sizes: {block_9: 1000},
+            min_tag_sizes: { block_9: 1000 },
+            max_tag_ages: { alpha: 2009 },
             included_tags: [['special_name'], ['uncommon'], ['rare']],
-            split_config: {split_trigger: 'ALWAYS', split_target_size_sats: 10000000}
+            split_config: { split_trigger: 'ALWAYS', split_target_size_sats: 10000000 }
         }
         expect(get_scan_config({ fee_rate: 4 })).toEqual(expected_result)
         // Cached result should be saved, so we should get the same result at higher fee levels.
@@ -394,11 +398,58 @@ describe('get_scan_config', () => {
         // Now if we delete the cached config, we'll get fresh ones.
         delete_scan_configs()
         expect(get_scan_config({ fee_rate: 50 })).toEqual({
-            tag_by_address: {tag1: 'address1', tag2: 'address2'},
+            tag_by_address: { tag1: 'address1', tag2: 'address2' },
             excluded_tags: [['omega'], ['alpha'], ['pizza']],
-            min_tag_sizes: {block_9: 20000},
+            min_tag_sizes: { block_9: 20000 },
             included_tags: [['rare']],
-            split_config: {split_trigger: 'NEVER', split_target_size_sats: 50000000}
+            max_tag_ages: { alpha: 2009 },
+            split_config: { split_trigger: 'NEVER', split_target_size_sats: 50000000 }
         })
+    })
+})
+
+describe('get_max_tag_ages', () => {
+    test('should return correct format', () => {
+        process.env.MAX_TAG_AGES = 'alpha:2009 omega:2000'
+        const result = get_max_tag_ages({ fee_rate: 0 })
+        expect(result).toEqual({ 'alpha': 2009, 'omega': 2000 })
+    })
+
+    test('should trim leading and trailing spaces', () => {
+        process.env.MAX_TAG_AGES = ' alpha:2009 omega:2000 '
+        const result = get_max_tag_ages({ fee_rate: 0 })
+        expect(result).toEqual({ 'alpha': 2009, 'omega': 2000 })
+    })
+
+    test('should return null when MAX_TAG_AGES is not set', () => {
+        delete process.env.MAX_TAG_AGES
+        const result = get_max_tag_ages({ fee_rate: 0 })
+        expect(result).toBeNull()
+    })
+
+    test('should use high fee max tag ages when fee_rate is higher than MAX_TAG_AGES_HIGH_FEE_THRESHOLD', () => {
+        process.env.MAX_TAG_AGES_HIGH_FEE_THRESHOLD = '10'
+        process.env.MAX_TAG_AGES_HIGH_FEE = 'alpha:2000 omega:3000'
+        process.env.MAX_TAG_AGES = 'alpha:2009 omega:2000'
+        const result = get_max_tag_ages({ fee_rate: 20 })
+        expect(result).toEqual({ 'alpha': 2000, 'omega': 3000 })
+    })
+
+    test('should use medium fee max tag ages when fee_rate is higher than MAX_TAG_AGES_MEDIUM_FEE_THRESHOLD but lower than MAX_TAG_AGES_HIGH_FEE_THRESHOLD', () => {
+        process.env.MAX_TAG_AGES = "vintage_nakamoto:2009 omega:2000"
+        process.env.MAX_TAG_AGES_MEDIUM_FEE_THRESHOLD = 20
+        process.env.MAX_TAG_AGES_MEDIUM_FEE = "vintage_nakamoto:2009 omega:2010"
+        process.env.MAX_TAG_AGES_HIGH_FEE_THRESHOLD = 50
+        process.env.MAX_TAG_AGES_HIGH_FEE = "vintage_nakamoto:2005 omega:2006"
+        const result = get_max_tag_ages({ fee_rate: 30 })
+        expect(result).toEqual({ 'vintage_nakamoto': 2009, 'omega': 2010 })
+    })
+
+    test('should not use high fee max tag ages when fee_rate is lower than MAX_TAG_AGES_HIGH_FEE_THRESHOLD', () => {
+        process.env.MAX_TAG_AGES_HIGH_FEE_THRESHOLD = '10'
+        process.env.MAX_TAG_AGES_HIGH_FEE = 'alpha:2000 omega:3000'
+        process.env.MAX_TAG_AGES = 'alpha:2009 omega:2000'
+        const result = get_max_tag_ages({ fee_rate: 5 })
+        expect(result).toEqual({ 'alpha': 2009, 'omega': 2000 })
     })
 })

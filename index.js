@@ -210,6 +210,7 @@ async function run() {
             included_tags,
             min_tag_sizes,
             tag_by_address,
+            max_tag_ages,
             split_config
         } = get_scan_config({ fee_rate, utxo })
         if (excluded_tags) {
@@ -223,6 +224,10 @@ async function run() {
         if (min_tag_sizes) {
             console.log(`Using min tag sizes: ${JSON.stringify(min_tag_sizes)}`)
             request_body.min_tag_sizes = min_tag_sizes
+        }
+        if (max_tag_ages) {
+            console.log(`Using max tag ages: ${Object.entries(max_tag_ages).map(([tag, age]) => `${tag}:${age}`).join(' ')}`)
+            request_body.max_tag_ages = max_tag_ages
         }
         if (tag_by_address) {
             console.log(`Using tag by address: ${Object.entries(tag_by_address).map(([tag, address]) => `${tag}:${address}`).join(' ')}`)
