@@ -30,14 +30,14 @@ The self hosted option requires you to run either of the following:
 
 ## Setup
 Install the Script
-```agsl
+```
 git clone https://github.com/deezy-inc/sat-hunter.git
 cd sat-hunter
 npm install
 ```
 
 Setup Environment Variables (you'll need to do some setup for the exchange you're using like getting API keys and allowlisting the withdrawal address)
-```agsl
+```
 cp .env.example .env
 // Edit .env to match your setup.
 ```
@@ -45,7 +45,7 @@ cp .env.example .env
 
 
 ## Usage
-```agsl
+```
 npm start
 ```
 
@@ -63,6 +63,12 @@ We recommend using Sparrow unless you're running an instance of Bitcoin Core. Fo
 10) The tabs on the left will turn blue.
 11) Go to the receive tab. You will need this address for .env file configuration.
 
+### Encrypting the wallet seed
+To encrypt the wallet seed run:
+```
+npm run encrypt-seed
+```
+This will require you to enter a password to unlock the bot every time it starts up.
 
 ## Telegram Bot
 Setting up the telegram bot can give you real-time updates of your operation. Follow these instructions:
@@ -112,3 +118,4 @@ Help us add more exchanges - we want to add them all! Open an Issue in the Githu
 
 
 ## Bitcoin Core
+You can use bitcoin core as the wallet backend. See the `.env.sample`

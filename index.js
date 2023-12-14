@@ -11,7 +11,8 @@ const {
     get_utxos,
     sign_and_finalize_transaction,
     broadcast_transaction,
-    fetch_most_recent_unconfirmed_send
+    fetch_most_recent_unconfirmed_send,
+    init_wallet
 } = require('./wallet')
 const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
@@ -313,6 +314,7 @@ Contact help@deezy.io for questions or to change your plan.
 
 async function runLoop() {
     await initNotifications()
+    await init_wallet()
     while (true) {
         await run().catch((err) => {
             console.error(err)

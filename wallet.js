@@ -6,6 +6,8 @@ const {
     listtransactions,
     getrawtransaction
 } = require('./bitcoin')
+const prompts = require('prompts')
+const { decrypt } = require('./encryption')
 const axios = require('axios')
 const ecc = require('tiny-secp256k1')
 const {BIP32Factory} = require('bip32')
@@ -28,39 +30,54 @@ let child_hd_node
 let derivation_path
 const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
 
-if (WALLET_TYPE === 'local') {
-    if (!process.env.LOCAL_WALLET_SEED || !process.env.LOCAL_WALLET_ADDRESS) {
-        throw new Error('LOCAL_WALLET_SEED and LOCAL_WALLET_ADDRESS must be set')
-    }
-    // Check validity of seed
-    const seed_phrase = process.env.LOCAL_WALLET_SEED
-    const seed_buffer = bip39.mnemonicToSeedSync(seed_phrase)
-    root_hd_node = bip32.fromSeed(seed_buffer)
+async function init_wallet() {
+    if (WALLET_TYPE === 'local') {
+        if ((!process.env.LOCAL_WALLET_SEED && !process.env.LOCAL_WALLET_SEED_ENCRYPTED) || !process.env.LOCAL_WALLET_ADDRESS) {
+            throw new Error('LOCAL_WALLET_ADDRESS and LOCAL_WALLET_SEED or LOCAL_WALLET_SEED_ENCRYPTED must be set')
+        }
+        if (process.env.LOCAL_WALLET_SEED && process.env.LOCAL_WALLET_SEED_ENCRYPTED) {
+            throw new Error('Cannot set both LOCAL_WALLET_SEED and LOCAL_WALLET_SEED_ENCRYPTED')
+        }
+        // Check validity of seed
+        let seed_phrase
+        if (process.env.LOCAL_WALLET_SEED_ENCRYPTED) {
+            const { password } = await prompts({
+                type: 'password',
+                name: 'password',
+                message: 'Enter the password to decrypt the seed phrase:',
+            })
+            seed_phrase = decrypt(process.env.LOCAL_WALLET_SEED_ENCRYPTED, password)
+        } else {
+            seed_phrase = process.env.LOCAL_WALLET_SEED
+        }
+        const seed_buffer = bip39.mnemonicToSeedSync(seed_phrase)
+        root_hd_node = bip32.fromSeed(seed_buffer)
 
-    const addresss_info = getAddressInfo(process.env.LOCAL_WALLET_ADDRESS)
-    local_wallet_type = addresss_info.type
-    if (local_wallet_type !== 'p2tr' && local_wallet_type !== 'p2wpkh') {
-        throw new Error('Local wallet address must be p2tr or p2wpkh')
-    }
-    derivation_path = process.env.LOCAL_DERIVATION_PATH || `m/8${local_wallet_type === 'p2tr' ? '6' : '4'}'/0'/0'/0/0`
-    child_hd_node = root_hd_node.derivePath(derivation_path)
-    child_xonly_pubkey = toXOnly(child_hd_node.publicKey)
-    let address
-    if (local_wallet_type === 'p2tr') {
-        const p2tr_derived_info = bitcoin.payments.p2tr({ internalPubkey: child_xonly_pubkey })
-        address = p2tr_derived_info.address
-    } else {
-        const p2wpkh_derived_info = bitcoin.payments.p2wpkh({ pubkey: child_hd_node.publicKey })
-        address = p2wpkh_derived_info.address
-    }
-    if (address !== process.env.LOCAL_WALLET_ADDRESS) {
-        throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct')
-    } else {
-        console.log(`Local wallet address: ${address}`)
+        const addresss_info = getAddressInfo(process.env.LOCAL_WALLET_ADDRESS)
+        local_wallet_type = addresss_info.type
+        if (local_wallet_type !== 'p2tr' && local_wallet_type !== 'p2wpkh') {
+            throw new Error('Local wallet address must be p2tr or p2wpkh')
+        }
+        derivation_path = process.env.LOCAL_DERIVATION_PATH || `m/8${local_wallet_type === 'p2tr' ? '6' : '4'}'/0'/0'/0/0`
+        child_hd_node = root_hd_node.derivePath(derivation_path)
+        child_xonly_pubkey = toXOnly(child_hd_node.publicKey)
+        let address
         if (local_wallet_type === 'p2tr') {
-            tweaked_child_node = child_hd_node.tweak(
-                bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey),
-            );
+            const p2tr_derived_info = bitcoin.payments.p2tr({internalPubkey: child_xonly_pubkey})
+            address = p2tr_derived_info.address
+        } else {
+            const p2wpkh_derived_info = bitcoin.payments.p2wpkh({pubkey: child_hd_node.publicKey})
+            address = p2wpkh_derived_info.address
+        }
+        if (address !== process.env.LOCAL_WALLET_ADDRESS) {
+            throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED/LOCAL_WALLET_SEED_ENCRYPTED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct')
+        } else {
+            console.log(`Local wallet address: ${address}`)
+            if (local_wallet_type === 'p2tr') {
+                tweaked_child_node = child_hd_node.tweak(
+                    bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey),
+                );
+            }
         }
     }
 }
@@ -219,4 +236,5 @@ module.exports = {
     sign_and_finalize_transaction,
     broadcast_transaction,
     fetch_most_recent_unconfirmed_send,
+    init_wallet
 }
