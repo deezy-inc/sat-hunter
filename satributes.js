@@ -29,18 +29,22 @@ function generate_satributes_messages(satributes) {
     const messages = [`Found ${satributes.length} special sats:`]
     for (const satribute of satributes) {
         let msg = ''
+        let is_chunkly = false
         for (const rarity of satribute.rarity_tags) {
             msg += `${emojis_by_rarity[rarity] || ''} `
         }
         for (const rarity of satribute.rarity_tags) {
             msg += `${rarity} `
+            if (['block_9', 'block_78', 'pizza'].includes(rarity)) {
+                is_chunkly = true
+            }
         }
         for (const inscription_group of satribute.inscriptions || []) {
             msg += `\ncollection: ${inscription_group}`
             msg += `\n${INSCRIPTION_BASE_URL}/${satribute.sat_number}`
         }
         msg += `\n#${satribute.sat_number}${satribute.name ? `\nname: ${satribute.name}` : ''}${satribute.timestamp ? `\n${satribute.timestamp.split('T')[0]}` : ''}`
-        if (satribute.size > 1) {
+        if (satribute.size > 1 || is_chunkly) {
             msg += `\nsize: ${satribute.size}`
         }
         messages.push(msg)
