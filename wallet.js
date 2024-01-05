@@ -93,7 +93,7 @@ async function get_utxos_from_mempool_space({ address }) {
     };
     const retryUrl = `${MEMPOOL_RETRY_API}/address/${address}/utxo`;
     
-    const { data } = await request_with_retry(axiosConfig, retryUrl, RETRY_ATTEMPTS).catch(err => {
+    const { data } = await request_with_retry(axiosConfig, retryUrl, MEMPOOL_RETRY_ATTEMPTS).catch(err => {
         console.error(err)
         return {}
     })
