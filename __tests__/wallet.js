@@ -33,7 +33,7 @@ describe('get_utxos', () => {
     beforeEach(() => {
         // Reset the mocks before each test
         listunspent.mockReset()
-        axios.get.mockReset()
+        axios.mockReset()
     })
 
     test('should return correct utxos for local wallet', async () => {

@@ -2,6 +2,8 @@ const {
     get_existing_scan_config_by_utxo,
     save_scan_config
 } = require('./storage')
+
+const axios = require('axios');
 const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
 
 function get_excluded_tags({ fee_rate }) {
@@ -147,6 +149,27 @@ function get_scan_config({ fee_rate, utxo }) {
     return config
 }
 
+async function request_with_retry(axiosConfig, retryUrl, attempts) {
+    let currentUrl = axiosConfig.url;
+    let lastError = null;
+
+    for (let i = 0; i < attempts; i++) {
+        try {
+            const response = await axios(axiosConfig);
+            return response.data;
+        } catch (err) {
+            lastError = err;
+            console.error(`Attempt ${i + 1} with URL ${currentUrl} failed: ${err.message}`);
+            if (retryUrl) {
+                axiosConfig.url = retryUrl; // Update the URL in the axios config for retries
+                currentUrl = retryUrl;
+            }
+        }
+    }
+
+    throw lastError; // Throw the last error caught
+}
+
 module.exports = {
     get_excluded_tags,
     get_min_tag_sizes,
@@ -156,5 +179,6 @@ module.exports = {
     get_tag_by_address,
     sleep,
     get_scan_config,
-    get_max_tag_ages
+    get_max_tag_ages,
+    request_with_retry,
 }
