@@ -7,7 +7,8 @@ const {
     sleep,
     get_scan_config,
     satoshi_to_BTC,
-    get_max_tag_ages
+    get_max_tag_ages,
+    request_with_retry
 } = require('../utils')
 
 const {
@@ -453,3 +454,24 @@ describe('get_max_tag_ages', () => {
         expect(result).toEqual({ 'alpha': 2009, 'omega': 2000 })
     })
 })
+
+describe('request_with_retry', () => {
+    const validUrl = 'http://mempool.space/api/tx/d477e0a2a73f5898b37bca2c4d6ea8e6ca2b5892f5d89576e9b2bfbf8df5aa31';
+    const invalidUrl = 'http://nonexistentdomain.invalid';
+    const retryUrl = validUrl; // The valid URL for retry
+    const RETRY_ATTEMPTS = 2;
+
+    test('should fail on invalid host and then succeed on retry', async () => {
+        const result = await request_with_retry({ url: invalidUrl, method: 'get' }, retryUrl, RETRY_ATTEMPTS);
+        
+        // Depending on the response structure of the validUrl, adjust this expectation
+        expect(result).toBeTruthy(); // Adjust based on expected result structure
+    });
+
+    test('should throw error after all attempts fail with invalid retry URL', async () => {
+        await expect(request_with_retry({ url: invalidUrl, method: 'get' }, invalidUrl, RETRY_ATTEMPTS))
+            .rejects.toThrow();
+    });
+
+    // Add more tests as needed
+});

@@ -16,11 +16,15 @@ const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation');
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
+const MEMPOOL_RETRY_URL = process.env.MEMPOOL_RETRY_URL || 'https://mempool.deezy.io'
+const MEMPOOL_RETRY_ATTEMPTS = process.env.MEMPOOL_RETRY_ATTEMPTS || 0
+const { request_with_retry } = require('./utils.js')
 const IGNORE_UTXOS_BELOW_SATS = 1000
 
 bitcoin.initEccLib(ecc)
 
 const MEMPOOL_API = `${MEMPOOL_URL}/api`
+const MEMPOOL_RETRY_API = `${MEMPOOL_RETRY_URL}/api`
 const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
 let local_wallet_type
 let child_xonly_pubkey
@@ -83,8 +87,13 @@ async function init_wallet() {
 }
 
 async function get_utxos_from_mempool_space({ address }) {
-    const url = `${MEMPOOL_API}/address/${address}/utxo`
-    const { data } = await axios.get(url).catch(err => {
+    const axiosConfig = {
+        url: `${MEMPOOL_API}/address/${address}/utxo`,
+        method: 'get'
+    };
+    const retryUrl = `${MEMPOOL_RETRY_API}/address/${address}/utxo`;
+    
+    const { data } = await request_with_retry(axiosConfig, retryUrl, RETRY_ATTEMPTS).catch(err => {
         console.error(err)
         return {}
     })
@@ -147,12 +156,20 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
 }
 
 async function broadcast_to_mempool_space({ hex }) {
-    const url = `${MEMPOOL_API}/tx`
-    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
-        console.error(err)
-        return {}
-    })
-    return data
+    const axiosConfig = {
+        url: `${MEMPOOL_API}/tx`,
+        method: 'post',
+        data: hex,
+        headers: { 'Content-Type': 'text/plain' }
+    };
+    const retryUrl = `${MEMPOOL_RETRY_API}/tx`;
+    const { data } = await request_with_retry(axiosConfig, retryUrl, MEMPOOL_RETRY_ATTEMPTS)
+        .catch(err => {
+            console.error(err);
+            return { data: {} };
+        });
+
+    return data;
 }
 
 async function broadcast_to_blockstream({ hex}) {
@@ -176,17 +193,23 @@ async function broadcast_transaction({ hex }) {
 }
 
 async function get_address_txs({ address }) {
-    const url = `${MEMPOOL_API}/address/${address}/txs`
-    const { data } = await axios.get(url, {
+    const axiosConfig = {
+        url: `${MEMPOOL_API}/address/${address}/txs`,
+        method: 'get',
         maxContentLength: Math.MAX_SAFE_INTEGER,
-    }).catch(err => {
-        console.error(err)
-        return {}
-    })
+    };
+    const retryUrl = `${MEMPOOL_RETRY_API}/address/${address}/txs`;
+
+    const { data } = await requestWithRetry(axiosConfig, retryUrl, MEMPOOL_RETRY_ATTEMPTS)
+        .catch(err => {
+            console.error(err);
+            return { data: {} };
+        });
+
     if (process.env.DEBUG) {
-        console.log(data)
+        console.log(data);
     }
-    return data || []
+    return data || [];
 }
 
 async function fetch_most_recent_unconfirmed_send() {
