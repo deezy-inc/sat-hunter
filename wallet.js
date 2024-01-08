@@ -200,7 +200,7 @@ async function get_address_txs({ address }) {
     };
     const retryUrl = `${MEMPOOL_RETRY_API}/address/${address}/txs`;
 
-    const { data } = await requestWithRetry(axiosConfig, retryUrl, MEMPOOL_RETRY_ATTEMPTS)
+    const { data } = await request_with_retry(axiosConfig, retryUrl, MEMPOOL_RETRY_ATTEMPTS)
         .catch(err => {
             console.error(err);
             return { data: {} };

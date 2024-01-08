@@ -32,7 +32,7 @@ async function get_fee_rate() {
             return { data: {} };
         });
 
-    const data = response.data;
+    const data = response;
 
     if (FEE_PREF === 'high') return data.fastestFee;
     if (FEE_PREF === 'medium') return data.halfHourFee;
@@ -54,7 +54,7 @@ async function get_min_next_block_fee_rate() {
             return { data: {} };
         });
 
-    const data = response.data;
+    const data = response;
 
     if (!data) {
         throw new Error('Could not get mempool blocks');
