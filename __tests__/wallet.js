@@ -24,22 +24,25 @@ process.env.LOCAL_DERIVATION_PATH = derivePath
 
 const { get_utxos } = require('../wallet')
 const { listunspent } = require('../bitcoin')
+const { request_with_retry } = require('../utils')
 const axios = require('axios')
 
 jest.mock('../bitcoin')
 jest.mock('axios')
+jest.mock('../utils')
 
 describe('get_utxos', () => {
     beforeEach(() => {
         // Reset the mocks before each test
         listunspent.mockReset()
         axios.mockReset()
+        request_with_retry.mockReset()
     })
 
     test('should return correct utxos for local wallet', async () => {
         delete process.env.BITCOIN_WALLET
         process.env.WALLET_TYPE = 'local'
-        axios.get.mockImplementation(() => Promise.resolve({
+        request_with_retry.mockImplementation(() => Promise.resolve({
             data: [
                 { txid: 'tx1', vout: 0, value: 100000 },
                 { txid: 'tx2', vout: 1, value: 200000 }
@@ -60,7 +63,7 @@ describe('get_utxos', () => {
     test('should throw error when mempool api is unreachable', async () => {
         delete process.env.BITCOIN_WALLET
         process.env.LOCAL_WALLET_ADDRESS = 'address'
-        axios.get.mockImplementation(() => Promise.reject(new Error('Network error')))
+        request_with_retry.mockImplementation(() => Promise.reject(new Error('Network error')))
 
         await expect(get_utxos()).rejects.toThrow('Error reaching mempool api')
     })
