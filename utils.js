@@ -1,6 +1,7 @@
 const {
     get_existing_scan_config_by_utxo,
-    save_scan_config
+    save_scan_config,
+    process_first_withdrawal_request
 } = require('./storage')
 const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
 
@@ -76,6 +77,18 @@ function get_tag_by_address() {
     }, {});
 }
 
+function get_address_by_name() {
+    let configured_address_book = process.env.ADDRESS_BOOK
+    if (!configured_address_book || configured_address_book.trim() === '') {
+        return null
+    }
+    return configured_address_book.trim().split(' ').reduce((acc, pair_name_by_address) => {
+        const [name, address] = pair_name_by_address.trim().split(':');
+        acc[name] = address;
+        return acc;
+    }, {});
+}
+
 function get_included_tags({ fee_rate }) {
     let configured_included_tags = process.env.INCLUDE_TAGS
     if (process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD)) {
@@ -140,7 +153,11 @@ function get_scan_config({ fee_rate, utxo }) {
         min_tag_sizes: get_min_tag_sizes({ fee_rate }),
         max_tag_ages: get_max_tag_ages({ fee_rate }),
         tag_by_address: get_tag_by_address(),
-        split_config: get_split_config({ fee_rate })
+        split_config: get_split_config({ fee_rate }),
+    }
+    const pending_withdrawal = process_first_withdrawal_request()
+    if (pending_withdrawal) {
+        config.withdraw_config = pending_withdrawal
     }
     console.log(`Saving scan config for ${utxo}`)
     save_scan_config({ utxo, config })
@@ -156,5 +173,6 @@ module.exports = {
     get_tag_by_address,
     sleep,
     get_scan_config,
-    get_max_tag_ages
+    get_max_tag_ages,
+    get_address_by_name
 }

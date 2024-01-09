@@ -4,7 +4,7 @@ const {
 } = process.env;
 
 const TelegramBot = require('node-telegram-bot-api');
-const { get_payment_details } = require('../commands');
+const { get_payment_details, create_withdraw_request } = require('../commands');
 const telegramBot = TELEGRAM_BOT_TOKEN ? new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true }) : null;
 
 const TELEGRAM_BOT_ENABLED = telegramBot && TELEGRAM_CHAT_ID;
@@ -16,6 +16,10 @@ async function initCommands() {
     await telegramBot.setMyCommands([{
         command: 'limits',
         description: 'Get current limits and payment info'
+    },
+    {
+        command: 'withdraw',
+        description: 'Create a new withdrawal request (denominated in sats)'
     }])
     telegramBot.onText(/\/limits/, async (msg) => {
 
@@ -30,6 +34,33 @@ async function initCommands() {
 
         await telegramBot.sendMessage(chatId, payment_details, { parse_mode: 'HTML' })
         await telegramBot.sendMessage(chatId, payment_address)
+    });
+    telegramBot.onText(/\/withdraw (.+)/, async (msg, match) => {
+        const chatId = msg.chat.id;
+    
+        // Extracting name and amount from the command
+        const args = match[1].split(' ');
+        if (args.length < 2) {
+            await telegramBot.sendMessage(chatId, "Usage: /withdraw [name] [amount]");
+            return;
+        }
+    
+        const name = args[0];
+        const amount = parseFloat(args[1]);
+    
+        if (isNaN(amount) || amount <= 1) {
+            await telegramBot.sendMessage(chatId, "Please enter a valid amount in satoshis.");
+            return;
+        }
+    
+        try {
+            // Call your create_withdraw_request function
+            const { withdrawal_details } = await create_withdraw_request(name, amount);
+            await telegramBot.sendMessage(chatId, withdrawal_details, { parse_mode: 'HTML' });
+        } catch (error) {
+            console.error('Error processing withdrawal request:', error);
+            await telegramBot.sendMessage(chatId, "An error occurred while processing your request.");
+        }
     });
 }
 const trySendTelegramMessage = async (message = undefined) => {

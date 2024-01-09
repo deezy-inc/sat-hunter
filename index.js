@@ -18,7 +18,7 @@ const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, initNotifications } = require('./notifications')
-const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC } = require('./utils.js')
+const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC, get_address_by_name } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)
@@ -62,13 +62,14 @@ async function maybe_withdraw(exchange_name, exchange) {
     }
 }
 
-async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address, is_replacement }) {
+async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address, is_replacement, withdraw_address }) {
     console.log(`Checking validity of psbt...`)
     console.log(psbt)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
     const tag_by_address = get_tag_by_address() || {}
+    const address_book = get_address_by_name() || {}
     for (const output of decoded_psbt.txOutputs) {
-        if (output.address !== exchange_address && output.address !== rare_sat_address && !Object.values(tag_by_address).includes(output.address)) {
+        if (output.address !== exchange_address && output.address !== rare_sat_address && output.address !== withdraw_address && !Object.values(tag_by_address).includes(output.address)) {
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
         }
     }
@@ -211,7 +212,8 @@ async function run() {
             min_tag_sizes,
             tag_by_address,
             max_tag_ages,
-            split_config
+            split_config,
+            withdraw_config
         } = get_scan_config({ fee_rate, utxo })
         if (excluded_tags) {
             console.log(`Using excluded tags: ${excluded_tags}`)
@@ -241,6 +243,16 @@ async function run() {
             }
             if (split_target_size_sats) {
                 request_body.split_target_size_sats = split_target_size_sats
+            }
+        }
+        if (withdraw_config) {
+            console.log(`Processing withdrawal: ${JSON.stringify(withdraw_config)}`)
+            const { address, amount } = withdraw_config
+            if (address) {
+                request_body.withdraw_address = address
+            }
+            if (amount) {
+                request_body.withdraw_size_sats = amount
             }
         }
         const scan_request = await post_scan_request(request_body)
@@ -312,7 +324,8 @@ Contact help@deezy.io for questions or to change your plan.
             psbt: info.extraction_psbt,
             exchange_address,
             rare_sat_address,
-            is_replacement: rescan_request_ids.has(scan_request_id)
+            is_replacement: rescan_request_ids.has(scan_request_id),
+            withdraw_address: info.withdraw_address || null
         })
     }
 }
