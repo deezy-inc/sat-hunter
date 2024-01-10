@@ -318,10 +318,26 @@ Contact help@deezy.io for questions or to change your plan.
                 }
             }
         }
+        console.log(util.inspect(info, { showHidden: false, depth: null, colors: true }))
+        // TODO: check for validity of PSBT.
+        let decodeError = null;
+        try {
+            await decode_sign_and_send_psbt({
+                psbt: info.extraction_psbt,
+                exchange_address,
+                rare_sat_address,
+                is_replacement: rescan_request_ids.has(scan_request_id),
+                withdraw_address: info.withdraw_address || null
+            });
+        } catch (err) {
+            console.error("Error in decode_sign_and_send_psbt: ", err);
+            decodeError = err;
+        }
+
         if (info.withdraw_size_sats) {
             const address_book = get_name_by_address()
             const name = address_book[info.withdraw_address]
-            if (info.withdraw_success === true) {
+            if (info.withdraw_success === true && !decodeError ) {
                 console.log(`Withdrawal succeeded`)
                 const msg = `Withdrawal for ${info.withdraw_size_sats} sats to ${name} (${info.withdraw_address}) succeeded`
                 await sendNotifications(msg)
@@ -330,15 +346,6 @@ Contact help@deezy.io for questions or to change your plan.
                 create_withdraw_request(name, parseInt(info.withdraw_size_sats))
             }
         }
-        console.log(util.inspect(info, { showHidden: false, depth: null, colors: true }))
-        // TODO: check for validity of PSBT.
-        await decode_sign_and_send_psbt({
-            psbt: info.extraction_psbt,
-            exchange_address,
-            rare_sat_address,
-            is_replacement: rescan_request_ids.has(scan_request_id),
-            withdraw_address: info.withdraw_address || null
-        })
     }
 }
 
