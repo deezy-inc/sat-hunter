@@ -5,6 +5,7 @@ const util = require('util')
 const ecc = require('tiny-secp256k1')
 const bitcoin = require('bitcoinjs-lib')
 const { delete_scan_configs } = require('./storage')
+const { create_withdraw_request } = require('./commands')
 bitcoin.initEccLib(ecc)
 const exchanges = require('./exchanges/config.js')
 const {
@@ -18,7 +19,7 @@ const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, initNotifications } = require('./notifications')
-const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC, get_address_by_name } = require('./utils.js')
+const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC, get_name_by_address } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)
@@ -67,7 +68,6 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(psbt)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
     const tag_by_address = get_tag_by_address() || {}
-    const address_book = get_address_by_name() || {}
     for (const output of decoded_psbt.txOutputs) {
         if (output.address !== exchange_address && output.address !== rare_sat_address && output.address !== withdraw_address && !Object.values(tag_by_address).includes(output.address)) {
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
@@ -316,6 +316,18 @@ Contact help@deezy.io for questions or to change your plan.
                 for (const msg of messages) {
                     await sendNotifications(msg)
                 }
+            }
+        }
+        if (info.withdraw_size_sats) {
+            const address_book = get_name_by_address()
+            const name = address_book[info.withdraw_address]
+            if (info.withdraw_success === true) {
+                console.log(`Withdrawal succeeded`)
+                const msg = `Withdrawal for ${info.withdraw_size_sats} sats to ${name} (${info.withdraw_address}) succeeded`
+                await sendNotifications(msg)
+            } else {
+                console.log(`Withdrawal failed, adding back to withdrawal queue`)
+                create_withdraw_request(name, parseInt(info.withdraw_size_sats))
             }
         }
         console.log(util.inspect(info, { showHidden: false, depth: null, colors: true }))

@@ -89,6 +89,18 @@ function get_address_by_name() {
     }, {});
 }
 
+function get_name_by_address() {
+    let configured_address_book = process.env.ADDRESS_BOOK
+    if (!configured_address_book || configured_address_book.trim() === '') {
+        return null
+    }
+    return configured_address_book.trim().split(' ').reduce((acc, pair_name_by_address) => {
+        const [name, address] = pair_name_by_address.trim().split(':');
+        acc[address] = name;
+        return acc;
+    }, {});
+}
+
 function get_included_tags({ fee_rate }) {
     let configured_included_tags = process.env.INCLUDE_TAGS
     if (process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD)) {
@@ -174,5 +186,6 @@ module.exports = {
     sleep,
     get_scan_config,
     get_max_tag_ages,
-    get_address_by_name
+    get_address_by_name,
+    get_name_by_address
 }
