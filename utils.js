@@ -122,6 +122,10 @@ function get_included_tags({ fee_rate }) {
 
 const satoshi_to_BTC = (satoshi) => parseFloat((satoshi / 100000000).toFixed(8));
 
+const BTC_to_satoshi = (btc) => {
+    return Math.floor(btc * 100000000);
+};
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function get_split_config({ fee_rate }) {
@@ -182,6 +186,7 @@ module.exports = {
     get_split_config,
     get_included_tags,
     satoshi_to_BTC,
+    BTC_to_satoshi,
     get_tag_by_address,
     sleep,
     get_scan_config,
