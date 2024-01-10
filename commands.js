@@ -59,7 +59,9 @@ const create_withdraw_request = async (name, amount) => {
         console.error(err);
     }
 
-    const withdrawal_details = `Withdrawal request created for ${name}: ${amount} satoshis`
+    const btc_amount = satoshi_to_BTC(amount)
+
+    const withdrawal_details = `Withdrawal request created for ${name}: ${btc_amount} BTC`
 
     return {
         withdrawal_details
