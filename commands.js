@@ -1,5 +1,6 @@
 const { get_user_limits } = require("./deezy")
-const { satoshi_to_BTC } = require("./utils")
+const { save_withdraw_request } = require("./storage")
+const { satoshi_to_BTC, get_address_by_name } = require("./utils")
 
 const get_payment_details = async () => {
     const {
@@ -40,6 +41,32 @@ Payment Address:
     }
 }
 
+const create_withdraw_request = async (name, amount) => {
+    const address_book = get_address_by_name()
+
+    if (!address_book) {
+        throw new Error(`No address book found`)
+    }
+
+    if (!address_book[name]) {
+        throw new Error(`No address found for ${name}`)
+    }
+
+    try {
+        save_withdraw_request(address_book[name], amount);
+    } catch (err) {
+        console.log(`Error saving withdrawal request: ${err}`);
+        console.error(err);
+    }
+
+    const withdrawal_details = `Withdrawal request created for ${name}: ${amount} satoshis`
+
+    return {
+        withdrawal_details
+    }
+}
+
 module.exports = {
-    get_payment_details
+    get_payment_details,
+    create_withdraw_request
 }

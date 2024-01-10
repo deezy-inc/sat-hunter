@@ -10,7 +10,8 @@
     "test": "jest",
     "coverage": "jest --coverage",
     "report": "jest --coverage && open coverage/lcov-report/index.html",
-    "hunter:limits": "node -r dotenv/config scripts/get_payment_details"
+    "hunter:limits": "node -r dotenv/config scripts/get_payment_details",
+    "hunter:withdraw": "node -r dotenv/config scripts/create_withdraw_request"
   },
   "jest": {
     "setupFiles": [
