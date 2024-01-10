@@ -59,7 +59,7 @@ async function initCommands() {
             await telegramBot.sendMessage(chatId, withdrawal_details, { parse_mode: 'HTML' });
         } catch (error) {
             console.error('Error processing withdrawal request:', error);
-            await telegramBot.sendMessage(chatId, "An error occurred while processing your request.");
+            await telegramBot.sendMessage(chatId, `An error occurred while processing your request. ${error.message}.`);
         }
     });
 }
