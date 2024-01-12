@@ -12,8 +12,8 @@ const {
 let lastSentMessage = '';
 
 const sendNotifications = async (message = undefined, type = undefined) => {
-  // Do not send duplicate payment required messages
-  if (type !== 'payment_req' || message !== lastSentMessage) {
+  // Do not send duplicate payment required messages or withdrawal success messages
+  if ((type !== 'payment_req' && type !== 'withdraw_success') || message !== lastSentMessage) {
     await trySendPushover(message);
     await trySendTelegramMessage(message);
     lastSentMessage = message;
