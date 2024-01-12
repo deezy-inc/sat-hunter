@@ -9,14 +9,31 @@ const {
   PUSHOVER_ENABLED
 } = require('./pushover');
 
-let lastSentMessage = '';
+const lastSentMessages = new Map();
 
-const sendNotifications = async (message = undefined, type = undefined) => {
-  // Do not send duplicate payment required messages or withdrawal success messages
-  if ((type !== 'payment_req' && type !== 'withdraw_success') || message !== lastSentMessage) {
-    await trySendPushover(message);
-    await trySendTelegramMessage(message);
-    lastSentMessage = message;
+const sendNotifications = async (message = undefined, type = undefined, uid = undefined) => {
+  // Check if the type is provided and get the last message of that type
+  if (type && lastSentMessages.has(type)) {
+      const lastMsg = lastSentMessages.get(type);
+
+      // Check if the uid is defined and compare it
+      if (uid && lastMsg.uid === uid) {
+          // If they are equal, do not send the message
+          return;
+      } else if (message === lastMsg.message && !uid) {
+          // If the message is the same and no uid was provided, do not send it
+          return;
+      }
+  }
+
+  // Proceed to send the message
+  if (message) {
+      await trySendPushover(message);
+      await trySendTelegramMessage(message);
+      // Update the last sent message for this type
+      if (type) {
+        lastSentMessages.set(type, { message, uid });
+      }
   }
 };
 

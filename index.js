@@ -341,7 +341,7 @@ Contact help@deezy.io for questions or to change your plan.
                 console.log(`Withdrawal succeeded`)
                 const withdraw_size_btc = satoshi_to_BTC(info.withdraw_size_sats)
                 const msg = `Withdrawal for ${withdraw_size_btc} BTC to ${name} (${info.withdraw_address}) succeeded`
-                await sendNotifications(msg, 'withdraw_success')
+                await sendNotifications(msg, 'withdraw_success', info.utxo)
             } else {
                 console.log(`Withdrawal failed, adding back to withdrawal queue`)
                 create_withdraw_request(name, parseInt(info.withdraw_size_sats))
