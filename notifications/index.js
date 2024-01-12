@@ -19,10 +19,10 @@ const sendNotifications = async (message = undefined, type = undefined, uid = un
       // Check if the uid is defined and compare it
       if (uid && lastMsg.uid === uid) {
           // If they are equal, do not send the message
-          return;
+          return Error(`Message already sent for ${type} ${uid}`);
       } else if (message === lastMsg.message && !uid) {
           // If the message is the same and no uid was provided, do not send it
-          return;
+          return Error(`Message already sent for ${type}`);
       }
   }
 
