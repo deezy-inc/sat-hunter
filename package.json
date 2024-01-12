@@ -34,8 +34,11 @@
     "bitcoin-address-validation": "^2.2.3",
     "bitcoinjs-lib": "^6.1.5",
     "bybit-api": "^3.7.3",
+    "deribit-nodejs": "^2.1.0",
     "dotenv": "^16.3.1",
     "node-telegram-bot-api": "^0.63.0",
+    "one-time-password": "^0.1.6",
+    "otp-generator": "^4.0.1",
     "prompts": "^2.4.2",
     "tiny-secp256k1": "^2.2.3",
     "totp-generator": "^0.0.14"

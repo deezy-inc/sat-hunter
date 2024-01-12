@@ -112,6 +112,9 @@ Works ok - kind of slow withdrawals from them.
 ## Kucoin
 Newly added
 
+## Deribit
+Newly added, withdrawals can take up to 2 hours
+
 ## MORE!!
 Help us add more exchanges - we want to add them all! Open an Issue in the Github to request a new one.
 
