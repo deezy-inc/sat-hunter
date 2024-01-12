@@ -27,20 +27,20 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@binance/connector": "^3.0.0",
-    "axios": "^1.6.2",
-    "bip32": "^4.0.0",
-    "bip39": "^3.1.0",
-    "bitcoin-address-validation": "^2.2.3",
-    "bitcoinjs-lib": "^6.1.5",
-    "bybit-api": "^3.7.3",
-    "dotenv": "^16.3.1",
-    "node-telegram-bot-api": "^0.64.0",
-    "prompts": "^2.4.2",
-    "tiny-secp256k1": "^2.2.3",
-    "totp-generator": "^0.0.14"
+    "@binance/connector": "3.0.0",
+    "axios": "1.6.2",
+    "bip32": "4.0.0",
+    "bip39": "3.1.0",
+    "bitcoin-address-validation": "2.2.3",
+    "bitcoinjs-lib": "6.1.5",
+    "bybit-api": "3.7.3",
+    "dotenv": "16.3.1",
+    "node-telegram-bot-api": "0.64.0",
+    "prompts": "2.4.2",
+    "tiny-secp256k1": "2.2.3",
+    "totp-generator": "0.0.14"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "29.7.0"
   }
 }
