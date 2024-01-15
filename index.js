@@ -36,7 +36,7 @@ async function maybe_withdraw(exchange_name, exchange) {
     })
     console.log(`BTC balance on ${exchange_name}: ${btc_balance}`)
 
-    if (btc_balance > (process.env.WITHDRAWAL_THRESHOLD_BTC || 0)) {
+    if (parseFloat(btc_balance) > parseFloat(process.env.WITHDRAWAL_THRESHOLD_BTC || 0)) {
         console.log(`Withdrawing from ${exchange_name}...`)
         let withdrawal_amount = btc_balance
         if (process.env.MAX_WITHDRAWAL_BTC) {
