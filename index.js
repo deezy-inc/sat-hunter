@@ -22,6 +22,7 @@ const { sendNotifications, initNotifications } = require('./notifications')
 const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC, get_name_by_address } = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
+const LOCAL_WALLET_ADDRESS = process.env.LOCAL_WALLET_ADDRESS
 const available_exchanges = Object.keys(exchanges)
 const FALLBACK_MAX_FEE_RATE = 200
 const SCAN_MAX_RETRIES = 180
@@ -63,26 +64,49 @@ async function maybe_withdraw(exchange_name, exchange) {
     }
 }
 
-async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address, is_replacement, withdraw_address }) {
+async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address, is_replacement, withdraw_address, consolidation_required }) {
     console.log(`Checking validity of psbt...`)
     console.log(psbt)
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
     const tag_by_address = get_tag_by_address() || {}
-    for (const output of decoded_psbt.txOutputs) {
-        if (output.address !== exchange_address && output.address !== rare_sat_address && output.address !== withdraw_address && !Object.values(tag_by_address).includes(output.address)) {
+    const witnessUtxos = [];
+    // Consolidation is required for exchanges that don't support multiple utxos in a single deposit
+    let totalAmountForConsolidation = 0;
+    const consolidationInputs = [];
+    const consolidationWitnessUtxos = [];
+    let final_consolidation_hex = null;
+    let final_consolidation_fee_rate = null;
+
+    for (const [index, output] of decoded_psbt.txOutputs.entries()) {
+        if (output.address !== LOCAL_WALLET_ADDRESS && output.address !== exchange_address && output.address !== rare_sat_address && output.address !== withdraw_address && !Object.values(tag_by_address).includes(output.address)) {
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
+        }
+
+        // create consolidation inputs
+        if (consolidation_required && output.address === LOCAL_WALLET_ADDRESS) {
+            totalAmountForConsolidation += output.value;
+            consolidationInputs.push({
+                hash: output.hash,
+                index: index,
+                nonWitnessUtxo: output.nonWitnessUtxo
+            });
+
+            consolidationWitnessUtxos.push({
+                value: output.value,
+                script: output.script
+            })
         }
     }
     const prev_tx = bitcoin.Transaction.fromBuffer(decoded_psbt.data.inputs[0].nonWitnessUtxo)
-    const witnessUtxo = {
+    witnessUtxos.push({
         value: prev_tx.outs[decoded_psbt.txInputs[0].index].value,
         script: prev_tx.outs[decoded_psbt.txInputs[0].index].script
-    }
+    })
 
     console.log(`Signing psbt...`)
     const signed_psbt = await sign_and_finalize_transaction({
         psbt: psbt,
-        witnessUtxo
+        witnessUtxos
     })
     console.log(signed_psbt)
     const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt)
@@ -101,6 +125,64 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
         throw new Error(`Fee rate is too high: ${final_fee_rate} sat/vbyte`)
     }
     console.log(final_hex)
+
+    // If consolidation is required, we need to create a new PSBT with the consolidation inputs
+    if (consolidation_required && consolidationInputs.length > 0) {
+        console.log(`Creating consolidation PSBT...`);
+        const consolidationPsbt = new bitcoin.Psbt();
+        for (const input of consolidationInputs) {
+            consolidationPsbt.addInput({
+                hash: final_tx.getHash(),
+                index: input.index,
+                nonWitnessUtxo: Buffer.from(final_hex, 'hex'),
+                sighashType: bitcoin.Transaction.SIGHASH_ALL,
+            });
+        }
+        consolidationPsbt.addOutput({
+            address: exchange_address,
+            value: totalAmountForConsolidation,
+        });
+
+        let signedConsolidationPsbt = await sign_and_finalize_transaction({
+            psbt: consolidationPsbt.toBase64(),
+            witnessUtxos: consolidationWitnessUtxos
+        });
+        const estimator = bitcoin.Psbt.fromBase64(signedConsolidationPsbt);
+        const estimatorSize = estimator.extractTransaction().virtualSize();
+        const consolidationTxFee = estimatorSize * final_fee_rate;
+
+        let adjustedOutputValue = totalAmountForConsolidation - consolidationTxFee;
+        if (adjustedOutputValue < 0) {
+            throw new Error('Consolidation transaction fee exceeds total input value.');
+        }
+        // Update the output value directly in the PSBT
+        consolidationPsbt.updateOutput(0, {
+            address: exchange_address,
+            value: adjustedOutputValue,
+        });
+        signedConsolidationPsbt = await sign_and_finalize_transaction({
+            psbt: consolidationPsbt.toBase64(),
+            witnessUtxos: consolidationWitnessUtxos
+        });
+
+        //console.log(signedConsolidationPsbt)
+        const final_signed_consolidation_psbt = bitcoin.Psbt.fromBase64(signedConsolidationPsbt)
+        if (consolidationTxFee > (process.env.MAX_FEE_SATS || 10000000)) {
+            console.log(`Fee of ${consolidationTxFee} is higher than configured max fee of ${process.env.MAX_FEE_SATS || 10000000} sats. Will not broadcast`)
+            return
+        }
+        const final_consolidation_tx = final_signed_consolidation_psbt.extractTransaction()
+        const final_consolidation_vbytes = final_consolidation_tx.virtualSize()
+        const final_consolidation_hex = final_consolidation_tx.toHex()
+        const final_consolidation_fee_rate = (consolidationTxFee / final_consolidation_vbytes).toFixed(1)
+        console.log(`Final fee rate of signed psbt is ~${final_consolidation_fee_rate} sat/vbyte`)
+        if (parseFloat(final_fee_rate) > (process.env.MAX_FEE_RATE || FALLBACK_MAX_FEE_RATE)) {
+            throw new Error(`Fee rate is too high: ${final_consolidation_fee_rate} sat/vbyte`)
+        }
+        console.log(final_consolidation_hex)
+
+        console.log(`Consolidation PSBT created and signed.`);
+    }
     console.log(`Broadcasting transaction...`)
     const txid = await broadcast_transaction({ hex: final_hex })
     if (!txid) return
@@ -110,6 +192,20 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
             `Broadcasted ${is_replacement ? 'replacement ' : ''
             }tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`
         )
+    }
+
+    if (final_consolidation_hex) {
+        sleep(10000);
+        console.log(`Broadcasting consolidation transaction...`)
+        const consolidation_txid = await broadcast_transaction({ hex: final_consolidation_hex })
+        if (!consolidation_txid) return
+        console.log(`Broadcasted transaction with txid: ${consolidation_txid} and fee rate of ${final_consolidation_fee_rate} sat/vbyte`)
+        if (!process.env.ONLY_NOTIFY_ON_SATS) {
+            await sendNotifications(
+                `Broadcasted ${is_replacement ? 'replacement ' : ''
+                }tx at ${final_consolidation_fee_rate} sat/vbyte https://mempool.space/tx/${consolidation_txid}`
+            )
+        }
     }
 }
 
@@ -202,7 +298,7 @@ async function run() {
         const request_body = {
             utxo_to_scan: utxo,
             extract: true,
-            regular_funds_addresses: [exchange_address],
+            regular_funds_addresses: exchange.DOES_NOT_SUPPORT_MULTIPLE_UTXOS ? [LOCAL_WALLET_ADDRESS]:[exchange_address],
             special_sat_addresses: [rare_sat_address],
             extraction_fee_rate: fee_rate
         }
@@ -327,7 +423,8 @@ Contact help@deezy.io for questions or to change your plan.
                 exchange_address,
                 rare_sat_address,
                 is_replacement: rescan_request_ids.has(scan_request_id),
-                withdraw_address: info.withdraw_address || null
+                withdraw_address: info.withdraw_address || null,
+                consolidation_required: exchange.DOES_NOT_SUPPORT_MULTIPLE_UTXOS
             });
         } catch (err) {
             console.error("Error in decode_sign_and_send_psbt: ", err);

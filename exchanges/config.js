@@ -10,6 +10,8 @@ const bybit = require('./bybit')
 const kucoin = require('./kucoin')
 const deribit = require('./deribit')
 
+deribit.DOES_NOT_SUPPORT_MULTIPLE_UTXOS = true;
+
 module.exports = {
   bitfinex, kraken, coinbase, gemini, binance, coinbase_exchange, coinbase_prime, okx, bybit, kucoin, deribit
 }

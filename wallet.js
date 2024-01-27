@@ -117,33 +117,39 @@ async function get_utxos() {
     return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
 }
 
-function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
+function sign_and_finalize_transaction({ psbt, witnessUtxos }) {
     if (WALLET_TYPE === 'core') {
-        const processed_psbt = walletprocesspsbt({ psbt }).psbt
-        return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt
-    }
-    let psbt_object = bitcoin.Psbt.fromBase64(psbt)
-    if (local_wallet_type === 'p2tr') {
-        psbt_object.updateInput(0, {
-            tapInternalKey: child_xonly_pubkey,
-            witnessUtxo,
-        })
-        psbt_object = psbt_object.signInput(0, tweaked_child_node, [bitcoin.Transaction.SIGHASH_ALL])
-    } else {
-        psbt_object.updateInput(0, {
-            bip32Derivation: [
-                {
-                    masterFingerprint: root_hd_node.fingerprint,
-                    path: derivation_path,
-                    pubkey: child_hd_node.publicKey
-                }
-            ]
-        })
-        psbt_object = psbt_object.signInputHD(0, root_hd_node, [bitcoin.Transaction.SIGHASH_ALL])
+        const processed_psbt = walletprocesspsbt({ psbt }).psbt;
+        return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt;
     }
 
-    return psbt_object.finalizeAllInputs().toBase64()
-    // Note: assumes one input
+    let psbt_object = bitcoin.Psbt.fromBase64(psbt);
+
+    // Iterate over each input in the PSBT
+    witnessUtxos.forEach((witnessUtxo, index) => {
+        if (local_wallet_type === 'p2tr') {
+            // For Taproot inputs, update with tapInternalKey and the corresponding witnessUtxo
+            psbt_object.updateInput(index, {
+                tapInternalKey: child_xonly_pubkey,
+                witnessUtxo,
+            });
+            psbt_object = psbt_object.signInput(index, tweaked_child_node,  [bitcoin.Transaction.SIGHASH_ALL]);
+        } else {
+            // For non-Taproot inputs, update with BIP32 derivation info and sign
+            psbt_object.updateInput(index, {
+                bip32Derivation: [{
+                    masterFingerprint: root_hd_node.fingerprint,
+                    path: derivation_path,
+                    pubkey: child_hd_node.publicKey,
+                }],
+                witnessUtxo,
+            });
+            psbt_object = psbt_object.signInputHD(index, root_hd_node,  [bitcoin.Transaction.SIGHASH_ALL]);
+        }
+    });
+
+    // Finalize all inputs and return the serialized PSBT
+    return psbt_object.finalizeAllInputs().toBase64();
 }
 
 async function broadcast_to_mempool_space({ hex }) {
