@@ -1,46 +1,47 @@
 {
-  "name": "sat-hunter",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node -r dotenv/config index.js",
-    "setup-telegram": "node -r dotenv/config setup-telegram-bot.js",
-    "encrypt-seed": "node -r dotenv/config scripts/encrypt-seed.js",
-    "test": "jest",
-    "coverage": "jest --coverage",
-    "report": "jest --coverage && open coverage/lcov-report/index.html",
-    "hunter:limits": "node -r dotenv/config scripts/get_payment_details",
-    "hunter:withdraw": "node -r dotenv/config scripts/create_withdraw_request"
-  },
-  "jest": {
-    "setupFiles": [
-      "./jest.setup.js"
-    ]
-  },
-  "engines": {
-    "node": ">=18.x",
-    "npm": "9.x"
-  },
-  "engineStrict": true,
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@binance/connector": "^3.0.0",
-    "axios": "^1.6.2",
-    "bip32": "^4.0.0",
-    "bip39": "^3.1.0",
-    "bitcoin-address-validation": "^2.2.3",
-    "bitcoinjs-lib": "^6.1.5",
-    "bybit-api": "^3.7.3",
-    "dotenv": "^16.3.1",
-    "node-telegram-bot-api": "^0.63.0",
-    "prompts": "^2.4.2",
-    "tiny-secp256k1": "^2.2.3",
-    "totp-generator": "^0.0.14"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0"
-  }
+    "name": "sat-hunter",
+    "version": "1.0.1",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "node -r dotenv/config index.js",
+        "setup-telegram": "node -r dotenv/config setup-telegram-bot.js",
+        "encrypt-seed": "node -r dotenv/config scripts/encrypt-seed.js",
+        "test": "jest",
+        "coverage": "jest --coverage",
+        "report": "jest --coverage && open coverage/lcov-report/index.html",
+        "hunter:limits": "node -r dotenv/config scripts/get_payment_details",
+        "hunter:withdraw": "node -r dotenv/config scripts/create_withdraw_request",
+        "hunter:bulk-transfer": "node -r dotenv/config scripts/bulk-transfer"
+    },
+    "jest": {
+        "setupFiles": [
+            "./jest.setup.js"
+        ]
+    },
+    "engines": {
+        "node": ">=18.x",
+        "npm": "9.x"
+    },
+    "engineStrict": true,
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@binance/connector": "^3.0.0",
+        "axios": "^1.6.2",
+        "bip32": "^4.0.0",
+        "bip39": "^3.1.0",
+        "bitcoin-address-validation": "^2.2.3",
+        "bitcoinjs-lib": "^6.1.5",
+        "bybit-api": "^3.7.3",
+        "dotenv": "^16.3.1",
+        "node-telegram-bot-api": "^0.63.0",
+        "prompts": "^2.4.2",
+        "tiny-secp256k1": "^2.2.3",
+        "totp-generator": "^0.0.14"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0"
+    }
 }
