@@ -1,5 +1,5 @@
-const fs = require('fs')
-const { completed_bulk_transfer_dir, pending_bulk_transfer_dir, data_dir, scan_configs_dir } = require('./constants')
+const fs = require("fs")
+const { completed_bulk_transfer_dir, pending_bulk_transfer_dir, data_dir, scan_configs_dir } = require("./constants")
 
 if (!fs.existsSync(data_dir)) {
     fs.mkdirSync(data_dir)
@@ -29,18 +29,18 @@ function save_scan_config({ utxo, config }) {
     fs.writeFileSync(file, JSON.stringify(config))
 }
 
-function save_bulk_transfer(file_name, config, type = 'pending') {
+function save_bulk_transfer(file_name, config, type = "pending") {
     let dir = pending_bulk_transfer_dir
-    if (type === 'completed') {
+    if (type === "completed") {
         dir = completed_bulk_transfer_dir
     }
     const file = `${dir}/${file_name}.json`
     fs.writeFileSync(file, JSON.stringify(config, null, 2))
 }
 
-function delete_bulk_transfer(file_name, type = 'pending') {
+function delete_bulk_transfer(file_name, type = "pending") {
     let dir = pending_bulk_transfer_dir
-    if (type === 'completed') {
+    if (type === "completed") {
         dir = completed_bulk_transfer_dir
     }
     const file = `${dir}/${file_name}.json`
@@ -52,7 +52,7 @@ function delete_bulk_transfer(file_name, type = 'pending') {
 }
 
 function delete_scan_configs() {
-    const dir = '${scan_configs_dir}'
+    const dir = `${scan_configs_dir}`
     if (fs.existsSync(dir)) {
         fs.rmdirSync(dir, { recursive: true })
     }
@@ -63,7 +63,7 @@ function save_withdraw_request(address, amount) {
     const withdrawRequest = { address, amount }
 
     const file = `${data_dir}/withdraw_requests.json`
-    fs.appendFileSync(file, JSON.stringify(withdrawRequest) + '\n')
+    fs.appendFileSync(file, JSON.stringify(withdrawRequest) + "\n")
 }
 
 function process_first_withdrawal_request() {
@@ -72,18 +72,18 @@ function process_first_withdrawal_request() {
     // Read the file content
     let fileContent
     try {
-        fileContent = fs.readFileSync(filePath, 'utf8')
+        fileContent = fs.readFileSync(filePath, "utf8")
     } catch (err) {
         // Handle the error (e.g., file does not exist)
-        console.error('Error reading the file:', err)
+        console.error("Error reading the file:", err)
         return null
     }
 
     // Split the content into lines
-    const lines = fileContent.split('\n').filter((line) => line.trim())
+    const lines = fileContent.split("\n").filter((line) => line.trim())
 
     if (lines.length === 0) {
-        console.log('No withdrawal requests to process.')
+        console.log("No withdrawal requests to process.")
         return null
     }
 
@@ -92,13 +92,13 @@ function process_first_withdrawal_request() {
     try {
         firstRequest = JSON.parse(lines[0])
     } catch (err) {
-        console.error('Error parsing the first request:', lines[0], err)
+        console.error("Error parsing the first request:", lines[0], err)
         return null
     }
 
     // Remove the first line and rewrite the file
     lines.shift()
-    fs.writeFileSync(filePath, lines.join('\n'))
+    fs.writeFileSync(filePath, lines.join("\n"))
 
     return firstRequest
 }

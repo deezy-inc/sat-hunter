@@ -1,25 +1,25 @@
-require('dotenv').config({
+require("dotenv").config({
     override: true
 })
-const util = require('util')
-const fs = require('fs').promises
-const ecc = require('tiny-secp256k1')
-const bitcoin = require('bitcoinjs-lib')
-const { delete_scan_configs, delete_bulk_transfer, save_bulk_transfer } = require('./storage')
-const { create_withdraw_request } = require('./commands')
+const util = require("util")
+const fs = require("fs").promises
+const ecc = require("tiny-secp256k1")
+const bitcoin = require("bitcoinjs-lib")
+const { delete_scan_configs, delete_bulk_transfer, save_bulk_transfer } = require("./storage")
+const { create_withdraw_request } = require("./commands")
 bitcoin.initEccLib(ecc)
-const exchanges = require('./exchanges/config.js')
+const exchanges = require("./exchanges/config.js")
 const {
     get_utxos,
     sign_and_finalize_transaction,
     broadcast_transaction,
     fetch_most_recent_unconfirmed_send,
     init_wallet
-} = require('./wallet')
-const { get_fee_rate } = require('./fees')
-const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
-const { generate_satributes_messages } = require('./satributes')
-const { sendNotifications, initNotifications } = require('./notifications')
+} = require("./wallet")
+const { get_fee_rate } = require("./fees")
+const { post_scan_request, get_scan_request, get_user_limits } = require("./deezy")
+const { generate_satributes_messages } = require("./satributes")
+const { sendNotifications, initNotifications } = require("./notifications")
 const {
     sleep,
     get_tag_by_address,
@@ -27,8 +27,8 @@ const {
     satoshi_to_BTC,
     get_name_by_address,
     get_warning_limits_exceeded
-} = require('./utils.js')
-const { pending_bulk_transfer_dir } = require('./constants.js')
+} = require("./utils.js")
+const { pending_bulk_transfer_dir } = require("./constants.js")
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)
@@ -126,7 +126,7 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     if (!process.env.ONLY_NOTIFY_ON_SATS) {
         await sendNotifications(
             `Broadcasted ${
-                is_replacement ? 'replacement ' : ''
+                is_replacement ? "replacement " : ""
             }tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`
         )
     }
@@ -135,11 +135,11 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
 async function validate_user_limits() {
     const { payment_address, amount, days, one_time_cost } = await get_user_limits()
     const allowed_volume = satoshi_to_BTC(amount) // We are using satoshis in the DB as default
-    const tier_info = allowed_volume > 0 ? ` allows ${allowed_volume} BTC per ${days} days and ` : ''
+    const tier_info = allowed_volume > 0 ? ` allows ${allowed_volume} BTC per ${days} days and ` : ""
     const msg = get_warning_limits_exceeded({ payment_address, tier_info, one_time_cost })
     console.log(`Scan request with id: ${scan_request_id} failed`)
     console.log(msg)
-    await sendNotifications(msg, 'payment_req')
+    await sendNotifications(msg, "payment_req")
     await sleep(PAYMENT_LOOP_SECONDS * 1000)
 }
 
@@ -153,27 +153,27 @@ async function loopScanAddresses() {
         }
 
         for (const file of files) {
-            const scan_request_id = file.split('.')[0]
+            const scan_request_id = file.split(".")[0]
             const info = await get_scan_request({ scan_request_id })
             console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`)
-            if (info.status === 'FAILED_LIMITS_EXCEEDED') {
+            if (info.status === "FAILED_LIMITS_EXCEEDED") {
                 await validate_user_limits()
                 continue
             }
-            if (info.status === 'FAILED') {
+            if (info.status === "FAILED") {
                 console.log(`Scan request with id: ${scan_request_id} failed`)
                 continue
             }
-            if (info.status !== 'COMPLETED') {
+            if (info.status !== "COMPLETED") {
                 console.log(`Waiting for scan to complete: ${scan_request_id}...`)
                 await sleep(1000)
                 continue
             }
-            if (info.status === 'COMPLETED') {
+            if (info.status === "COMPLETED") {
                 delete_bulk_transfer(scan_request_id)
-                save_bulk_transfer(scan_request_id, info, 'completed')
-                const tag = Object.keys(info.tag_limits || {})?.[0] || 'tag'
-                const quantity = Object.values(info.tag_limits || {})?.[0] || 'quantity'
+                save_bulk_transfer(scan_request_id, info, "completed")
+                const tag = Object.keys(info.tag_limits || {})?.[0] || "tag"
+                const quantity = Object.values(info.tag_limits || {})?.[0] || "quantity"
                 const message = `Bulk transfer of ${tag} ${quantity} have been completed, results can be viewed at data/completed_bulk_transfer/${scan_request_id}.json`
                 console.log(message)
                 await sendNotifications(message)
@@ -187,16 +187,16 @@ async function loopScanAddresses() {
 async function loopScanUtxos() {
     const exchange_name = process.env.ACTIVE_EXCHANGE
     if (!exchange_name) {
-        throw new Error(`ACTIVE_EXCHANGE must be set in .env\nAvailable options are ${available_exchanges.join(', ')}`)
+        throw new Error(`ACTIVE_EXCHANGE must be set in .env\nAvailable options are ${available_exchanges.join(", ")}`)
     }
 
     const exchange = exchanges[exchange_name]
     if (!exchange) {
-        throw new Error(`${exchange_name} is not a valid exchange. Available options are ${available_exchanges.join(', ')}`)
+        throw new Error(`${exchange_name} is not a valid exchange. Available options are ${available_exchanges.join(", ")}`)
     }
 
-    const withdrawal_disabled = process.env.DISABLE_WITHDRAWAL === '1'
-    const bank_run_enabled = process.env.BANK_RUN === '1'
+    const withdrawal_disabled = process.env.DISABLE_WITHDRAWAL === "1"
+    const bank_run_enabled = process.env.BANK_RUN === "1"
 
     if (withdrawal_disabled && bank_run_enabled) {
         throw new Error(
@@ -295,7 +295,7 @@ async function loopScanUtxos() {
             console.log(
                 `Using max tag ages: ${Object.entries(max_tag_ages)
                     .map(([tag, age]) => `${tag}:${age}`)
-                    .join(' ')}`
+                    .join(" ")}`
             )
             request_body.max_tag_ages = max_tag_ages
         }
@@ -303,7 +303,7 @@ async function loopScanUtxos() {
             console.log(
                 `Using tag by address: ${Object.entries(tag_by_address)
                     .map(([tag, address]) => `${tag}:${address}`)
-                    .join(' ')}`
+                    .join(" ")}`
             )
             request_body.tag_by_address = tag_by_address
         }
@@ -329,7 +329,7 @@ async function loopScanUtxos() {
         }
         const scan_request = await post_scan_request(request_body)
         if (!scan_request.id) {
-            throw new Error('Failed to initiate scan request')
+            throw new Error("Failed to initiate scan request")
         }
         scan_request_ids.push(scan_request.id)
         if (rescanned_utxos.has(utxo)) {
@@ -342,15 +342,15 @@ async function loopScanUtxos() {
         console.log(`Checking status of scan request with id: ${scan_request_id}`)
         const info = await get_scan_request({ scan_request_id })
         console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`)
-        if (info.status === 'FAILED_LIMITS_EXCEEDED') {
-            validate_user_limits()
+        if (info.status === "FAILED_LIMITS_EXCEEDED") {
+            await validate_user_limits()
             continue
         }
-        if (info.status === 'FAILED') {
+        if (info.status === "FAILED") {
             console.log(`Scan request with id: ${scan_request_id} failed`)
             continue
         }
-        if (info.status !== 'COMPLETED') {
+        if (info.status !== "COMPLETED") {
             console.log(`Waiting for scan to complete: ${scan_request_id}...`)
             await sleep(1000)
             num_retries++
@@ -382,7 +382,7 @@ async function loopScanUtxos() {
                 withdraw_address: info.withdraw_address || null
             })
         } catch (err) {
-            console.error('Error in decode_sign_and_send_psbt: ', err)
+            console.error("Error in decode_sign_and_send_psbt: ", err)
             decodeError = err
         }
 
@@ -393,7 +393,7 @@ async function loopScanUtxos() {
                 console.log(`Withdrawal succeeded`)
                 const withdraw_size_btc = satoshi_to_BTC(info.withdraw_size_sats)
                 const msg = `Withdrawal for ${withdraw_size_btc} BTC to ${name} (${info.withdraw_address}) succeeded`
-                await sendNotifications(msg, 'withdraw_success', info.utxo)
+                await sendNotifications(msg, "withdraw_success", info.utxo)
             } else {
                 console.log(`Withdrawal failed, adding back to withdrawal queue`)
                 create_withdraw_request(name, parseInt(info.withdraw_size_sats))
@@ -402,7 +402,6 @@ async function loopScanUtxos() {
     }
 }
 
-// Define recursive functions for loopScanUtxos and loopScanAddresses outside of runLoop
 async function loopUtxos() {
     await loopScanUtxos().catch((err) => {
         console.error(err)
@@ -428,14 +427,12 @@ async function runLoop() {
         console.log(`\n\nTotal memory used by the process: ${usedMemoryInMB} MB\n\n`)
     }
 
-    // Call getMemoryUsage immediately to log the memory usage at startup
     getMemoryUsage()
 
-    // Then set the interval to log it periodically
     setInterval(() => {
-        console.log('Logging memory usage...')
+        console.log("Logging memory usage...")
         getMemoryUsage()
-    }, LOOP_SECONDS * 10000) // Adjust the multiplier as needed
+    }, LOOP_SECONDS * 10000)
 
     // Start the loops
     loopUtxos()

@@ -1,5 +1,5 @@
-const { get_existing_scan_config_by_utxo, save_scan_config, process_first_withdrawal_request } = require('./storage')
-const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
+const { get_existing_scan_config_by_utxo, save_scan_config, process_first_withdrawal_request } = require("./storage")
+const VALID_SPLIT_TRIGGERS = ["NEVER", "ALWAYS", "NO_SATS"]
 
 function get_excluded_tags({ fee_rate }) {
     let configured_excluded_tags = process.env.EXCLUDE_TAGS
@@ -13,7 +13,7 @@ function get_excluded_tags({ fee_rate }) {
         console.log(`Using medium fee excluded tags`)
         configured_excluded_tags = process.env.EXCLUDE_TAGS_MEDIUM_FEE
     }
-    if (configured_excluded_tags === '') {
+    if (configured_excluded_tags === "") {
         // Explicitly set empty string means include all tags.
         return []
     }
@@ -22,8 +22,8 @@ function get_excluded_tags({ fee_rate }) {
     }
     return configured_excluded_tags
         .trim()
-        .split(' ')
-        .map((tag) => tag.split('/'))
+        .split(" ")
+        .map((tag) => tag.split("/"))
 }
 
 function get_min_tag_sizes({ fee_rate }) {
@@ -43,9 +43,9 @@ function get_min_tag_sizes({ fee_rate }) {
     }
     return configured_min_tag_sizes
         .trim()
-        .split(' ')
+        .split(" ")
         .reduce((acc, tagSize) => {
-            const [tag, size] = tagSize.trim().split(':')
+            const [tag, size] = tagSize.trim().split(":")
             acc[tag] = parseInt(size)
             return acc
         }, {})
@@ -68,9 +68,9 @@ function get_max_tag_ages({ fee_rate }) {
     }
     return configured_max_tag_ages
         .trim()
-        .split(' ')
+        .split(" ")
         .reduce((acc, tagAge) => {
-            const [tag, age] = tagAge.trim().split(':')
+            const [tag, age] = tagAge.trim().split(":")
             acc[tag] = parseInt(age)
             return acc
         }, {})
@@ -78,14 +78,14 @@ function get_max_tag_ages({ fee_rate }) {
 
 function get_tag_by_address() {
     let configured_tag_by_address = process.env.TAG_BY_ADDRESS
-    if (!configured_tag_by_address || configured_tag_by_address.trim() === '') {
+    if (!configured_tag_by_address || configured_tag_by_address.trim() === "") {
         return null
     }
     return configured_tag_by_address
         .trim()
-        .split(' ')
+        .split(" ")
         .reduce((acc, pair_tag_by_address) => {
-            const [tag, address] = pair_tag_by_address.trim().split(':')
+            const [tag, address] = pair_tag_by_address.trim().split(":")
             acc[tag] = address
             return acc
         }, {})
@@ -93,14 +93,14 @@ function get_tag_by_address() {
 
 function get_address_by_name() {
     let configured_address_book = process.env.ADDRESS_BOOK
-    if (!configured_address_book || configured_address_book.trim() === '') {
+    if (!configured_address_book || configured_address_book.trim() === "") {
         return null
     }
     return configured_address_book
         .trim()
-        .split(' ')
+        .split(" ")
         .reduce((acc, pair_name_by_address) => {
-            const [name, address] = pair_name_by_address.trim().split(':')
+            const [name, address] = pair_name_by_address.trim().split(":")
             acc[name] = address
             return acc
         }, {})
@@ -108,14 +108,14 @@ function get_address_by_name() {
 
 function get_name_by_address() {
     let configured_address_book = process.env.ADDRESS_BOOK
-    if (!configured_address_book || configured_address_book.trim() === '') {
+    if (!configured_address_book || configured_address_book.trim() === "") {
         return null
     }
     return configured_address_book
         .trim()
-        .split(' ')
+        .split(" ")
         .reduce((acc, pair_name_by_address) => {
-            const [name, address] = pair_name_by_address.trim().split(':')
+            const [name, address] = pair_name_by_address.trim().split(":")
             acc[address] = name
             return acc
         }, {})
@@ -133,14 +133,14 @@ function get_included_tags({ fee_rate }) {
         console.log(`Using medium fee included tags`)
         configured_included_tags = process.env.INCLUDE_TAGS_MEDIUM_FEE
     }
-    if (!configured_included_tags || configured_included_tags.trim() === '') {
+    if (!configured_included_tags || configured_included_tags.trim() === "") {
         // Explicitly set empty string means excluded_tags has priority.
         return []
     }
     return configured_included_tags
         .trim()
-        .split(' ')
-        .map((tag) => tag.split('/'))
+        .split(" ")
+        .map((tag) => tag.split("/"))
 }
 
 const satoshi_to_BTC = (satoshi) => parseFloat((satoshi / 100000000).toFixed(8))
@@ -173,10 +173,10 @@ function get_split_config({ fee_rate }) {
     if (split_trigger) {
         if (!VALID_SPLIT_TRIGGERS.includes(process.env.SPLIT_TRIGGER)) {
             throw new Error(
-                `Invalid SPLIT_TRIGGER: ${process.env.SPLIT_TRIGGER}, must be one of ${VALID_SPLIT_TRIGGERS.join(', ')}`
+                `Invalid SPLIT_TRIGGER: ${process.env.SPLIT_TRIGGER}, must be one of ${VALID_SPLIT_TRIGGERS.join(", ")}`
             )
         }
-        if (split_trigger !== 'NEVER' && !split_target_size_sats) {
+        if (split_trigger !== "NEVER" && !split_target_size_sats) {
             throw new Error(`SPLIT_TRIGGER is set but SPLIT_UTXO_SIZE_SATS is not set properly for fee rate ${fee_rate}`)
         }
     }

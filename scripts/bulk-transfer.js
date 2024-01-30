@@ -1,4 +1,4 @@
-const { bulk_transfer } = require('../commands')
+const { bulk_transfer } = require("../commands")
 
 const from_address_arg = process.argv[2]
 const to_address_arg = process.argv[3]
@@ -10,7 +10,7 @@ bulk_transfer(from_address_arg, to_address_arg, tag_to_extract_arg, num_of_tag_t
     .then((result) => {
         console.log(
             `Bulk transfer of ${num_of_tag_to_send_arg} ${tag_to_extract_arg} have been created, results can be viewed at data/completed_bulk_transfer/${
-                result.bulk_transfer_file_name || 'N_A'
+                result.bulk_transfer_file_name || "N_A"
             }.json`
         )
     })
