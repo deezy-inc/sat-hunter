@@ -1,8 +1,6 @@
-const {
-    get_existing_scan_config_by_utxo,
-    save_scan_config,
-    process_first_withdrawal_request
-} = require('./storage')
+const { completed_bulk_transfer_dir } = require('./constants')
+const { get_user_limits } = require('./deezy')
+const { get_existing_scan_config_by_utxo, save_scan_config, process_first_withdrawal_request } = require('./storage')
 const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
 
 function get_excluded_tags({ fee_rate }) {
@@ -10,7 +8,10 @@ function get_excluded_tags({ fee_rate }) {
     if (process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.EXCLUDE_TAGS_HIGH_FEE_THRESHOLD)) {
         console.log(`Using high fee excluded tags`)
         configured_excluded_tags = process.env.EXCLUDE_TAGS_HIGH_FEE
-    } else if (process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD && fee_rate > parseFloat(process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD)) {
+    } else if (
+        process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD &&
+        fee_rate > parseFloat(process.env.EXCLUDE_TAGS_MEDIUM_FEE_THRESHOLD)
+    ) {
         console.log(`Using medium fee excluded tags`)
         configured_excluded_tags = process.env.EXCLUDE_TAGS_MEDIUM_FEE
     }
@@ -32,18 +33,24 @@ function get_min_tag_sizes({ fee_rate }) {
     if (process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD && fee_rate >= parseFloat(process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD)) {
         console.log(`Using high fee min tag sizes`)
         configured_min_tag_sizes = process.env.MIN_TAG_SIZES_HIGH_FEE
-    } else if (process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD && fee_rate >= parseFloat(process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD)) {
+    } else if (
+        process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD &&
+        fee_rate >= parseFloat(process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD)
+    ) {
         console.log(`Using medium fee min tag sizes`)
         configured_min_tag_sizes = process.env.MIN_TAG_SIZES_MEDIUM_FEE
     }
     if (!configured_min_tag_sizes) {
         return null
     }
-    return configured_min_tag_sizes.trim().split(' ').reduce((acc, tagSize) => {
-        const [tag, size] = tagSize.trim().split(':');
-        acc[tag] = parseInt(size);
-        return acc;
-    }, {});
+    return configured_min_tag_sizes
+        .trim()
+        .split(' ')
+        .reduce((acc, tagSize) => {
+            const [tag, size] = tagSize.trim().split(':')
+            acc[tag] = parseInt(size)
+            return acc
+        }, {})
 }
 
 function get_max_tag_ages({ fee_rate }) {
@@ -51,18 +58,24 @@ function get_max_tag_ages({ fee_rate }) {
     if (process.env.MAX_TAG_AGES_HIGH_FEE_THRESHOLD && fee_rate >= parseFloat(process.env.MAX_TAG_AGES_HIGH_FEE_THRESHOLD)) {
         console.log(`Using high fee max tag ages`)
         configured_max_tag_ages = process.env.MAX_TAG_AGES_HIGH_FEE
-    } else if (process.env.MAX_TAG_AGES_MEDIUM_FEE_THRESHOLD && fee_rate >= parseFloat(process.env.MAX_TAG_AGES_MEDIUM_FEE_THRESHOLD)) {
+    } else if (
+        process.env.MAX_TAG_AGES_MEDIUM_FEE_THRESHOLD &&
+        fee_rate >= parseFloat(process.env.MAX_TAG_AGES_MEDIUM_FEE_THRESHOLD)
+    ) {
         console.log(`Using medium fee max tag ages`)
         configured_max_tag_ages = process.env.MAX_TAG_AGES_MEDIUM_FEE
     }
     if (!configured_max_tag_ages) {
         return null
     }
-    return configured_max_tag_ages.trim().split(' ').reduce((acc, tagAge) => {
-        const [tag, age] = tagAge.trim().split(':');
-        acc[tag] = parseInt(age);
-        return acc;
-    }, {});
+    return configured_max_tag_ages
+        .trim()
+        .split(' ')
+        .reduce((acc, tagAge) => {
+            const [tag, age] = tagAge.trim().split(':')
+            acc[tag] = parseInt(age)
+            return acc
+        }, {})
 }
 
 function get_tag_by_address() {
@@ -70,11 +83,14 @@ function get_tag_by_address() {
     if (!configured_tag_by_address || configured_tag_by_address.trim() === '') {
         return null
     }
-    return configured_tag_by_address.trim().split(' ').reduce((acc, pair_tag_by_address) => {
-        const [tag, address] = pair_tag_by_address.trim().split(':');
-        acc[tag] = address;
-        return acc;
-    }, {});
+    return configured_tag_by_address
+        .trim()
+        .split(' ')
+        .reduce((acc, pair_tag_by_address) => {
+            const [tag, address] = pair_tag_by_address.trim().split(':')
+            acc[tag] = address
+            return acc
+        }, {})
 }
 
 function get_address_by_name() {
@@ -82,11 +98,14 @@ function get_address_by_name() {
     if (!configured_address_book || configured_address_book.trim() === '') {
         return null
     }
-    return configured_address_book.trim().split(' ').reduce((acc, pair_name_by_address) => {
-        const [name, address] = pair_name_by_address.trim().split(':');
-        acc[name] = address;
-        return acc;
-    }, {});
+    return configured_address_book
+        .trim()
+        .split(' ')
+        .reduce((acc, pair_name_by_address) => {
+            const [name, address] = pair_name_by_address.trim().split(':')
+            acc[name] = address
+            return acc
+        }, {})
 }
 
 function get_name_by_address() {
@@ -94,11 +113,14 @@ function get_name_by_address() {
     if (!configured_address_book || configured_address_book.trim() === '') {
         return null
     }
-    return configured_address_book.trim().split(' ').reduce((acc, pair_name_by_address) => {
-        const [name, address] = pair_name_by_address.trim().split(':');
-        acc[address] = name;
-        return acc;
-    }, {});
+    return configured_address_book
+        .trim()
+        .split(' ')
+        .reduce((acc, pair_name_by_address) => {
+            const [name, address] = pair_name_by_address.trim().split(':')
+            acc[address] = name
+            return acc
+        }, {})
 }
 
 function get_included_tags({ fee_rate }) {
@@ -106,7 +128,10 @@ function get_included_tags({ fee_rate }) {
     if (process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.INCLUDE_TAGS_HIGH_FEE_THRESHOLD)) {
         console.log(`Using high fee included tags`)
         configured_included_tags = process.env.INCLUDE_TAGS_HIGH_FEE
-    } else if (process.env.INCLUDE_TAGS_MEDIUM_FEE_THRESHOLD && fee_rate > parseFloat(process.env.INCLUDE_TAGS_MEDIUM_FEE_THRESHOLD)) {
+    } else if (
+        process.env.INCLUDE_TAGS_MEDIUM_FEE_THRESHOLD &&
+        fee_rate > parseFloat(process.env.INCLUDE_TAGS_MEDIUM_FEE_THRESHOLD)
+    ) {
         console.log(`Using medium fee included tags`)
         configured_included_tags = process.env.INCLUDE_TAGS_MEDIUM_FEE
     }
@@ -120,11 +145,11 @@ function get_included_tags({ fee_rate }) {
         .map((tag) => tag.split('/'))
 }
 
-const satoshi_to_BTC = (satoshi) => parseFloat((satoshi / 100000000).toFixed(8));
+const satoshi_to_BTC = (satoshi) => parseFloat((satoshi / 100000000).toFixed(8))
 
 const BTC_to_satoshi = (btc) => {
-    return Math.floor(btc * 100000000);
-};
+    return Math.floor(btc * 100000000)
+}
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -135,7 +160,10 @@ function get_split_config({ fee_rate }) {
         console.log(`Using high fee split trigger`)
         split_trigger = process.env.SPLIT_TRIGGER_HIGH_FEE
         split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE || 0)
-    } else if (process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD && fee_rate > parseFloat(process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD)) {
+    } else if (
+        process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD &&
+        fee_rate > parseFloat(process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD)
+    ) {
         console.log(`Using medium fee split trigger`)
         split_trigger = process.env.SPLIT_TRIGGER_MEDIUM_FEE
         split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS_MEDIUM_FEE || 0)
@@ -146,7 +174,9 @@ function get_split_config({ fee_rate }) {
     }
     if (split_trigger) {
         if (!VALID_SPLIT_TRIGGERS.includes(process.env.SPLIT_TRIGGER)) {
-            throw new Error(`Invalid SPLIT_TRIGGER: ${process.env.SPLIT_TRIGGER}, must be one of ${VALID_SPLIT_TRIGGERS.join(', ')}`)
+            throw new Error(
+                `Invalid SPLIT_TRIGGER: ${process.env.SPLIT_TRIGGER}, must be one of ${VALID_SPLIT_TRIGGERS.join(', ')}`
+            )
         }
         if (split_trigger !== 'NEVER' && !split_target_size_sats) {
             throw new Error(`SPLIT_TRIGGER is set but SPLIT_UTXO_SIZE_SATS is not set properly for fee rate ${fee_rate}`)
@@ -169,7 +199,7 @@ function get_scan_config({ fee_rate, utxo }) {
         min_tag_sizes: get_min_tag_sizes({ fee_rate }),
         max_tag_ages: get_max_tag_ages({ fee_rate }),
         tag_by_address: get_tag_by_address(),
-        split_config: get_split_config({ fee_rate }),
+        split_config: get_split_config({ fee_rate })
     }
     const pending_withdrawal = process_first_withdrawal_request()
     if (pending_withdrawal) {
@@ -178,6 +208,28 @@ function get_scan_config({ fee_rate, utxo }) {
     console.log(`Saving scan config for ${utxo}`)
     save_scan_config({ utxo, config })
     return config
+}
+
+const get_warning_limits_exceeded = ({ payment_address, tier_info, one_time_cost }) => {
+    return `
+--------------------------
+Sat Hunting limits exceeded.
+To purchase more scans, you can send BTC to the following address: ${payment_address}.
+Your plan${tier_info}allows purchasing additional volume at a rate of ${one_time_cost} satoshis per 1 BTC of scan volume.
+Contact help@deezy.io for questions or to change your plan.
+--------------------------
+`
+}
+
+const get_success_scan_address_file = ({ scan_request_id, transfer_message }) =>
+    `Bulk transfer of ${transfer_message} have been completed, results can be viewed at ${completed_bulk_transfer_dir}/${scan_request_id}.json`
+
+async function validate_user_limits() {
+    const { payment_address, amount, days, one_time_cost } = await get_user_limits()
+    const allowed_volume = satoshi_to_BTC(amount) // We are using satoshis in the DB as default
+    const tier_info = allowed_volume > 0 ? ` allows ${allowed_volume} BTC per ${days} days and ` : ''
+    const msg = get_warning_limits_exceeded({ payment_address, tier_info, one_time_cost })
+    return msg
 }
 
 module.exports = {
@@ -192,5 +244,7 @@ module.exports = {
     get_scan_config,
     get_max_tag_ages,
     get_address_by_name,
-    get_name_by_address
+    get_name_by_address,
+    validate_user_limits,
+    get_success_scan_address_file
 }
