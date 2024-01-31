@@ -3,7 +3,6 @@ const { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } = process.env
 const TelegramBot = require('node-telegram-bot-api')
 const { get_payment_details, create_withdraw_request, bulk_transfer } = require('../commands')
 const { BTC_to_satoshi } = require('../utils')
-const { completed_bulk_transfer_dir } = require('../constants')
 const telegramBot = TELEGRAM_BOT_TOKEN ? new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true }) : null
 
 const TELEGRAM_BOT_ENABLED = telegramBot && TELEGRAM_CHAT_ID

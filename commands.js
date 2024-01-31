@@ -1,5 +1,4 @@
 const { get_user_limits, post_scan_request, get_scan_request } = require('./deezy')
-const { sendNotifications } = require('./notifications')
 const { save_withdraw_request, save_bulk_transfer } = require('./storage')
 const { satoshi_to_BTC, get_address_by_name, validate_user_limits, get_success_scan_address_file } = require('./utils')
 
@@ -89,14 +88,8 @@ async function loop_check_bulk_transfer(scan_request_id) {
                 if (info.status === 'COMPLETED') {
                     clearInterval(intervalId) // Stop the interval
                     save_bulk_transfer(scan_request_id, info)
-                    let transfer_message = Object.entries(info.tag_limits).reduce((acc, [tag, quantity]) => {
-                        return (acc += `${quantity} ${tag}`)
-                    }, '')
-                    const message = console.log(message)
-                    await sendNotifications(message)
                     resolve() // Resolve the promise
                 }
-                console.log(`Scan request with id: ${scan_request_id} is still in progress`)
             } catch (err) {
                 console.log(`Error checking bulk transfer with id: ${scan_request_id}: ${err.message}`)
                 reject(err) // Reject the promise
