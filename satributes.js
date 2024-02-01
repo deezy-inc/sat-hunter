@@ -17,12 +17,15 @@ const emojis_by_rarity = {
     "block 9": "9️⃣",
     "block_78": "7️⃣8️⃣",
     "block 78": "7️⃣8️⃣",
+    "block_666": "👹",
     "digits_palindrome": "♊",
     "name_palindrome": "♏",
     "halfinney": "👨🏻",
     "inscription": "🖼",
     "special_name": "🔤",
+    "2009": "0️⃣9️⃣"
 }
+const first_2010_sat = 162450000000000
 
 function generate_satributes_messages(satributes) {
     if (satributes.length === 0) return [`No special sats found on this utxo`]
@@ -30,6 +33,9 @@ function generate_satributes_messages(satributes) {
     for (const satribute of satributes) {
         let msg = ''
         let is_chunkly = false
+        if (satributes.sat_number < first_2010_sat) {
+            msg += `${emojis_by_rarity["2009"]} `
+        }
         for (const rarity of satribute.rarity_tags) {
             msg += `${emojis_by_rarity[rarity] || ''} `
         }
