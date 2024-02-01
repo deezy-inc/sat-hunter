@@ -38,7 +38,7 @@ npm install
 
 Setup Environment Variables (you'll need to do some setup for the exchange you're using like getting API keys and allowlisting the withdrawal address)
 ```
-cp .env.example .env
+cp .env.sample .env
 // Edit .env to match your setup.
 ```
 
