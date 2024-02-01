@@ -70,6 +70,28 @@ npm run encrypt-seed
 ```
 This will require you to enter a password to unlock the bot every time it starts up.
 
+### Fetching limits and payment information
+To fetch your scan limits and payment information run:
+```
+npm run hunter:limits
+```
+Or if you have Telegram configured:
+```
+/limits
+```
+This will return your available scan limits, consumed scan volume, and your deposit address to purchase additional volume or renew your subscription.
+
+### Performing a withdrawal
+To perform a withdrawal, first alter your ADDRESS_BOOK in the .env and then run:
+```
+npm run hunter:withdraw name amount_btc
+```
+Or if you have Telegram configured:
+``` 
+/withdraw name amount_btc
+``` 
+This will attempt to fill the withdrawal request in your next scan and a notification will be sent upon completion.
+
 ## Telegram Bot
 Setting up the telegram bot can give you real-time updates of your operation. Follow these instructions:
 1) Message @botfather on telegram with the command `/newbot` and answer the questions
