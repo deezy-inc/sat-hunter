@@ -33,7 +33,7 @@ function generate_satributes_messages(satributes) {
     for (const satribute of satributes) {
         let msg = ''
         let is_chunkly = false
-        if (satributes.sat_number < first_2010_sat) {
+        if (satribute.sat_number < first_2010_sat) {
             msg += `${emojis_by_rarity["2009"]} `
         }
         for (const rarity of satribute.rarity_tags) {
