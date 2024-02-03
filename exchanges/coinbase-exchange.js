@@ -49,7 +49,7 @@ async function get_btc_balance() {
         console.log(err)
         return {}
     })
-    return parseFloat(parseFloat(data.available).toFixed(8))
+    return Math.floor(parseFloat(data.available) * 1e8) / 1e8
 }
 
 async function withdraw({ amount_btc }) {
