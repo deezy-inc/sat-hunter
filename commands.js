@@ -73,29 +73,35 @@ async function loop_check_bulk_transfer(scan_request_id) {
     return new Promise((resolve, reject) => {
         const intervalId = setInterval(async () => {
             try {
-                const info = await get_scan_request({ scan_request_id })
-                console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`)
+                const info = await get_scan_request({ scan_request_id });
+                console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`);
+                
                 if (info.status === 'FAILED_LIMITS_EXCEEDED') {
-                    const user_limits_message = await validate_user_limits()
-                    console.log(user_limits_message)
-                    throw new Error(user_limits_message)
+                    const user_limits_message = await validate_user_limits();
+                    console.log(user_limits_message);
+                    clearInterval(intervalId); // Stop the interval before throwing an error
+                    throw new Error(user_limits_message);
                 }
+
                 if (info.status === 'FAILED') {
-                    const message = `Scan request with id: ${scan_request_id} failed`
-                    console.log(message)
-                    throw new Error(message)
+                    const message = `Scan request with id: ${scan_request_id} failed`;
+                    console.log(message);
+                    clearInterval(intervalId); // Stop the interval before throwing an error
+                    throw new Error(message);
                 }
+
                 if (info.status === 'COMPLETED') {
-                    clearInterval(intervalId) // Stop the interval
-                    save_bulk_transfer(scan_request_id, info)
-                    resolve() // Resolve the promise
+                    clearInterval(intervalId); // Stop the interval
+                    save_bulk_transfer(scan_request_id, info);
+                    resolve(); // Resolve the promise
                 }
             } catch (err) {
-                console.log(`Error checking bulk transfer with id: ${scan_request_id}: ${err.message}`)
-                reject(err) // Reject the promise
+                console.log(`Error checking bulk transfer with id: ${scan_request_id}: ${err.message}`);
+                clearInterval(intervalId); // Ensure the interval is cleared on error
+                reject(err); // Reject the promise
             }
-        }, 1000) // Check every second
-    })
+        }, 1000); // Check every second
+    });
 }
 
 const bulk_transfer = async (p_from_address, p_to_address, p_tag_to_extract, p_num_of_tag_to_send, p_fee_rate) => {
