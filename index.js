@@ -16,10 +16,17 @@ const {
     init_wallet
 } = require('./wallet')
 const { get_fee_rate } = require('./fees')
-const { post_scan_request, get_scan_request, get_user_limits } = require('./deezy')
+const { post_scan_request, get_scan_request } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
 const { sendNotifications, initNotifications } = require('./notifications')
-const { sleep, get_tag_by_address, get_scan_config, satoshi_to_BTC, get_name_by_address } = require('./utils.js')
+const {
+    sleep,
+    get_tag_by_address,
+    get_scan_config,
+    satoshi_to_BTC,
+    get_name_by_address,
+    validate_user_limits
+} = require('./utils.js')
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)
@@ -69,7 +76,12 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt)
     const tag_by_address = get_tag_by_address() || {}
     for (const output of decoded_psbt.txOutputs) {
-        if (output.address !== exchange_address && output.address !== rare_sat_address && output.address !== withdraw_address && !Object.values(tag_by_address).includes(output.address)) {
+        if (
+            output.address !== exchange_address &&
+            output.address !== rare_sat_address &&
+            output.address !== withdraw_address &&
+            !Object.values(tag_by_address).includes(output.address)
+        ) {
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`)
         }
     }
@@ -88,7 +100,11 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt)
     const final_fee = final_signed_psbt.getFee()
     if (final_fee > (process.env.MAX_FEE_SATS || 10000000)) {
-        console.log(`Fee of ${final_fee} is higher than configured max fee of ${process.env.MAX_FEE_SATS || 10000000} sats. Will not broadcast`)
+        console.log(
+            `Fee of ${final_fee} is higher than configured max fee of ${
+                process.env.MAX_FEE_SATS || 10000000
+            } sats. Will not broadcast`
+        )
         return
     }
     const final_tx = final_signed_psbt.extractTransaction()
@@ -107,7 +123,8 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     console.log(`Broadcasted transaction with txid: ${txid} and fee rate of ${final_fee_rate} sat/vbyte`)
     if (!process.env.ONLY_NOTIFY_ON_SATS) {
         await sendNotifications(
-            `Broadcasted ${is_replacement ? 'replacement ' : ''
+            `Broadcasted ${
+                is_replacement ? 'replacement ' : ''
             }tx at ${final_fee_rate} sat/vbyte https://mempool.space/tx/${txid}`
         )
     }
@@ -182,7 +199,7 @@ async function run() {
     console.log(`Listing existing wallet utxos...`)
     const unspents = await get_utxos()
     console.log(`Found ${unspents.length} utxos in wallet.`)
-    const utxos = unspents.concat(bump_utxos);
+    const utxos = unspents.concat(bump_utxos)
     if (utxos.length === 0) {
         return
     }
@@ -206,15 +223,8 @@ async function run() {
             special_sat_addresses: [rare_sat_address],
             extraction_fee_rate: fee_rate
         }
-        const {
-            excluded_tags,
-            included_tags,
-            min_tag_sizes,
-            tag_by_address,
-            max_tag_ages,
-            split_config,
-            withdraw_config
-        } = get_scan_config({ fee_rate, utxo })
+        const { excluded_tags, included_tags, min_tag_sizes, tag_by_address, max_tag_ages, split_config, withdraw_config } =
+            get_scan_config({ fee_rate, utxo })
         if (excluded_tags) {
             console.log(`Using excluded tags: ${excluded_tags}`)
             request_body.excluded_tags = excluded_tags
@@ -228,11 +238,19 @@ async function run() {
             request_body.min_tag_sizes = min_tag_sizes
         }
         if (max_tag_ages) {
-            console.log(`Using max tag ages: ${Object.entries(max_tag_ages).map(([tag, age]) => `${tag}:${age}`).join(' ')}`)
+            console.log(
+                `Using max tag ages: ${Object.entries(max_tag_ages)
+                    .map(([tag, age]) => `${tag}:${age}`)
+                    .join(' ')}`
+            )
             request_body.max_tag_ages = max_tag_ages
         }
         if (tag_by_address) {
-            console.log(`Using tag by address: ${Object.entries(tag_by_address).map(([tag, address]) => `${tag}:${address}`).join(' ')}`)
+            console.log(
+                `Using tag by address: ${Object.entries(tag_by_address)
+                    .map(([tag, address]) => `${tag}:${address}`)
+                    .join(' ')}`
+            )
             request_body.tag_by_address = tag_by_address
         }
         if (split_config) {
@@ -271,27 +289,11 @@ async function run() {
         const info = await get_scan_request({ scan_request_id })
         console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`)
         if (info.status === 'FAILED_LIMITS_EXCEEDED') {
-            const {
-                payment_address,
-                amount,
-                days,
-                one_time_cost,
-            } = await get_user_limits()
-            const allowed_volume = satoshi_to_BTC(amount) // We are using satoshis in the DB as default
-            const tier_info = allowed_volume > 0 ? ` allows ${allowed_volume} BTC per ${days} days and ` : ''
-            const msg = `
---------------------------
-Sat Hunting limits exceeded.
-To purchase more scans, you can send BTC to the following address: ${payment_address}.
-Your plan${tier_info}allows purchasing additional volume at a rate of ${one_time_cost} satoshis per 1 BTC of scan volume.
-Contact help@deezy.io for questions or to change your plan.
---------------------------
-`
+            const user_limits_message = await validate_user_limits()
+            console.log(user_limits_message)
             console.log(`Scan request with id: ${scan_request_id} failed`)
-            console.log(msg)
-
-            await sendNotifications(msg, 'payment_req')
-            sleep(PAYMENT_LOOP_SECONDS * 1000)
+            await sendNotifications(user_limits_message, 'payment_req')
+            await sleep(PAYMENT_LOOP_SECONDS * 1000)
             continue
         }
         if (info.status === 'FAILED') {
@@ -320,7 +322,7 @@ Contact help@deezy.io for questions or to change your plan.
         }
         console.log(util.inspect(info, { showHidden: false, depth: null, colors: true }))
         // TODO: check for validity of PSBT.
-        let decodeError = null;
+        let decodeError = null
         try {
             await decode_sign_and_send_psbt({
                 psbt: info.extraction_psbt,
@@ -328,16 +330,16 @@ Contact help@deezy.io for questions or to change your plan.
                 rare_sat_address,
                 is_replacement: rescan_request_ids.has(scan_request_id),
                 withdraw_address: info.withdraw_address || null
-            });
+            })
         } catch (err) {
-            console.error("Error in decode_sign_and_send_psbt: ", err);
-            decodeError = err;
+            console.error('Error in decode_sign_and_send_psbt: ', err)
+            decodeError = err
         }
 
         if (info.withdraw_size_sats) {
             const address_book = get_name_by_address()
             const name = address_book[info.withdraw_address]
-            if (info.withdraw_success === true && !decodeError ) {
+            if (info.withdraw_success === true && !decodeError) {
                 console.log(`Withdrawal succeeded`)
                 const withdraw_size_btc = satoshi_to_BTC(info.withdraw_size_sats)
                 const msg = `Withdrawal for ${withdraw_size_btc} BTC to ${name} (${info.withdraw_address}) succeeded`

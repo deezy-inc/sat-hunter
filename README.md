@@ -92,6 +92,25 @@ Or if you have Telegram configured:
 ``` 
 This will attempt to fill the withdrawal request in your next scan and a notification will be sent upon completion.
 
+### Performing a bulk transfer
+To perform a bulk transfer, simply run:
+```
+npm run hunter:bulk-transfer from_address to_address tag_to_transfer num_of_sats_to_send fee_rate
+
+```
+Or if you have Telegram configured:
+``` 
+/bulktransfer from_address to_address tag_to_extract num_of_tag_to_send fee_rate
+``` 
+This will attempt to build a PSBT, store the results in the data folder, and a notification will be sent upon completion.
+This can be used to transfer sats between your own wallets or to send special sats to settle an OTC trade.
+The PSBT at this time must be manually loaded into a wallet of your choice to be signed and broadcasted. (e.g. Sparrow)
+
+For example, to transfer 100,000 pizza sats from address abc123 to address def456 with a fee rate of 1 sat/vbyte, you would run:
+```
+npm run hunter:bulk-transfer abc123 def456 pizza 100000 1
+```
+
 ## Telegram Bot
 Setting up the telegram bot can give you real-time updates of your operation. Follow these instructions:
 1) Message @botfather on telegram with the command `/newbot` and answer the questions
