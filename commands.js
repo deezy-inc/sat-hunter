@@ -73,39 +73,62 @@ async function loop_check_bulk_transfer(scan_request_id) {
     return new Promise((resolve, reject) => {
         const intervalId = setInterval(async () => {
             try {
-                const info = await get_scan_request({ scan_request_id });
-                console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`);
-                
+                const info = await get_scan_request({ scan_request_id })
+                console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`)
+
                 if (info.status === 'FAILED_LIMITS_EXCEEDED') {
-                    const user_limits_message = await validate_user_limits();
-                    console.log(user_limits_message);
-                    clearInterval(intervalId); // Stop the interval before throwing an error
-                    throw new Error(user_limits_message);
+                    const user_limits_message = await validate_user_limits()
+                    console.log(user_limits_message)
+                    clearInterval(intervalId) // Stop the interval before throwing an error
+                    throw new Error(user_limits_message)
                 }
 
                 if (info.status === 'FAILED') {
-                    const message = `Scan request with id: ${scan_request_id} failed`;
-                    console.log(message);
-                    clearInterval(intervalId); // Stop the interval before throwing an error
-                    throw new Error(message);
+                    const message = `Scan request with id: ${scan_request_id} failed`
+                    console.log(message)
+                    clearInterval(intervalId) // Stop the interval before throwing an error
+                    throw new Error(message)
                 }
 
                 if (info.status === 'COMPLETED') {
-                    clearInterval(intervalId); // Stop the interval
-                    save_bulk_transfer(scan_request_id, info);
-                    resolve(); // Resolve the promise
+                    clearInterval(intervalId) // Stop the interval
+                    save_bulk_transfer(scan_request_id, info)
+                    resolve() // Resolve the promise
                 }
             } catch (err) {
-                console.log(`Error checking bulk transfer with id: ${scan_request_id}: ${err.message}`);
-                clearInterval(intervalId); // Ensure the interval is cleared on error
-                reject(err); // Reject the promise
+                console.log(`Error checking bulk transfer with id: ${scan_request_id}: ${err.message}`)
+                clearInterval(intervalId) // Ensure the interval is cleared on error
+                reject(err) // Reject the promise
             }
-        }, 1000); // Check every second
-    });
+        }, 1000) // Check every second
+    })
 }
 
-const bulk_transfer = async (p_from_address, p_to_address, p_tag_to_extract, p_num_of_tag_to_send, p_fee_rate) => {
+const bulk_transfer = async (
+    p_from_address,
+    p_to_address,
+    p_tag_to_extract,
+    p_num_of_tag_to_send,
+    p_fee_rate,
+    callbackMessage
+) => {
     try {
+        if (!p_from_address && !p_to_address && !p_tag_to_extract && !p_num_of_tag_to_send && !p_fee_rate) {
+            console.log(`
+Usage: hunter:bulk-transfer [from_address] [to_address] [tag_to_extract] [num_of_tag_to_send] [fee_rate]
+
+- from_address: The blockchain address from which the tags will be extracted. This should be a valid address from which you have permission to transfer.
+- to_address: The destination blockchain address to which the tags will be sent. Ensure this address is correct to avoid loss of assets.
+- tag_to_extract: The specific tag or identifier of the assets to be transferred.
+- num_of_tag_to_send: The number of tags or assets to send to the destination address. This must be a positive integer.
+- fee_rate: The fee rate for the transaction in satoshis per virtual byte (sat/vbyte). This rate affects how quickly the transaction is processed by the network.
+
+Example: hunter:bulk-transfer 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy uncommon 100 30
+
+This command will transfer 100 uncommon tags from address 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa to 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy with a fee rate of 30 sat/vbyte.
+`)
+            return { message: 'Missing or invalid arguments. Please refer to the usage information above.' }
+        }
         console.log('Bulk transfer called')
 
         const num_of_tag_to_send = parseInt(p_num_of_tag_to_send)
@@ -139,9 +162,15 @@ const bulk_transfer = async (p_from_address, p_to_address, p_tag_to_extract, p_n
 
         const scan_request_id = response.id
 
+        if (callbackMessage) {
+            await callbackMessage(
+                `Bulk transfer created with id: ${scan_request_id}. Some transfers may take a while. Please see terminal logs to track progress...`
+            )
+        }
+
         await loop_check_bulk_transfer(scan_request_id)
 
-        console.log(`Bulk transfer completed with id: ${scan_request_id}`)
+        console.log(`Bulk transfer created with id: ${scan_request_id}`)
 
         return {
             message: get_success_scan_address_file({
