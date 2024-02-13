@@ -1,6 +1,19 @@
+# local env files
 .env
+
+# dependencies
 node_modules
 data
+
+# misc
 .DS_Store
+.idea
+
+# testing
 coverage/
 README.local.md
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
