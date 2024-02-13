@@ -1,17 +1,18 @@
 const axios = require('axios')
 const crypto = require('crypto')
-const totp = require("totp-generator")
+const totp = require('totp-generator')
 const BASE_URL = 'https://api.exchange.coinbase.com'
 
 let BTC_ACCOUNT_ID = null
 
-function create_signature({ path, timestamp, method, body = ''}) {
+function create_signature({ path, timestamp, method, body = '' }) {
     const data = `${timestamp}${method}${path}${body}`
     const base64_key = Buffer.from(process.env.COINBASE_EXCHANGE_API_SECRET, 'base64')
     return crypto.createHmac('sha256', base64_key)
         .update(data)
         .digest('base64');
 }
+
 function create_headers({ path, timestamp, method, body = '' }) {
     return {
         'CB-ACCESS-KEY': process.env.COINBASE_EXCHANGE_API_KEY,
@@ -21,6 +22,7 @@ function create_headers({ path, timestamp, method, body = '' }) {
         'CB-VERSION': '2023-10-19'
     }
 }
+
 async function get_btc_account_id() {
     const path = '/accounts'
     const timestamp = `${Math.floor(Date.now() / 1000)}`
