@@ -17,7 +17,7 @@ describe('coinbase-exchange', () => {
                 ['COINBASE_EXCHANGE_API_KEY'],
                 ['COINBASE_EXCHANGE_API_SECRET'],
                 ['COINBASE_EXCHANGE_API_PASSPHRASE'],
-            ])('should throw exception if missing %i environment variable', async (environmentVariable) => {
+            ])('should throw exception if missing %p environment variable', async (environmentVariable) => {
                 // Given
                 const expectedError = new Error('COINBASE_EXCHANGE_API_KEY, COINBASE_EXCHANGE_API_SECRET, and COINBASE_EXCHANGE_API_PASSPHRASE must be set');
 
