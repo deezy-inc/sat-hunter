@@ -1,5 +1,6 @@
-const axios = require('axios')
+const axios = require('axios');
 const { get_btc_balance } = require('../../exchanges/coinbase-exchange');
+const { env } = require('../../env');
 
 jest.mock('axios');
 
@@ -7,11 +8,9 @@ describe('coinbase-exchange', () => {
     describe('get_btc_balance', () => {
         beforeEach(() => {
             jest.resetModules();
-            process.env = {
-                COINBASE_EXCHANGE_API_KEY: 'COINBASE_EXCHANGE_API_KEY',
-                COINBASE_EXCHANGE_API_SECRET: 'COINBASE_EXCHANGE_API_SECRET',
-                COINBASE_EXCHANGE_API_PASSPHRASE: 'COINBASE_EXCHANGE_API_PASSPHRASE',
-            };
+            env.COINBASE_EXCHANGE_API_KEY = 'COINBASE_EXCHANGE_API_KEY';
+            env.COINBASE_EXCHANGE_API_SECRET = 'COINBASE_EXCHANGE_API_SECRET';
+            env.COINBASE_EXCHANGE_API_PASSPHRASE = 'COINBASE_EXCHANGE_API_PASSPHRASE';
         });
 
         describe('Environment variables', () => {
@@ -21,17 +20,17 @@ describe('coinbase-exchange', () => {
                 ['COINBASE_EXCHANGE_API_PASSPHRASE'],
             ])('should throw exception if %p is not defined', async (environmentVariable) => {
                 // Given
-                const expectedError = new Error('COINBASE_EXCHANGE_API_KEY, COINBASE_EXCHANGE_API_SECRET, and COINBASE_EXCHANGE_API_PASSPHRASE must be set');
+                const expectedError = new Error(`${environmentVariable} must be set`);
 
                 // When
-                delete process.env[environmentVariable];
+                delete env[environmentVariable];
 
                 // Then
                 await expect(get_btc_balance()).rejects.toEqual(expectedError);
             });
         });
 
-        describe('Parsing available balance',  () => {
+        describe('Parsing available balance', () => {
             test.each([
                 ['250.445545554', 250.44554555],
                 ['250.445545555', 250.44554555],
