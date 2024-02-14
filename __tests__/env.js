@@ -1,4 +1,5 @@
 const { env } = require('../env');
+
 describe('env', () => {
     describe('get', () => {
         test('should throw exception when variable is not set', () => {
