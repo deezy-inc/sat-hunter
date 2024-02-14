@@ -49,6 +49,11 @@ function save_withdraw_request(address, amount) {
 function process_first_withdrawal_request() {
     const filePath = `${data_dir}/withdraw_requests.json`
 
+    if (!fs.existsSync(filePath)) {
+        console.log('No withdraw_requests.json file to process.');
+        return null;
+    }
+
     // Read the file content
     let fileContent
     try {
