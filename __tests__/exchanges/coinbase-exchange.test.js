@@ -1,23 +1,25 @@
-const coinbaseExchange = require('../../exchanges/coinbase-exchange');
-const { get_btc_balance } = coinbaseExchange;
+const axios = require('axios')
+const { get_btc_balance } = require('../../exchanges/coinbase-exchange');
+
+jest.mock('axios');
 
 describe('coinbase-exchange', () => {
     describe('get_btc_balance', () => {
-        describe('Environment variables configuration', () => {
-            beforeEach(() => {
-                jest.resetModules();
-                process.env = {
-                    COINBASE_EXCHANGE_API_KEY: 'COINBASE_EXCHANGE_API_KEY',
-                    COINBASE_EXCHANGE_API_SECRET: 'COINBASE_EXCHANGE_API_SECRET',
-                    COINBASE_EXCHANGE_API_PASSPHRASE: 'COINBASE_EXCHANGE_API_PASSPHRASE',
-                };
-            });
+        beforeEach(() => {
+            jest.resetModules();
+            process.env = {
+                COINBASE_EXCHANGE_API_KEY: 'COINBASE_EXCHANGE_API_KEY',
+                COINBASE_EXCHANGE_API_SECRET: 'COINBASE_EXCHANGE_API_SECRET',
+                COINBASE_EXCHANGE_API_PASSPHRASE: 'COINBASE_EXCHANGE_API_PASSPHRASE',
+            };
+        });
 
+        describe('Environment variables', () => {
             test.each([
                 ['COINBASE_EXCHANGE_API_KEY'],
                 ['COINBASE_EXCHANGE_API_SECRET'],
                 ['COINBASE_EXCHANGE_API_PASSPHRASE'],
-            ])('should throw exception if missing %p environment variable', async (environmentVariable) => {
+            ])('should throw exception if %p is not defined', async (environmentVariable) => {
                 // Given
                 const expectedError = new Error('COINBASE_EXCHANGE_API_KEY, COINBASE_EXCHANGE_API_SECRET, and COINBASE_EXCHANGE_API_PASSPHRASE must be set');
 
@@ -26,6 +28,33 @@ describe('coinbase-exchange', () => {
 
                 // Then
                 await expect(get_btc_balance()).rejects.toEqual(expectedError);
+            });
+        });
+
+        describe('Parsing available balance',  () => {
+            test.each([
+                ['250.445545554', 250.44554555],
+                ['250.445545555', 250.44554555],
+                ['250.445545556', 250.44554555],
+                ['250.445', 250.445],
+                ['250', 250],
+                ['0', 0],
+            ])('should parse %p to %p', async (inputValue, expectedValue) => {
+                // Given
+                axios.get.mockImplementation((path) => {
+                    if (path.endsWith('/accounts')) {
+                        return Promise.resolve({ data: [{ currency: 'BTC', id: 'account-id' }] });
+                    }
+
+                    if (path.endsWith('/accounts/account-id')) {
+                        return Promise.resolve({ data: { available: inputValue } });
+                    }
+
+                    return Promise.reject({});
+                });
+
+                // Then
+                expect(await get_btc_balance()).toBe(expectedValue);
             });
         });
     });
