@@ -9,7 +9,7 @@ const tick = () => new Promise(resolve => jest.requireActual('timers').setImmedi
 const packageJson = { version: '1.0.0' };
 jest.mock('../../package.json', () => (packageJson), { virtual: true });
 
-describe('tools', () => {
+describe('utils', () => {
     beforeEach(() => {
         jest.resetAllMocks();
         axios.get.mockResolvedValue({ data: { tag_name: `v1.0.0`, html_url: 'https://github.com/deezy-inc/sat-hunter/releases/tag/v1.0.0' } });
