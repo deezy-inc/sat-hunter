@@ -355,7 +355,7 @@ async function run() {
 
 async function runLoop() {
     await initNotifications()
-    await initVersionCheck();
+    await initVersionCheck(process.env.VERSION_CHECK_INTERVAL);
     await init_wallet()
 
     while (true) {
