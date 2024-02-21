@@ -3,6 +3,7 @@ const {
     process_first_withdrawal_request,
     save_scan_config,
 } = require('../storage');
+const { get_excluded_tags, get_included_tags, get_min_tag_sizes, get_max_tag_ages, get_tag_by_address } = require('./tag');
 const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
 
 function get_split_config({ fee_rate }) {
