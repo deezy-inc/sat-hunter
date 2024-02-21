@@ -20,7 +20,7 @@ const extractSemanticVersion = (tag) => {
 const getRemoteLatestRelease = async () => {
     try {
         const response = await axios.get(`${GH_API_URL}/repos/${REPOSITORY}/releases/latest`);
-        return await response.data;
+        return response.data;
     } catch (err) {
         throw new Error('Could not retrieve latest release from GitHub');
     }
