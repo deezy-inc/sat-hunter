@@ -51,7 +51,7 @@ const initVersionCheck = async () => {
         await sendNotifications(message, 'version_check');
     }
 
-    void runPeriodicVersionCheck();
+    await runPeriodicVersionCheck();
     setInterval(runPeriodicVersionCheck, VERSION_CHECK_INTERVAL);
 };
 
