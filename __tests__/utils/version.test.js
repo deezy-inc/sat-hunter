@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { sendNotifications } = require('../../notifications/index.js');
-const { initVersionCheck } = require('../../tools/version');
+const { initVersionCheck } = require('../../utils/version');
 
 jest.mock('axios');
 jest.mock('../../notifications/index.js');

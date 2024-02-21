@@ -8,11 +8,11 @@ const {
     get_scan_config,
     satoshi_to_BTC,
     get_max_tag_ages
-} = require('../utils')
+} = require('../../utils')
 
 const {
     delete_scan_configs
-} = require('../storage')
+} = require('../../storage')
 
 describe('get_excluded_tags', () => {
     test('should return correct format', () => {
