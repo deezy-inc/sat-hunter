@@ -29,7 +29,7 @@ let child_hd_node
 let derivation_path
 const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
 
-const get_min_sat_utxo_limit = () => process.env.IGNORE_UTXOS_BELOW_SATS || 1001
+const get_min_sat_utxo_limit = () => Number(process.env.IGNORE_UTXOS_BELOW_SATS) || 1001
 
 async function init_wallet() {
     if (WALLET_TYPE === 'local') {
