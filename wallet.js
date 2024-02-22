@@ -15,6 +15,7 @@ const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation');
+const { BTC_to_satoshi } = require('./utils');
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
 
 bitcoin.initEccLib(ecc)
@@ -194,17 +195,22 @@ async function get_address_txs({ address }) {
 }
 
 async function fetch_most_recent_unconfirmed_send() {
+    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit();
+
     if (WALLET_TYPE === 'core') {
         const recent_transactions = listtransactions()
-        const unconfirmed_sends = recent_transactions.filter(it => it.category === 'send' && it.confirmations === 0)
+        const unconfirmed_sends = recent_transactions.filter(
+            it => it.category === 'send' && it.confirmations === 0 && BTC_to_satoshi(it.amount) >= IGNORE_UTXOS_BELOW_SATS
+        )
         if (unconfirmed_sends.length === 0) {
             return {}
         }
-        // TODO: skip if the input is below IGNORE_UTXOS_BELOW_SATS size.
+
         // sort by fee ascending
         const tx = unconfirmed_sends.sort((a, b) => a.fee - b.fee)[0]
         const fee = -tx.fee * 100000000
         const tx_info = getrawtransaction({ txid: tx.txid, verbose: true })
+
         // Assumes one input
         const input = tx_info.vin[0]
         const existing_fee_rate = (fee / tx_info.vsize).toFixed(1)
@@ -213,12 +219,13 @@ async function fetch_most_recent_unconfirmed_send() {
             input_utxo: `${input.txid}:${input.vout}`,
         }
     }
+
     const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
     const unconfirmed_sends = txs.filter(it => {
         // Hacky way to find which ones are ours...
         if (it.status.confirmed) return false
         if (it.vin.length !== 1) return false
-        if (it.vin[0].prevout.value < get_min_sat_utxo_limit()) {
+        if (it.vin[0].prevout.value < IGNORE_UTXOS_BELOW_SATS) {
             console.log(`Ignoring spent dust input of ${it.vin[0].prevout.value} sats`)
             return false
         }
