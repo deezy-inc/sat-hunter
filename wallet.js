@@ -16,7 +16,7 @@ const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation');
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
-const IGNORE_UTXOS_BELOW_SATS = 1000
+const IGNORE_UTXOS_BELOW_SATS = process.env.IGNORE_UTXOS_BELOW_SATS || 1001
 
 bitcoin.initEccLib(ecc)
 
