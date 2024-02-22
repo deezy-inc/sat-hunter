@@ -26,8 +26,8 @@ const {
     satoshi_to_BTC,
     get_name_by_address,
     validate_user_limits
-} = require('./utils.js')
-const { initVersionCheck } = require('./tools/version');
+} = require('./utils')
+const { initVersionCheck } = require('./utils');
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)

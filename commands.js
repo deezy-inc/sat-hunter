@@ -75,7 +75,7 @@ async function loop_check_bulk_transfer(scan_request_id) {
             try {
                 const info = await get_scan_request({ scan_request_id });
                 console.log(`Scan request with id: ${scan_request_id} has status: ${info.status}`);
-                
+
                 if (info.status === 'FAILED_LIMITS_EXCEEDED') {
                     const user_limits_message = await validate_user_limits();
                     console.log(user_limits_message);
