@@ -17,7 +17,7 @@ const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation')
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
 const IGNORE_UTXOS_BELOW_SATS = process.env.IGNORE_UTXOS_BELOW_SATS || 1001
-const { get_address_from_hsm } = require('./hsm')
+const { get_address_from_hsm, sign_with_hsm } = require('./hsm')
 
 bitcoin.initEccLib(ecc)
 
@@ -138,6 +138,9 @@ async function get_utxos() {
 }
 
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
+    if (USE_HSM) {
+        return sign_with_hsm({ psbt, witnessUtxo })
+    }
     if (WALLET_TYPE === 'core') {
         const processed_psbt = walletprocesspsbt({ psbt }).psbt
         return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt
