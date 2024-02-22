@@ -10,25 +10,33 @@ const prompts = require('prompts')
 const { decrypt } = require('./encryption')
 const axios = require('axios')
 const ecc = require('tiny-secp256k1')
-const {BIP32Factory} = require('bip32')
+const { BIP32Factory } = require('bip32')
 const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
-const { getAddressInfo } = require('bitcoin-address-validation');
+const { getAddressInfo } = require('bitcoin-address-validation')
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
 const IGNORE_UTXOS_BELOW_SATS = process.env.IGNORE_UTXOS_BELOW_SATS || 1001
 
 bitcoin.initEccLib(ecc)
 
+const USE_HSM = process.env.USE_HSM === 'true'
+const get_wallet_type = () => {
+    if (USE_HSM) {
+        return 'hsm'
+    }
+    return process.env.BITCOIN_WALLET ? 'core' : 'local'
+}
+
 const MEMPOOL_API = `${MEMPOOL_URL}/api`
-const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
+const WALLET_TYPE = get_wallet_type()
 let local_wallet_type
 let child_xonly_pubkey
 let tweaked_child_node
 let root_hd_node
 let child_hd_node
 let derivation_path
-const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
+const toXOnly = (pubKey) => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33))
 
 async function init_wallet() {
     if (WALLET_TYPE === 'local') {
@@ -44,7 +52,7 @@ async function init_wallet() {
             const { password } = await prompts({
                 type: 'password',
                 name: 'password',
-                message: 'Enter the password to decrypt the seed phrase:',
+                message: 'Enter the password to decrypt the seed phrase:'
             })
             seed_phrase = decrypt(process.env.LOCAL_WALLET_SEED_ENCRYPTED, password)
         } else {
@@ -63,20 +71,20 @@ async function init_wallet() {
         child_xonly_pubkey = toXOnly(child_hd_node.publicKey)
         let address
         if (local_wallet_type === 'p2tr') {
-            const p2tr_derived_info = bitcoin.payments.p2tr({internalPubkey: child_xonly_pubkey})
+            const p2tr_derived_info = bitcoin.payments.p2tr({ internalPubkey: child_xonly_pubkey })
             address = p2tr_derived_info.address
         } else {
-            const p2wpkh_derived_info = bitcoin.payments.p2wpkh({pubkey: child_hd_node.publicKey})
+            const p2wpkh_derived_info = bitcoin.payments.p2wpkh({ pubkey: child_hd_node.publicKey })
             address = p2wpkh_derived_info.address
         }
         if (address !== process.env.LOCAL_WALLET_ADDRESS) {
-            throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED/LOCAL_WALLET_SEED_ENCRYPTED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct')
+            throw new Error(
+                'Local address does not match expected - ensure LOCAL_WALLET_SEED/LOCAL_WALLET_SEED_ENCRYPTED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct'
+            )
         } else {
             console.log(`Local wallet address: ${address}`)
             if (local_wallet_type === 'p2tr') {
-                tweaked_child_node = child_hd_node.tweak(
-                    bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey),
-                );
+                tweaked_child_node = child_hd_node.tweak(bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey))
             }
         }
     }
@@ -84,7 +92,7 @@ async function init_wallet() {
 
 async function get_utxos_from_mempool_space({ address }) {
     const url = `${MEMPOOL_API}/address/${address}/utxo`
-    const { data } = await axios.get(url).catch(err => {
+    const { data } = await axios.get(url).catch((err) => {
         console.error(err)
         return {}
     })
@@ -93,12 +101,12 @@ async function get_utxos_from_mempool_space({ address }) {
 async function get_utxos() {
     if (WALLET_TYPE === 'core') {
         const unspents = listunspent()
-        const filtered_unspents = unspents.filter(it => it.amount * 100000000 >= IGNORE_UTXOS_BELOW_SATS)
+        const filtered_unspents = unspents.filter((it) => it.amount * 100000000 >= IGNORE_UTXOS_BELOW_SATS)
         const ignored_num = unspents.length - filtered_unspents.length
         if (ignored_num > 0) {
             console.log(`Ignored ${ignored_num} dust unspents below ${IGNORE_UTXOS_BELOW_SATS} sats`)
         }
-        return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
+        return filtered_unspents.map((it) => `${it.txid}:${it.vout}`)
     }
     const address = process.env.LOCAL_WALLET_ADDRESS
     if (!address) {
@@ -109,12 +117,12 @@ async function get_utxos() {
         throw new Error('Error reaching mempool api')
     }
     const all_unspents_length = unspents.length
-    const filtered_unspents = unspents.filter(it => it.value >= IGNORE_UTXOS_BELOW_SATS)
+    const filtered_unspents = unspents.filter((it) => it.value >= IGNORE_UTXOS_BELOW_SATS)
     const ignored_num = all_unspents_length - filtered_unspents.length
     if (ignored_num > 0) {
         console.log(`Ignored ${ignored_num} dust unspents below ${IGNORE_UTXOS_BELOW_SATS} sats`)
     }
-    return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
+    return filtered_unspents.map((it) => `${it.txid}:${it.vout}`)
 }
 
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
@@ -126,7 +134,7 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
     if (local_wallet_type === 'p2tr') {
         psbt_object.updateInput(0, {
             tapInternalKey: child_xonly_pubkey,
-            witnessUtxo,
+            witnessUtxo
         })
         psbt_object = psbt_object.signInput(0, tweaked_child_node, [bitcoin.Transaction.SIGHASH_ALL])
     } else {
@@ -148,16 +156,16 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
 
 async function broadcast_to_mempool_space({ hex }) {
     const url = `${MEMPOOL_API}/tx`
-    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
+    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch((err) => {
         console.error(err)
         return {}
     })
     return data
 }
 
-async function broadcast_to_blockstream({ hex}) {
+async function broadcast_to_blockstream({ hex }) {
     const url = `https://blockstream.info/api/tx`
-    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
+    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch((err) => {
         console.error(err)
         return {}
     })
@@ -177,12 +185,14 @@ async function broadcast_transaction({ hex }) {
 
 async function get_address_txs({ address }) {
     const url = `${MEMPOOL_API}/address/${address}/txs`
-    const { data } = await axios.get(url, {
-        maxContentLength: Math.MAX_SAFE_INTEGER,
-    }).catch(err => {
-        console.error(err)
-        return {}
-    })
+    const { data } = await axios
+        .get(url, {
+            maxContentLength: Math.MAX_SAFE_INTEGER
+        })
+        .catch((err) => {
+            console.error(err)
+            return {}
+        })
     if (process.env.DEBUG) {
         console.log(data)
     }
@@ -192,7 +202,7 @@ async function get_address_txs({ address }) {
 async function fetch_most_recent_unconfirmed_send() {
     if (WALLET_TYPE === 'core') {
         const recent_transactions = listtransactions()
-        const unconfirmed_sends = recent_transactions.filter(it => it.category === 'send' && it.confirmations === 0)
+        const unconfirmed_sends = recent_transactions.filter((it) => it.category === 'send' && it.confirmations === 0)
         if (unconfirmed_sends.length === 0) {
             return {}
         }
@@ -206,11 +216,11 @@ async function fetch_most_recent_unconfirmed_send() {
         const existing_fee_rate = (fee / tx_info.vsize).toFixed(1)
         return {
             existing_fee_rate,
-            input_utxo: `${input.txid}:${input.vout}`,
+            input_utxo: `${input.txid}:${input.vout}`
         }
     }
     const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
-    const unconfirmed_sends = txs.filter(it => {
+    const unconfirmed_sends = txs.filter((it) => {
         // Hacky way to find which ones are ours...
         if (it.status.confirmed) return false
         if (it.vin.length !== 1) return false
@@ -232,7 +242,7 @@ async function fetch_most_recent_unconfirmed_send() {
     const existing_fee_rate = (tx.fee / (tx.weight / 4)).toFixed(1)
     return {
         existing_fee_rate,
-        input_utxo: `${tx.vin[0].txid}:${tx.vin[0].vout}`,
+        input_utxo: `${tx.vin[0].txid}:${tx.vin[0].vout}`
     }
 }
 
