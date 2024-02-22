@@ -17,19 +17,21 @@ const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation')
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
 const IGNORE_UTXOS_BELOW_SATS = process.env.IGNORE_UTXOS_BELOW_SATS || 1001
+const { get_address_from_hsm } = require('./hsm')
 
 bitcoin.initEccLib(ecc)
 
 const USE_HSM = process.env.USE_HSM === 'true'
 const get_wallet_type = () => {
     if (USE_HSM) {
-        return 'hsm'
+        return 'coldcard'
     }
     return process.env.BITCOIN_WALLET ? 'core' : 'local'
 }
 
 const MEMPOOL_API = `${MEMPOOL_URL}/api`
 const WALLET_TYPE = get_wallet_type()
+console.log(`Using wallet type: ${WALLET_TYPE}`)
 let local_wallet_type
 let child_xonly_pubkey
 let tweaked_child_node
@@ -98,6 +100,18 @@ async function get_utxos_from_mempool_space({ address }) {
     })
     return data
 }
+
+function get_address() {
+    if (WALLET_TYPE === 'coldcard') {
+        return get_address_from_hsm()
+    }
+    const address = process.env.LOCAL_WALLET_ADDRESS
+    if (WALLET_TYPE === 'local' && !address) {
+        throw new Error('LOCAL_WALLET_ADDRESS must be set')
+    }
+    return address
+}
+
 async function get_utxos() {
     if (WALLET_TYPE === 'core') {
         const unspents = listunspent()
@@ -108,10 +122,8 @@ async function get_utxos() {
         }
         return filtered_unspents.map((it) => `${it.txid}:${it.vout}`)
     }
-    const address = process.env.LOCAL_WALLET_ADDRESS
-    if (!address) {
-        throw new Error('LOCAL_WALLET_ADDRESS must be set')
-    }
+    const address = get_address()
+    console.log(`Fetching utxos for address: ${address}`)
     const unspents = await get_utxos_from_mempool_space({ address })
     if (!unspents) {
         throw new Error('Error reaching mempool api')
@@ -219,7 +231,8 @@ async function fetch_most_recent_unconfirmed_send() {
             input_utxo: `${input.txid}:${input.vout}`
         }
     }
-    const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
+    const address = get_address()
+    const txs = await get_address_txs({ address })
     const unconfirmed_sends = txs.filter((it) => {
         // Hacky way to find which ones are ours...
         if (it.status.confirmed) return false
