@@ -113,7 +113,7 @@ const bulk_transfer = async (
     callbackMessage
 ) => {
     try {
-        if (!p_from_address && !p_to_address && !p_tag_to_extract && !p_num_of_tag_to_send && !p_fee_rate) {
+        if (!p_from_address || !p_to_address || !p_tag_to_extract || !p_num_of_tag_to_send || !p_fee_rate) {
             console.log(`
 Usage: hunter:bulk-transfer [from_address] [to_address] [tag_to_extract] [num_of_tag_to_send] [fee_rate]
 
