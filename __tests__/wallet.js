@@ -38,7 +38,7 @@ describe('get_utxos', () => {
 
     describe('Environment variables', () => {
         beforeEach(() => {
-           jest.resetModules();
+            jest.resetModules();
         });
 
         test('should throw error when LOCAL_WALLET_ADDRESS is not set', async () => {
@@ -175,3 +175,105 @@ describe('get_utxos', () => {
         })
     })
 })
+
+describe('fetch_most_recent_unconfirmed_send', () => {
+    describe('Core wallet', () => {
+        beforeEach(() => {
+            jest.resetModules()
+            process.env.BITCOIN_WALLET = 'hunter'
+        });
+
+        test('should return {} when inputs lower then IGNORE_UTXOS_BELOW_SATS', async () => {
+            // Given
+            process.env.IGNORE_UTXOS_BELOW_SATS = '1500';
+            jest.mock('../bitcoin', () => ({
+                listtransactions: jest.fn().mockReturnValue([
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000015,
+                        amount: 0.0000123,
+                    },
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000020,
+                        amount: 0.00001123,
+                    }
+                ]),
+            }));
+            const { fetch_most_recent_unconfirmed_send } = require('../wallet')
+
+            // Then
+            expect(await fetch_most_recent_unconfirmed_send()).toEqual({});
+        })
+
+        test('should return unconfirmed_send when at least one input is higher then IGNORE_UTXOS_BELOW_SATS', async () => {
+            // Given
+            process.env.IGNORE_UTXOS_BELOW_SATS = '1000';
+            jest.mock('../bitcoin', () => ({
+                listtransactions: jest.fn().mockReturnValue([
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000030,
+                        amount: 0.0000123,
+                    },
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000045,
+                        amount: 0.00001123,
+                    }
+                ]),
+                getrawtransaction: jest.fn().mockReturnValue(
+                    {
+                        'in_active_chain': true,
+                        'hex': 'hex',
+                        'txid': 'hex',
+                        'hash': 'hex',
+                        'size': 1,
+                        'vsize': 263,
+                        'weight': 1,
+                        'version': 1,
+                        'locktime': 123,
+                        'vin': [
+                            {
+                                'txid': 'hex',
+                                'vout': 1,
+                                'scriptSig': {
+                                    'asm': 'str',
+                                    'hex': 'hex'
+                                },
+                                'sequence': 1,
+                                'txinwitness': ['hex']
+                            },
+                        ],
+                        'vout': [
+                            {
+                                'value': 1,
+                                'n': 1,
+                                'scriptPubKey': {
+                                    'asm': 'str',
+                                    'hex': 'str',
+                                    'reqSigs': 1,
+                                    'type': 'str',
+                                    'addresses': ['str']
+                                }
+                            },
+                        ],
+                        'blockhash': 'hex',
+                        'confirmations': 1,
+                        'blocktime': 123,
+                        'time': 1
+                    }
+                )
+            }));
+            const { fetch_most_recent_unconfirmed_send } = require('../wallet')
+
+            // Then
+            expect(await fetch_most_recent_unconfirmed_send()).not.toEqual({});
+        })
+    });
+
+});
