@@ -13,6 +13,13 @@ function get_address_from_hsm() {
     return addr
 }
 
+function sign_message_with_hsm(message) {
+    check_wallet()
+    const signingResult = child_process.execSync(`${hsm_command} msg ${message}`).toString()
+    console.log(`Signing result: ${signingResult}`)
+    return signingResult
+}
+
 async function sign_with_hsm({ psbt, witnessUtxo }) {
     // TODO: implement witnessUtxo?
     // Ensure PSBT is in base64 format for the Coldcard command
@@ -34,5 +41,6 @@ async function sign_with_hsm({ psbt, witnessUtxo }) {
 
 module.exports = {
     get_address_from_hsm,
-    sign_with_hsm
+    sign_with_hsm,
+    sign_message_with_hsm
 }
