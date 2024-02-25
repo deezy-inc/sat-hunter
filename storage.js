@@ -54,8 +54,7 @@ function process_first_withdrawal_request() {
     try {
         fileContent = fs.readFileSync(filePath, 'utf8')
     } catch (err) {
-        // Handle the error (e.g., file does not exist)
-        console.error('Error reading the file:', err)
+        console.log(`Withdrawal file not found: ${filePath}`)
         return null
     }
 
