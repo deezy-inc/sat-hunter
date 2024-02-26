@@ -1,5 +1,4 @@
 const packageJson = require('../package.json');
-const { sendNotifications } = require('../notifications');
 const axios = require('axios');
 
 const GH_API_URL = 'https://api.github.com';
@@ -41,24 +40,6 @@ const getVersionMessage = async () => {
     }
 };
 
-/**
- * Sends notifications about the version message
- * @param interval Timeout in milliseconds, default is 24 hours
- * @returns {Promise<void>}
- */
-const initVersionCheck = async (interval = 1000 * 60 * 60 * 24) => {
-    console.log('Checking version...')
-    console.log(await getVersionMessage());
-
-    const runPeriodicVersionCheck = async () => {
-        const message = await getVersionMessage();
-        await sendNotifications(message, 'version_check');
-    }
-
-    await runPeriodicVersionCheck();
-    setInterval(runPeriodicVersionCheck, interval);
-};
-
 module.exports = {
-    initVersionCheck,
+    getVersionMessage,
 };

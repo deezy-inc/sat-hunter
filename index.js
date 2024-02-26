@@ -18,7 +18,7 @@ const {
 const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
-const { sendNotifications, initNotifications } = require('./notifications')
+const { sendNotifications, initNotifications, initVersionCheck } = require('./notifications')
 const {
     sleep,
     get_tag_by_address,
@@ -27,7 +27,6 @@ const {
     get_name_by_address,
     validate_user_limits
 } = require('./utils')
-const { initVersionCheck } = require('./utils');
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)
