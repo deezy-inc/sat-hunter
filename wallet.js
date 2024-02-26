@@ -10,13 +10,13 @@ const prompts = require('prompts')
 const { decrypt } = require('./encryption')
 const axios = require('axios')
 const ecc = require('tiny-secp256k1')
-const {BIP32Factory} = require('bip32')
+const { BIP32Factory } = require('bip32')
 const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation');
+const { BTC_to_satoshi } = require('./utils');
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
-const IGNORE_UTXOS_BELOW_SATS = process.env.IGNORE_UTXOS_BELOW_SATS || 1001
 
 bitcoin.initEccLib(ecc)
 
@@ -29,6 +29,8 @@ let root_hd_node
 let child_hd_node
 let derivation_path
 const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
+
+const get_min_sat_utxo_limit = () => Number(process.env.IGNORE_UTXOS_BELOW_SATS) || 1001
 
 async function init_wallet() {
     if (WALLET_TYPE === 'local') {
@@ -63,10 +65,10 @@ async function init_wallet() {
         child_xonly_pubkey = toXOnly(child_hd_node.publicKey)
         let address
         if (local_wallet_type === 'p2tr') {
-            const p2tr_derived_info = bitcoin.payments.p2tr({internalPubkey: child_xonly_pubkey})
+            const p2tr_derived_info = bitcoin.payments.p2tr({ internalPubkey: child_xonly_pubkey })
             address = p2tr_derived_info.address
         } else {
-            const p2wpkh_derived_info = bitcoin.payments.p2wpkh({pubkey: child_hd_node.publicKey})
+            const p2wpkh_derived_info = bitcoin.payments.p2wpkh({ pubkey: child_hd_node.publicKey })
             address = p2wpkh_derived_info.address
         }
         if (address !== process.env.LOCAL_WALLET_ADDRESS) {
@@ -90,7 +92,10 @@ async function get_utxos_from_mempool_space({ address }) {
     })
     return data
 }
+
 async function get_utxos() {
+    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit();
+
     if (WALLET_TYPE === 'core') {
         const unspents = listunspent()
         const filtered_unspents = unspents.filter(it => it.amount * 100000000 >= IGNORE_UTXOS_BELOW_SATS)
@@ -155,7 +160,7 @@ async function broadcast_to_mempool_space({ hex }) {
     return data
 }
 
-async function broadcast_to_blockstream({ hex}) {
+async function broadcast_to_blockstream({ hex }) {
     const url = `https://blockstream.info/api/tx`
     const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
         console.error(err)
@@ -190,17 +195,23 @@ async function get_address_txs({ address }) {
 }
 
 async function fetch_most_recent_unconfirmed_send() {
+    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit();
+
     if (WALLET_TYPE === 'core') {
         const recent_transactions = listtransactions()
-        const unconfirmed_sends = recent_transactions.filter(it => it.category === 'send' && it.confirmations === 0)
+        const unconfirmed_sends = recent_transactions.filter(
+            it => it.category === 'send' && it.confirmations === 0 && BTC_to_satoshi(it.amount) >= IGNORE_UTXOS_BELOW_SATS
+        )
         if (unconfirmed_sends.length === 0) {
+            console.log(`Did not find any unconfirmed sends above ${IGNORE_UTXOS_BELOW_SATS} sats from ${recent_transactions.length} recent transactions`)
             return {}
         }
-        // TODO: skip if the input is below IGNORE_UTXOS_BELOW_SATS size.
+
         // sort by fee ascending
         const tx = unconfirmed_sends.sort((a, b) => a.fee - b.fee)[0]
         const fee = -tx.fee * 100000000
         const tx_info = getrawtransaction({ txid: tx.txid, verbose: true })
+
         // Assumes one input
         const input = tx_info.vin[0]
         const existing_fee_rate = (fee / tx_info.vsize).toFixed(1)
@@ -209,6 +220,7 @@ async function fetch_most_recent_unconfirmed_send() {
             input_utxo: `${input.txid}:${input.vout}`,
         }
     }
+
     const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
     const unconfirmed_sends = txs.filter(it => {
         // Hacky way to find which ones are ours...

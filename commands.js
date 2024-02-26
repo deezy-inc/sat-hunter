@@ -1,6 +1,6 @@
-const { get_user_limits, post_scan_request, get_scan_request } = require('./deezy')
-const { save_withdraw_request, save_bulk_transfer } = require('./storage')
-const { satoshi_to_BTC, get_address_by_name, validate_user_limits, get_success_scan_address_file } = require('./utils')
+const { get_user_limits, post_scan_request, get_scan_request } = require('./deezy');
+const { save_withdraw_request, save_bulk_transfer } = require('./storage');
+const { satoshi_to_BTC, get_address_by_name, validate_user_limits, get_success_scan_address_file } = require('./utils');
 
 const get_payment_details = async () => {
     const {
@@ -10,64 +10,64 @@ const get_payment_details = async () => {
         subscription_cost: _subscription_cost = '0',
         one_time_cost = '0',
         remaining_volume: _remaining_volume = '0'
-    } = await get_user_limits()
+    } = await get_user_limits();
 
     if (payment_address === '...') {
-        return ''
+        return '';
     }
 
-    const subscription_cost = satoshi_to_BTC(_subscription_cost)
-    const remaining_volume = satoshi_to_BTC(_remaining_volume)
-    const amount = satoshi_to_BTC(_amount)
+    const subscription_cost = satoshi_to_BTC(_subscription_cost);
+    const remaining_volume = satoshi_to_BTC(_remaining_volume);
+    const amount = satoshi_to_BTC(_amount);
 
-    const unlimitedTier = amount < 0
-    const remainingAmountText = unlimitedTier ? 'unlimited' : remaining_volume
-    const amountText = unlimitedTier ? 'unlimited' : amount
-    const relevantTier = amount > 0
+    const unlimitedTier = amount < 0;
+    const remainingAmountText = unlimitedTier ? 'unlimited' : remaining_volume;
+    const amountText = unlimitedTier ? 'unlimited' : amount;
+    const relevantTier = amount > 0;
 
-    const scanVolumeText = `Scan Volume Remaining: ${remainingAmountText} BTC\n`
-    const priceText = !unlimitedTier ? `Price: ${one_time_cost} sats / BTC\n` : ''
-    const tierText = relevantTier ? `Tier: ${amountText} BTC per ${days} days\n` : ''
-    const subscriptionText = relevantTier ? `Subscription Cost: ${subscription_cost} BTC\n` : ''
+    const scanVolumeText = `Scan Volume Remaining: ${remainingAmountText} BTC\n`;
+    const priceText = !unlimitedTier ? `Price: ${one_time_cost} sats / BTC\n` : '';
+    const tierText = relevantTier ? `Tier: ${amountText} BTC per ${days} days\n` : '';
+    const subscriptionText = relevantTier ? `Subscription Cost: ${subscription_cost} BTC\n` : '';
 
     const payment_details = `
 ${scanVolumeText}${priceText}
 ${tierText}${subscriptionText}
 Payment Address:
-`
+`;
 
     return {
         payment_details,
         payment_address
-    }
-}
+    };
+};
 
 const create_withdraw_request = async (name, amount) => {
-    const address_book = get_address_by_name()
+    const address_book = get_address_by_name();
 
     if (!address_book) {
-        throw new Error(`No address book found`)
+        throw new Error(`No address book found`);
     }
 
     if (!address_book[name]) {
-        throw new Error(`No address found for ${name}`)
+        throw new Error(`No address found for ${name}`);
     }
 
     try {
-        save_withdraw_request(address_book[name], amount)
+        save_withdraw_request(address_book[name], amount);
     } catch (err) {
-        console.log(`Error saving withdrawal request: ${err}`)
-        console.error(err)
+        console.log(`Error saving withdrawal request: ${err}`);
+        console.error(err);
     }
 
-    const btc_amount = satoshi_to_BTC(amount)
+    const btc_amount = satoshi_to_BTC(amount);
 
-    const withdrawal_details = `Withdrawal request created for ${name}: ${btc_amount} BTC`
+    const withdrawal_details = `Withdrawal request created for ${name}: ${btc_amount} BTC`;
 
     return {
         withdrawal_details
-    }
-}
+    };
+};
 
 async function loop_check_bulk_transfer(scan_request_id) {
     return new Promise((resolve, reject) => {
@@ -104,20 +104,43 @@ async function loop_check_bulk_transfer(scan_request_id) {
     });
 }
 
-const bulk_transfer = async (p_from_address, p_to_address, p_tag_to_extract, p_num_of_tag_to_send, p_fee_rate) => {
+const bulk_transfer = async (
+    p_from_address,
+    p_to_address,
+    p_tag_to_extract,
+    p_num_of_tag_to_send,
+    p_fee_rate,
+    callbackMessage
+) => {
     try {
-        console.log('Bulk transfer called')
+        if (!p_from_address || !p_to_address || !p_tag_to_extract || !p_num_of_tag_to_send || !p_fee_rate) {
+            console.log(`
+Usage: hunter:bulk-transfer [from_address] [to_address] [tag_to_extract] [num_of_tag_to_send] [fee_rate]
 
-        const num_of_tag_to_send = parseInt(p_num_of_tag_to_send)
+- from_address: The blockchain address from which the tags will be extracted. This should be a valid address from which you have permission to transfer.
+- to_address: The destination blockchain address to which the tags will be sent. Ensure this address is correct to avoid loss of assets.
+- tag_to_extract: The specific tag or identifier of the assets to be transferred.
+- num_of_tag_to_send: The number of tags or assets to send to the destination address. This must be a positive integer.
+- fee_rate: The fee rate for the transaction in satoshis per virtual byte (sat/vbyte). This rate affects how quickly the transaction is processed by the network.
+
+Example: hunter:bulk-transfer 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy uncommon 100 30
+
+This command will transfer 100 uncommon tags from address 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa to 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy with a fee rate of 30 sat/vbyte.
+`);
+            return { message: 'Missing or invalid arguments. Please refer to the usage information above.' };
+        }
+        console.log('Bulk transfer called');
+
+        const num_of_tag_to_send = parseInt(p_num_of_tag_to_send);
         if (isNaN(num_of_tag_to_send) || num_of_tag_to_send <= 0) {
-            throw new Error(`num_of_tag_to_send must be an integer and positive number, got ${p_num_of_tag_to_send}`)
+            throw new Error(`num_of_tag_to_send must be an integer and positive number, got ${p_num_of_tag_to_send}`);
         }
-        const fee_rate = parseFloat(p_fee_rate)
+        const fee_rate = parseFloat(p_fee_rate);
         if (isNaN(fee_rate) || fee_rate <= 0) {
-            throw new Error(`fee_rate must be a positive number, got ${p_fee_rate}`)
+            throw new Error(`fee_rate must be a positive number, got ${p_fee_rate}`);
         }
 
-        console.log(`Will use fee rate of ${fee_rate} sat/vbyte`)
+        console.log(`Will use fee rate of ${fee_rate} sat/vbyte`);
 
         const request_body = {
             address_to_scan: p_from_address,
@@ -129,36 +152,42 @@ const bulk_transfer = async (p_from_address, p_to_address, p_tag_to_extract, p_n
                 [p_tag_to_extract]: num_of_tag_to_send
             },
             included_tags: [[p_tag_to_extract]]
-        }
+        };
 
-        const response = await post_scan_request(request_body)
+        const response = await post_scan_request(request_body);
 
         if (!response || Object.keys(response).length === 0 || !response.id) {
-            throw new Error('No response from deezy')
+            throw new Error('No response from deezy');
         }
 
-        const scan_request_id = response.id
+        const scan_request_id = response.id;
 
-        await loop_check_bulk_transfer(scan_request_id)
+        if (callbackMessage) {
+            await callbackMessage(
+                `Bulk transfer created with id: ${scan_request_id}. Some transfers may take a while. Please see terminal logs to track progress...`
+            );
+        }
 
-        console.log(`Bulk transfer completed with id: ${scan_request_id}`)
+        await loop_check_bulk_transfer(scan_request_id);
+
+        console.log(`Bulk transfer created with id: ${scan_request_id}`);
 
         return {
             message: get_success_scan_address_file({
                 scan_request_id,
                 transfer_message: `${num_of_tag_to_send} ${p_tag_to_extract}`
             })
-        }
+        };
     } catch (error) {
-        console.error(error)
+        console.error(error);
         return {
             message: `Error in bulk transfer: ${error.message}`
-        }
+        };
     }
-}
+};
 
 module.exports = {
     get_payment_details,
     create_withdraw_request,
     bulk_transfer
-}
+};
