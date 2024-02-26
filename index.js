@@ -33,6 +33,7 @@ const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process
 const available_exchanges = Object.keys(exchanges);
 const FALLBACK_MAX_FEE_RATE = 200;
 const SCAN_MAX_RETRIES = 180;
+const MIN_BUMP_FEE_RATE_DELTA = 1.2;
 let notified_bank_run = false;
 let notified_withdrawal_disabled = false;
 let notified_error_withdrawing = false;
@@ -184,7 +185,7 @@ async function run() {
         if (input_utxo) {
             console.log(`Found existing unconfirmed send with fee rate of ${existing_fee_rate} sat/vbyte`);
             console.log(`Current fee rate is ${fee_rate} sat/vbyte`);
-            if (fee_rate - existing_fee_rate >= 2) {
+            if (fee_rate - existing_fee_rate >= MIN_BUMP_FEE_RATE_DELTA) {
                 const msg = `Existing transaction has fee rate of ${existing_fee_rate} sat/vbyte. Will replace with ${fee_rate} sat/vbyte`;
                 console.log(msg);
                 bump_utxos.push(input_utxo);

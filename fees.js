@@ -16,6 +16,7 @@ if (process.env.MIN_FEE_BUFFER_PERCENT) {
     }
 }
 const MIN_FEE_BUFFER = parseFloat(process.env.MIN_FEE_BUFFER || 3)
+const NEXT_BLOCK_FEE_SLOT = parseInt(process.env.NEXT_BLOCK_FEE_SLOT || 0)
 // Get fee rate from mempool.space
 async function get_fee_rate() {
     if (process.env.AUTO_RBF) {
@@ -41,12 +42,13 @@ async function get_min_next_block_fee_rate() {
     }
     if (MIN_FEE_BUFFER_PERCENT) {
         const min_fee_buffer_percent = parseFloat(process.env.MIN_FEE_BUFFER_PERCENT)
-        return Math.round((data[0].feeRange[0] * min_fee_buffer_percent) * 10) / 10
+        return Math.ceil((data[0].feeRange[NEXT_BLOCK_FEE_SLOT] * min_fee_buffer_percent) * 10) / 10
     }
     // We add 3 right now because we want to be sure we get into the next block.
-    return Math.round((data[0].feeRange[0] + MIN_FEE_BUFFER) * 10) / 10
+    return Math.ceil((data[0].feeRange[NEXT_BLOCK_FEE_SLOT] + MIN_FEE_BUFFER) * 10) / 10
 }
 
 module.exports = {
-    get_fee_rate
+    get_fee_rate,
+    get_min_next_block_fee_rate
 }
