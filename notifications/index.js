@@ -8,7 +8,7 @@ const {
   trySendPushover,
   PUSHOVER_ENABLED
 } = require('./pushover');
-const { getVersionMessage } = require('../utils');
+const { get_version_message } = require('../utils');
 
 const lastSentMessages = new Map();
 
@@ -54,10 +54,10 @@ const initNotifications = async () => {
  */
 const initVersionCheck = async (interval = 1000 * 60 * 60 * 24) => {
     console.log('Checking version...')
-    console.log(await getVersionMessage());
+    console.log(await get_version_message());
 
     const runPeriodicVersionCheck = async () => {
-        const message = await getVersionMessage();
+        const message = await get_version_message();
         await sendNotifications(message, 'version_check');
     }
 

@@ -4,7 +4,7 @@ const { satoshi_to_BTC, BTC_to_satoshi } = require('./currency');
 const { sleep, get_success_scan_address_file } = require('./io');
 const { get_address_by_name, get_name_by_address } = require('./address');
 const { validate_user_limits } = require('./limits');
-const { getVersionMessage } = require('./version');
+const { get_version_message } = require('./version');
 
 module.exports = {
     get_excluded_tags,
@@ -21,5 +21,5 @@ module.exports = {
     get_name_by_address,
     validate_user_limits,
     get_success_scan_address_file,
-    getVersionMessage,
+    get_version_message,
 }
