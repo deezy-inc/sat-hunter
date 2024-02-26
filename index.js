@@ -18,15 +18,16 @@ const {
 const { get_fee_rate } = require('./fees')
 const { post_scan_request, get_scan_request } = require('./deezy')
 const { generate_satributes_messages } = require('./satributes')
-const { sendNotifications, initNotifications, initVersionCheck } = require('./notifications')
+const { sendNotifications, initNotifications } = require('./notifications')
 const {
     sleep,
     get_tag_by_address,
     get_scan_config,
     satoshi_to_BTC,
     get_name_by_address,
-    validate_user_limits
+    validate_user_limits,
 } = require('./utils')
+const { init_version_check } = require('./helpers');
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60
 const available_exchanges = Object.keys(exchanges)
@@ -354,7 +355,7 @@ async function run() {
 
 async function runLoop() {
     await initNotifications()
-    await initVersionCheck(process.env.VERSION_CHECK_INTERVAL);
+    await init_version_check(process.env.VERSION_CHECK_INTERVAL);
     await init_wallet()
 
     while (true) {

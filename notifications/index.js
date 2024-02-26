@@ -8,7 +8,6 @@ const {
   trySendPushover,
   PUSHOVER_ENABLED
 } = require('./pushover');
-const { get_version_message } = require('../utils');
 
 const lastSentMessages = new Map();
 
@@ -47,26 +46,7 @@ const initNotifications = async () => {
   await sendNotifications(`Starting up sat hunter on ${process.env.ACTIVE_EXCHANGE}`)
 };
 
-/**
- * Sends notifications about the version message
- * @param interval Timeout in milliseconds, default is 24 hours
- * @returns {Promise<void>}
- */
-const initVersionCheck = async (interval = 1000 * 60 * 60 * 24) => {
-    console.log('Checking version...')
-    console.log(await get_version_message());
-
-    const runPeriodicVersionCheck = async () => {
-        const message = await get_version_message();
-        await sendNotifications(message, 'version_check');
-    }
-
-    await runPeriodicVersionCheck();
-    setInterval(runPeriodicVersionCheck, interval);
-};
-
 module.exports = {
-    initVersionCheck,
     sendNotifications,
     initNotifications
 };
