@@ -9,6 +9,7 @@
         "encrypt-seed": "node -r dotenv/config scripts/encrypt-seed.js",
         "test": "jest",
         "coverage": "jest --coverage",
+        "hsm:policy": "node -r dotenv/config scripts/generate_hsm_policy",
         "report": "jest --coverage && open coverage/lcov-report/index.html",
         "hunter:limits": "node -r dotenv/config scripts/get_payment_details",
         "hunter:withdraw": "node -r dotenv/config scripts/create_withdraw_request",
