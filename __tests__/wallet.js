@@ -36,32 +36,244 @@ describe('get_utxos', () => {
         axios.get.mockReset()
     })
 
-    test('should return correct utxos for local wallet', async () => {
-        delete process.env.BITCOIN_WALLET
-        process.env.WALLET_TYPE = 'local'
-        axios.get.mockImplementation(() => Promise.resolve({
-            data: [
-                { txid: 'tx1', vout: 0, value: 100000 },
-                { txid: 'tx2', vout: 1, value: 200000 }
-            ]
-        }))
+    describe('Environment variables', () => {
+        beforeEach(() => {
+            jest.resetModules();
+        });
 
-        const result = await get_utxos()
-        expect(result).toEqual(['tx1:0', 'tx2:1'])
-    })
+        test('should throw error when LOCAL_WALLET_ADDRESS is not set', async () => {
+            delete process.env.BITCOIN_WALLET
+            delete process.env.LOCAL_WALLET_ADDRESS
 
-    test('should throw error when LOCAL_WALLET_ADDRESS is not set', async () => {
-        delete process.env.BITCOIN_WALLET
-        delete process.env.LOCAL_WALLET_ADDRESS
+            await expect(get_utxos()).rejects.toThrow('LOCAL_WALLET_ADDRESS must be set')
+        })
 
-        await expect(get_utxos()).rejects.toThrow('LOCAL_WALLET_ADDRESS must be set')
-    })
+        test('should throw error when mempool api is unreachable', async () => {
+            delete process.env.BITCOIN_WALLET
+            process.env.LOCAL_WALLET_ADDRESS = 'address'
+            axios.get.mockImplementation(() => Promise.reject(new Error('Network error')))
 
-    test('should throw error when mempool api is unreachable', async () => {
-        delete process.env.BITCOIN_WALLET
-        process.env.LOCAL_WALLET_ADDRESS = 'address'
-        axios.get.mockImplementation(() => Promise.reject(new Error('Network error')))
+            await expect(get_utxos()).rejects.toThrow('Error reaching mempool api')
+        })
 
-        await expect(get_utxos()).rejects.toThrow('Error reaching mempool api')
+        describe('IGNORE_UTXOS_BELOW_SATS', () => {
+            test('should filter utxos below specified limit in IGNORE_UTXOS_BELOW_SATS (lower)', async () => {
+                // Given
+                axios.get.mockImplementation(() => Promise.resolve({
+                    data: [
+                        {
+                            'txid': '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
+                            'vout': 4,
+                            'status': {
+                                'confirmed': true,
+                                'block_height': 831003,
+                                'block_hash': '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
+                                'block_time': 1708268225
+                            },
+                            'value': 14599
+                        },
+                        {
+                            'txid': '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
+                            'vout': 0,
+                            'status': { 'confirmed': false },
+                            'value': 608
+                        }
+                    ]
+                }))
+
+                // When
+                process.env.IGNORE_UTXOS_BELOW_SATS = 400;
+
+                // Then
+                expect(await get_utxos()).toEqual([
+                    '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190:4',
+                    '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e:0',
+                ])
+            })
+
+            test('should filter utxos below specified limit in IGNORE_UTXOS_BELOW_SATS (higher)', async () => {
+                // Given
+                axios.get.mockImplementation(() => Promise.resolve({
+                    data: [
+                        {
+                            'txid': '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
+                            'vout': 4,
+                            'status': {
+                                'confirmed': true,
+                                'block_height': 831003,
+                                'block_hash': '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
+                                'block_time': 1708268225
+                            },
+                            'value': 14599
+                        },
+                        {
+                            'txid': '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
+                            'vout': 0,
+                            'status': { 'confirmed': false },
+                            'value': 608
+                        }
+                    ]
+                }))
+
+                // When
+                process.env.IGNORE_UTXOS_BELOW_SATS = 17000;
+
+                // Then
+                expect(await get_utxos()).toEqual([]);
+            })
+
+            test('should filter utxos below 1000 (default value for IGNORE_UTXOS_BELOW_SATS)', async () => {
+                // Given
+                axios.get.mockImplementation(() => Promise.resolve({
+                    data: [
+                        {
+                            'txid': '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
+                            'vout': 4,
+                            'status': {
+                                'confirmed': true,
+                                'block_height': 831003,
+                                'block_hash': '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
+                                'block_time': 1708268225
+                            },
+                            'value': 14599
+                        },
+                        {
+                            'txid': '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
+                            'vout': 0,
+                            'status': { 'confirmed': false },
+                            'value': 608
+                        }
+                    ]
+                }))
+
+                // When
+                delete process.env.IGNORE_UTXOS_BELOW_SATS;
+
+                // Then
+                expect(await get_utxos()).toEqual([
+                    '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190:4',
+                ]);
+            })
+        });
+
+
+    });
+
+    describe('Local wallet', () => {
+        test('should return correct utxos for local wallet', async () => {
+            delete process.env.BITCOIN_WALLET
+            process.env.WALLET_TYPE = 'local'
+            axios.get.mockImplementation(() => Promise.resolve({
+                data: [
+                    { txid: 'tx1', vout: 0, value: 100000 },
+                    { txid: 'tx2', vout: 1, value: 200000 }
+                ]
+            }))
+
+            const result = await get_utxos()
+            expect(result).toEqual(['tx1:0', 'tx2:1'])
+        })
     })
 })
+
+describe('fetch_most_recent_unconfirmed_send', () => {
+    describe('Core wallet', () => {
+        beforeEach(() => {
+            jest.resetModules()
+            process.env.BITCOIN_WALLET = 'hunter'
+        });
+
+        test('should return {} when inputs lower then IGNORE_UTXOS_BELOW_SATS', async () => {
+            // Given
+            process.env.IGNORE_UTXOS_BELOW_SATS = '1500';
+            jest.mock('../bitcoin', () => ({
+                listtransactions: jest.fn().mockReturnValue([
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000015,
+                        amount: 0.0000123,
+                    },
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000020,
+                        amount: 0.00001123,
+                    }
+                ]),
+            }));
+            const { fetch_most_recent_unconfirmed_send } = require('../wallet')
+
+            // Then
+            expect(await fetch_most_recent_unconfirmed_send()).toEqual({});
+        })
+
+        test('should return unconfirmed_send when at least one input is higher then IGNORE_UTXOS_BELOW_SATS', async () => {
+            // Given
+            process.env.IGNORE_UTXOS_BELOW_SATS = '1000';
+            jest.mock('../bitcoin', () => ({
+                listtransactions: jest.fn().mockReturnValue([
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000030,
+                        amount: 0.0000123,
+                    },
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000045,
+                        amount: 0.00001123,
+                    }
+                ]),
+                getrawtransaction: jest.fn().mockReturnValue(
+                    {
+                        'in_active_chain': true,
+                        'hex': 'hex',
+                        'txid': 'hex',
+                        'hash': 'hex',
+                        'size': 1,
+                        'vsize': 263,
+                        'weight': 1,
+                        'version': 1,
+                        'locktime': 123,
+                        'vin': [
+                            {
+                                'txid': 'hex',
+                                'vout': 1,
+                                'scriptSig': {
+                                    'asm': 'str',
+                                    'hex': 'hex'
+                                },
+                                'sequence': 1,
+                                'txinwitness': ['hex']
+                            },
+                        ],
+                        'vout': [
+                            {
+                                'value': 1,
+                                'n': 1,
+                                'scriptPubKey': {
+                                    'asm': 'str',
+                                    'hex': 'str',
+                                    'reqSigs': 1,
+                                    'type': 'str',
+                                    'addresses': ['str']
+                                }
+                            },
+                        ],
+                        'blockhash': 'hex',
+                        'confirmations': 1,
+                        'blocktime': 123,
+                        'time': 1
+                    }
+                )
+            }));
+            const { fetch_most_recent_unconfirmed_send } = require('../wallet')
+
+            // Then
+            expect(await fetch_most_recent_unconfirmed_send()).not.toEqual({});
+        })
+    });
+
+});
