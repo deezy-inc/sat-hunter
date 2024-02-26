@@ -47,6 +47,6 @@ const initNotifications = async () => {
 };
 
 module.exports = {
-  sendNotifications,
-  initNotifications
+    sendNotifications,
+    initNotifications
 };

@@ -26,7 +26,8 @@ const {
     satoshi_to_BTC,
     get_name_by_address,
     validate_user_limits,
-} = require('./utils.js');
+} = require('./utils');
+const { init_version_check } = require('./helpers');
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10;
 const PAYMENT_LOOP_SECONDS = process.env.PAYMENT_LOOP_SECONDS ? parseInt(process.env.PAYMENT_LOOP_SECONDS) : 60;
 const available_exchanges = Object.keys(exchanges);
@@ -356,6 +357,7 @@ async function run() {
 
 async function runLoop() {
     await initNotifications();
+    await init_version_check(process.env.VERSION_CHECK_INTERVAL);
     await init_wallet();
     while (true) {
         await run().catch((err) => {
