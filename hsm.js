@@ -1,5 +1,22 @@
-const child_process = require('child_process')
+const { bitcoin } = require('bitcoinjs-lib/src/networks')
+const child_process = require('node:child_process')
 const hsm_command = process.env.HSM_CLI_PATH || 'ckcc --simulator' // TODO: change to 'ckcc' when ready
+const fs = require('fs')
+const os = require('os')
+const path = require('path')
+
+function parse_psbt(psbt) {
+    let psbtBase64
+    if (/^[0-9a-fA-F]+$/.test(psbt)) {
+        // PSBT is in hex, convert to Buffer then to base64
+        const psbtBuffer = Buffer.from(psbt, 'hex')
+        psbtBase64 = psbtBuffer.toString('base64')
+    } else {
+        // Assume PSBT is already in base64
+        psbtBase64 = psbt
+    }
+    return psbtBase64
+}
 
 function check_wallet() {
     if (!process.env.USE_HSM) {
@@ -21,22 +38,26 @@ function sign_message_with_hsm(message) {
 }
 
 async function sign_with_hsm({ psbt, witnessUtxo }) {
-    // TODO: implement witnessUtxo?
-    // Ensure PSBT is in base64 format for the Coldcard command
-    const psbtBase64 = bitcoin.Psbt.fromBase64(psbt).toString('base64')
+    // check_wallet()
+    const psbtBase64 = parse_psbt(psbt)
+    const tempDir = os.tmpdir()
+    const psbtFilePath = path.join(tempDir, 'psbt_in.psbt')
+    fs.writeFileSync(psbtFilePath, psbtBase64, 'base64')
+    try {
+        // Create a temporary file to store the PSBT
+        // Adjust the command to use the file path
+        const signedPsbtBase64 = child_process
+            .execSync(`${hsm_command} sign --base64 --visualize ${psbtFilePath}`)
+            .toString()
+            .trim()
+        console.log(`Signed PSBT: ${signedPsbtBase64}`) // TODO: remove debug log
 
-    return new Promise((resolve, reject) => {
-        exec(`${hsm_command} sign --base64 --finalize ${psbtBase64}`, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`exec error: ${error}`)
-                return reject(error)
-            }
-            // Process the signed PSBT returned from Coldcard
-            const signedPsbtBase64 = stdout.trim()
-            console.log(`Signed PSBT: ${signedPsbtBase64}`) // TODO: remove debug log
-            resolve(signedPsbtBase64)
-        })
-    })
+        return signedPsbtBase64
+    } catch (error) {
+        console.error(`execSync error: ${error.message}`)
+    } finally {
+        fs.unlinkSync(psbtFilePath)
+    }
 }
 
 module.exports = {
