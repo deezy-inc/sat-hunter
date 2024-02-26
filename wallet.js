@@ -203,6 +203,7 @@ async function fetch_most_recent_unconfirmed_send() {
             it => it.category === 'send' && it.confirmations === 0 && BTC_to_satoshi(it.amount) >= IGNORE_UTXOS_BELOW_SATS
         )
         if (unconfirmed_sends.length === 0) {
+            console.log(`Did not find any unconfirmed sends above ${IGNORE_UTXOS_BELOW_SATS} sats, from ${recent_transactions.length}`)
             return {}
         }
 
