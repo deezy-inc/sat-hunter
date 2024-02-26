@@ -1,5 +1,5 @@
 const { create_withdraw_request } = require('./../commands');
-const { BTC_to_satoshi } = require('./../utils');
+const { BTC_to_satoshi } = require('../utils');
 
 const args = process.argv.slice(2); // Gets the arguments after the script name
 
