@@ -87,8 +87,16 @@ async function initCommands() {
         const fee_rate = parseFloat(args[4])
 
         try {
-            // Call your bulk_transfer function
-            const result = await bulk_transfer(from_address, to_address, tag_to_extract, num_of_tag_to_send, fee_rate)
+            const result = await bulk_transfer(
+                from_address,
+                to_address,
+                tag_to_extract,
+                num_of_tag_to_send,
+                fee_rate,
+                async (message) => {
+                    await telegramBot.sendMessage(chatId, message, { parse_mode: 'HTML' })
+                }
+            )
             await telegramBot.sendMessage(chatId, result.message, { parse_mode: 'HTML' })
         } catch (error) {
             console.error('Error processing bulk transfer:', error)
