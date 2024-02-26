@@ -1,5 +1,5 @@
 require('dotenv').config({
-    override: true,
+    override: true
 });
 const util = require('util');
 const ecc = require('tiny-secp256k1');
@@ -13,7 +13,7 @@ const {
     sign_and_finalize_transaction,
     broadcast_transaction,
     fetch_most_recent_unconfirmed_send,
-    init_wallet,
+    init_wallet
 } = require('./wallet');
 const { get_fee_rate } = require('./fees');
 const { post_scan_request, get_scan_request } = require('./deezy');
@@ -25,7 +25,7 @@ const {
     get_scan_config,
     satoshi_to_BTC,
     get_name_by_address,
-    validate_user_limits,
+    validate_user_limits
 } = require('./utils');
 const { init_version_check } = require('./helpers');
 const LOOP_SECONDS = process.env.LOOP_SECONDS ? parseInt(process.env.LOOP_SECONDS) : 10;
@@ -74,6 +74,10 @@ async function maybe_withdraw(exchange_name, exchange) {
 
 async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address, is_replacement, withdraw_address }) {
     console.log(`Checking validity of psbt...`);
+    if (is_hsm_enabled()) {
+        console.log(`HSM is enabled. Will not sign or broadcast on this module. Please use the sat-hunter-signer.`);
+        return;
+    }
     console.log(psbt);
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt);
     const tag_by_address = get_tag_by_address() || {};
@@ -90,13 +94,13 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
     const prev_tx = bitcoin.Transaction.fromBuffer(decoded_psbt.data.inputs[0].nonWitnessUtxo);
     const witnessUtxo = {
         value: prev_tx.outs[decoded_psbt.txInputs[0].index].value,
-        script: prev_tx.outs[decoded_psbt.txInputs[0].index].script,
+        script: prev_tx.outs[decoded_psbt.txInputs[0].index].script
     };
 
     console.log(`Signing psbt...`);
     const signed_psbt = await sign_and_finalize_transaction({
         psbt: psbt,
-        witnessUtxo,
+        witnessUtxo
     });
     console.log(signed_psbt);
     const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt);
@@ -225,7 +229,7 @@ async function run() {
             extract: true,
             regular_funds_addresses: [exchange_address],
             special_sat_addresses: [rare_sat_address],
-            extraction_fee_rate: fee_rate,
+            extraction_fee_rate: fee_rate
         };
         const { excluded_tags, included_tags, min_tag_sizes, tag_by_address, max_tag_ages, split_config, withdraw_config } =
             get_scan_config({ fee_rate, utxo });
@@ -333,7 +337,7 @@ async function run() {
                 exchange_address,
                 rare_sat_address,
                 is_replacement: rescan_request_ids.has(scan_request_id),
-                withdraw_address: info.withdraw_address || null,
+                withdraw_address: info.withdraw_address || null
             });
         } catch (err) {
             console.error('Error in decode_sign_and_send_psbt: ', err);
