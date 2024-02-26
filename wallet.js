@@ -16,7 +16,7 @@ const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation');
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
-const IGNORE_UTXOS_BELOW_SATS = 1000
+const IGNORE_UTXOS_BELOW_SATS = process.env.IGNORE_UTXOS_BELOW_SATS || 1001
 
 bitcoin.initEccLib(ecc)
 
@@ -196,6 +196,7 @@ async function fetch_most_recent_unconfirmed_send() {
         if (unconfirmed_sends.length === 0) {
             return {}
         }
+        // TODO: skip if the input is below IGNORE_UTXOS_BELOW_SATS size.
         // sort by fee ascending
         const tx = unconfirmed_sends.sort((a, b) => a.fee - b.fee)[0]
         const fee = -tx.fee * 100000000
@@ -213,6 +214,10 @@ async function fetch_most_recent_unconfirmed_send() {
         // Hacky way to find which ones are ours...
         if (it.status.confirmed) return false
         if (it.vin.length !== 1) return false
+        if (it.vin[0].prevout.value < IGNORE_UTXOS_BELOW_SATS) {
+            console.log(`Ignoring spent dust input of ${it.vin[0].prevout.value} sats`)
+            return false
+        }
         for (const output of it.vout) {
             if (output.scriptpubkey_address === process.env.LOCAL_WALLET_ADDRESS) {
                 return false
