@@ -21,7 +21,13 @@ const getPeriod = () => {
 const split_address = (env_var) => {
     if (!env_var) return [];
     try {
-        return env_var.split(' ').map((address) => address.split(':')[1]);
+        return env_var.split(' ').map((address_item) => {
+            const [description, address] = address_item.split(':');
+            return {
+                address,
+                description
+            };
+        });
     } catch (error) {
         console.log('Error splitting addresses:', error);
     }
@@ -32,20 +38,74 @@ const get_whitelist = () => {
     const tag_by_address = split_address(process.env.TAG_BY_ADDRESS);
     const address_book = split_address(process.env.ADDRESS_BOOK);
     const withdrawal_address = [
-        process.env.KRAKEN_WITHDRAWAL_ADDRESS,
-        process.env.COINBASE_WITHDRAWAL_ADDRESS,
-        process.env.COINBASE_EXCHANGE_WITHDRAWAL_ADDRESS,
-        process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS,
-        process.env.GEMINI_WITHDRAWAL_ADDRESS,
-        process.env.BFX_WITHDRAWAL_ADDRESS,
-        process.env.BINANCE_WITHDRAWAL_ADDRESS,
-        process.env.OKX_WITHDRAWAL_ADDRESS,
-        process.env.BYBIT_WITHDRAWAL_ADDRESS,
-        process.env.KUCOIN_WITHDRAWAL_ADDRESS
+        {
+            description: 'KRAKEN_WITHDRAWAL_ADDRESS',
+            address: process.env.KRAKEN_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'BITSTAMP_WITHDRAWAL_ADDRESS',
+            address: process.env.BITSTAMP_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'BITTREX_WITHDRAWAL_ADDRESS',
+            address: process.env.BITTREX_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'COINBASE_WITHDRAWAL_ADDRESS',
+            address: process.env.COINBASE_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'COINBASE_EXCHANGE_WITHDRAWAL_ADDRESS',
+            address: process.env.COINBASE_EXCHANGE_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'COINBASE_PRIME_WITHDRAWAL_ADDRESS',
+            address: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'GEMINI_WITHDRAWAL_ADDRESS',
+            address: process.env.GEMINI_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'BFX_WITHDRAWAL_ADDRESS',
+            address: process.env.BFX_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'BINANCE_WITHDRAWAL_ADDRESS',
+            address: process.env.BINANCE_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'OKX_WITHDRAWAL_ADDRESS',
+            address: process.env.OKX_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'BYBIT_WITHDRAWAL_ADDRESS',
+            address: process.env.BYBIT_WITHDRAWAL_ADDRESS
+        },
+        {
+            description: 'KUCOIN_WITHDRAWAL_ADDRESS',
+            address: process.env.KUCOIN_WITHDRAWAL_ADDRESS
+        }
     ];
-    const whitelist = [
-        ...new Set([process.env.RARE_SAT_ADDRESS, ...tag_by_address, ...address_book, ...withdrawal_address].filter(Boolean))
-    ];
+    const combined_addresses = [
+        {
+            address: process.env.RARE_SAT_ADDRESS,
+            description: 'RARE_SAT_ADDRESS'
+        },
+        ...tag_by_address,
+        ...address_book,
+        ...withdrawal_address
+    ].filter((address) => address.address && address.description);
+
+    const unique_addresses = new Set();
+    const whitelist = combined_addresses.filter((address) => {
+        if (unique_addresses.has(address.address)) {
+            return false;
+        }
+        unique_addresses.add(address.address);
+        return true;
+    });
+
     return whitelist;
 };
 
