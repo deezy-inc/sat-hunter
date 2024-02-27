@@ -82,16 +82,18 @@ function sign_psbt_with_coldcard(psbt) {
     // Create a temporary file to store the PSBT
     const psbtFilePath = path.join(tempDir, `psbt_in_${id}.psbt`);
     fs.writeFileSync(psbtFilePath, psbtBase64, 'base64');
+    console.log(`PSBT file path: ${psbtFilePath}`);
     try {
         const signedPsbtBase64 = child_process
             .execSync(`${hsm_command} sign --base64 --finalize ${psbtFilePath}`)
             .toString()
             .trim();
+            cons
         return signedPsbtBase64.split('\n').pop();
     } catch (error) {
         console.error(`execSync error: ${error.message}`);
     } finally {
-        fs.unlinkSync(psbtFilePath);
+        // fs.unlinkSync(psbtFilePath);
     }
 }
 

@@ -145,7 +145,9 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
         console.log('Signing with coldcard');
         const signed_psbt = sign_psbt_with_coldcard(psbt);
         console.log('Signed PSBT:', signed_psbt);
-        return signed_psbt;
+        //return signed_psbt;
+        // TODO: enable broadcast
+        return '';
     }
     if (get_wallet_type() === 'core') {
         const processed_psbt = walletprocesspsbt({ psbt }).psbt;
