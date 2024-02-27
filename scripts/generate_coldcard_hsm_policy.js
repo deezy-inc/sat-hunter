@@ -37,56 +37,36 @@ const split_address = (env_var) => {
 const get_whitelist = () => {
     const tag_by_address = split_address(process.env.TAG_BY_ADDRESS);
     const address_book = split_address(process.env.ADDRESS_BOOK);
-    const withdrawal_address = [
-        {
-            description: 'KRAKEN_WITHDRAWAL_ADDRESS',
-            address: process.env.KRAKEN_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'BITSTAMP_WITHDRAWAL_ADDRESS',
-            address: process.env.BITSTAMP_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'BITTREX_WITHDRAWAL_ADDRESS',
-            address: process.env.BITTREX_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'COINBASE_WITHDRAWAL_ADDRESS',
-            address: process.env.COINBASE_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'COINBASE_EXCHANGE_WITHDRAWAL_ADDRESS',
-            address: process.env.COINBASE_EXCHANGE_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'COINBASE_PRIME_WITHDRAWAL_ADDRESS',
-            address: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'GEMINI_WITHDRAWAL_ADDRESS',
-            address: process.env.GEMINI_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'BFX_WITHDRAWAL_ADDRESS',
-            address: process.env.BFX_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'BINANCE_WITHDRAWAL_ADDRESS',
-            address: process.env.BINANCE_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'OKX_WITHDRAWAL_ADDRESS',
-            address: process.env.OKX_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'BYBIT_WITHDRAWAL_ADDRESS',
-            address: process.env.BYBIT_WITHDRAWAL_ADDRESS
-        },
-        {
-            description: 'KUCOIN_WITHDRAWAL_ADDRESS',
-            address: process.env.KUCOIN_WITHDRAWAL_ADDRESS
+    const exchange_addresses = [
+        'KRAKEN',
+        'COINBASE',
+        'COINBASE_EXCHANGE',
+        'COINBASE_PRIME',
+        'GEMINI',
+        'BFX',
+        'BINANCE',
+        'OKX',
+        'BYBIT',
+        'KUCOIN'
+    ].reduce((acc, curr) => {
+        const withdrawal_address_key = `${curr}_WITHDRAWAL_ADDRESS`;
+        const withdrawal_address = process.env[withdrawal_address_key];
+        if (withdrawal_address) {
+            acc.push({
+                address: withdrawal_address,
+                description: withdrawal_address_key
+            });
         }
-    ];
+        const deposit_address_key = `${curr}_DEPOSIT_ADDRESS`;
+        const deposit_address = process.env[deposit_address_key];
+        if (deposit_address) {
+            acc.push({
+                address: deposit_address,
+                description: deposit_address_key
+            });
+        }
+        return acc;
+    }, []);
     const combined_addresses = [
         {
             address: process.env.RARE_SAT_ADDRESS,
@@ -94,15 +74,15 @@ const get_whitelist = () => {
         },
         ...tag_by_address,
         ...address_book,
-        ...withdrawal_address
+        ...exchange_addresses
     ].filter((address) => address.address && address.description);
 
     const unique_addresses = new Set();
-    const whitelist = combined_addresses.filter((address) => {
-        if (unique_addresses.has(address.address)) {
+    const whitelist = combined_addresses.filter((item_address) => {
+        if (unique_addresses.has(item_address.address)) {
             return false;
         }
-        unique_addresses.add(address.address);
+        unique_addresses.add(item_address.address);
         return true;
     });
 
@@ -110,10 +90,10 @@ const get_whitelist = () => {
 };
 
 const get_whitelist_rules = () => {
-    const rules = get_whitelist().map((address) => {
+    const rules = get_whitelist().map((item_address) => {
         return {
-            name: 'Whitelist for Transactions',
-            whitelist: [address],
+            name: item_address.description,
+            whitelist: [item_address.address],
             per_period: null,
             max_amount: null,
             users: [],

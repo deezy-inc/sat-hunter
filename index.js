@@ -87,18 +87,22 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`);
         }
     }
-    const prev_tx = bitcoin.Transaction.fromBuffer(decoded_psbt.data.inputs[0].nonWitnessUtxo);
-    const witnessUtxo = {
-        value: prev_tx.outs[decoded_psbt.txInputs[0].index].value,
-        script: prev_tx.outs[decoded_psbt.txInputs[0].index].script
-    };
-
+    console.log(`Valid psbt`, JSON.stringify(decoded_psbt, null, 2));
+    let witnessUtxo = null;
+    if (decoded_psbt.data.inputs[0].witnessUtxo) {
+        witnessUtxo = decoded_psbt.data.inputs[0].witnessUtxo;
+    } else {
+        const prev_tx = bitcoin.Transaction.fromBuffer(decoded_psbt.data.inputs[0].nonWitnessUtxo);
+        witnessUtxo = {
+            value: prev_tx.outs[decoded_psbt.txInputs[0].index].value,
+            script: prev_tx.outs[decoded_psbt.txInputs[0].index].script
+        };
+    }
     console.log(`Signing psbt...`);
     const signed_psbt = await sign_and_finalize_transaction({
         psbt: psbt,
         witnessUtxo
     });
-    console.log(signed_psbt);
     const final_signed_psbt = bitcoin.Psbt.fromBase64(signed_psbt);
     const final_fee = final_signed_psbt.getFee();
     if (final_fee > (process.env.MAX_FEE_SATS || 10000000)) {
@@ -204,7 +208,6 @@ async function run() {
     const unspents = await get_utxos();
     console.log(`Found ${unspents.length} utxos in wallet.`);
     const utxos = unspents.concat(bump_utxos);
-    utxos.push('78fc7160ff046b0d859db32003cce8bdfbc1d6eb676764a7f45bcc0a2fc6fadf:0');
     if (utxos.length === 0) {
         return;
     }
@@ -330,7 +333,7 @@ async function run() {
         let decodeError = null;
         try {
             await decode_sign_and_send_psbt({
-                psbt: info.extraction_psbt,
+                psbt: 'cHNidP8BALACAAAAAw0LFe2nYZVhWGRFccsyZ1kWzineRsUq2xM/gJAqfHvYAAAAAAD/////T3KwcSU2a3qn8J9opvAs61NbbruFTmebo4ZCgIJ/sukAAAAAAP////939XUhgWBqk1icrzcEAFQmsv6hKPx9tlzuQi23gby5FwAAAAAA/////wFAwfwQAAAAACIAICKwk9O/uMVkMqVMZ2HyTe1d5B1YdAZxHnutVEG9LSRcAAAAAAABASIA4fUFAAAAABl2qRQLJTen1vPMZoyen6AwP/s8rW6bgYisIgYDK+NygB2EYN2lKuF4qtd0pUgAulb5Scl7ii9R4pkgnQYMDwVpQwAAAAAAAAAAAAEBIgDh9QUAAAAAGXapFIKLdGycxuL7uJOU9U/0Dv/SpLZRiKwiBgLZIpA7jrKVuyMvwDBNiM8XVaYBeRVvqPhJcPDUBy1fuwwPBWlDAAAAAAEAAAAAAQEiAOH1BQAAAAAZdqkUEYjZdEwP6Oj67HctDEgb+BQA+QmIrCIGAh+0I9QlEuSddanSdBUEenQ3gkPPeu4Hwbabp9oKA9QoDA8FaUMAAAAAAgAAAAABASIAICKwk9O/uMVkMqVMZ2HyTe1d5B1YdAZxHnutVEG9LSRcAA==',
                 exchange_address,
                 rare_sat_address,
                 is_replacement: rescan_request_ids.has(scan_request_id),

@@ -76,7 +76,6 @@ function sign_message_with_coldcard(message) {
 function sign_psbt_with_coldcard(psbt) {
     check_wallet();
     const psbtBase64 = get_base64_psbt(psbt);
-    console.log(`_______________________>Signing PSBT: [${psbtBase64}]`);
     const tempDir = os.tmpdir();
     const id = Math.random().toString(36).substring(7);
     // Create a temporary file to store the PSBT
@@ -88,12 +87,11 @@ function sign_psbt_with_coldcard(psbt) {
             .execSync(`${hsm_command} sign --base64 --finalize ${psbtFilePath}`)
             .toString()
             .trim();
-            cons
         return signedPsbtBase64.split('\n').pop();
     } catch (error) {
         console.error(`execSync error: ${error.message}`);
     } finally {
-        // fs.unlinkSync(psbtFilePath);
+        fs.unlinkSync(psbtFilePath);
     }
 }
 

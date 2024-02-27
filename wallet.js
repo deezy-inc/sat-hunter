@@ -142,12 +142,8 @@ async function get_utxos() {
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
     // We handle hsm signing in sat-hunter-signer repository
     if (is_hsm_enabled()) {
-        console.log('Signing with coldcard');
         const signed_psbt = sign_psbt_with_coldcard(psbt);
-        console.log('Signed PSBT:', signed_psbt);
-        //return signed_psbt;
-        // TODO: enable broadcast
-        return '';
+        return signed_psbt;
     }
     if (get_wallet_type() === 'core') {
         const processed_psbt = walletprocesspsbt({ psbt }).psbt;
