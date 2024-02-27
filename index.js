@@ -74,10 +74,6 @@ async function maybe_withdraw(exchange_name, exchange) {
 
 async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_address, is_replacement, withdraw_address }) {
     console.log(`Checking validity of psbt...`);
-    if (is_hsm_enabled()) {
-        console.log(`HSM is enabled. Will not sign or broadcast on this module. Please use the sat-hunter-signer.`);
-        return;
-    }
     console.log(psbt);
     const decoded_psbt = bitcoin.Psbt.fromBase64(psbt);
     const tag_by_address = get_tag_by_address() || {};

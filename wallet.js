@@ -16,6 +16,7 @@ const bitcoin = require('bitcoinjs-lib');
 const bip39 = require('bip39');
 const { getAddressInfo } = require('bitcoin-address-validation');
 const { BTC_to_satoshi } = require('./utils');
+const { sign_psbt_with_hsm } = require('./hsm');
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space';
 
 bitcoin.initEccLib(ecc);
@@ -140,7 +141,9 @@ async function get_utxos() {
 
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
     // We handle hsm signing in sat-hunter-signer repository
-    if (is_hsm_enabled()) return;
+    if (is_hsm_enabled()) {
+        return sign_psbt_with_hsm(psbt);
+    }
     if (get_wallet_type() === 'core') {
         const processed_psbt = walletprocesspsbt({ psbt }).psbt;
         return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt;
