@@ -4,7 +4,31 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+const ecc = require('tiny-secp256k1');
+const bitcoin = require('bitcoinjs-lib');
+const NETWORK = bitcoin.networks.bitcoin;
+bitcoin.initEccLib(ecc);
+
+function isHexadecimal(str) {
+    const hexRegex = /^[0-9A-Fa-f]*$/;
+    return str.length % 2 === 0 && hexRegex.test(str);
+}
+
+const validate_psbt = (psbtContent) => {
+    const psbt = isHexadecimal(psbtContent)
+        ? bitcoin.Psbt.fromHex(psbtContent, {
+              network: NETWORK
+          })
+        : bitcoin.Psbt.fromBase64(psbtContent, {
+              network: NETWORK
+          });
+
+    return psbt;
+};
+
 function get_base64_psbt(psbt) {
+    const psbt_object = validate_psbt(psbt);
+    console.log(`PSBT object: ${JSON.stringify(psbt_object)}`);
     let psbtBase64;
     if (/^[0-9a-fA-F]+$/.test(psbt)) {
         // PSBT is in hex, convert to Buffer then to base64
@@ -52,6 +76,7 @@ function sign_message_with_coldcard(message) {
 function sign_psbt_with_coldcard(psbt) {
     check_wallet();
     const psbtBase64 = get_base64_psbt(psbt);
+    console.log(`_______________________>Signing PSBT: [${psbtBase64}]`);
     const tempDir = os.tmpdir();
     const id = Math.random().toString(36).substring(7);
     // Create a temporary file to store the PSBT

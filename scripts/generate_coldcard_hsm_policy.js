@@ -41,10 +41,8 @@ const hsmPolicy = {
     rules: [
         {
             name: 'Whitelist for Transactions',
-            whitelist: [
-                rareSatAddress // Use the RARE_SAT_ADDRESS from .env
-                // Add more addresses as needed
-            ],
+            // build a whitelist of allowed addresses based on the environment variable
+            whitelist: [process.env.RARE_SAT_ADDRESS],
             per_period: null,
             max_amount: null,
             users: [],
