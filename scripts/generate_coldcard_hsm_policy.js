@@ -18,8 +18,51 @@ const getPeriod = () => {
     }
 };
 
-// Extract relevant configurations
-const rareSatAddress = process.env.RARE_SAT_ADDRESS;
+const split_address = (env_var) => {
+    if (!env_var) return [];
+    try {
+        return env_var.split(' ').map((address) => address.split(':')[1]);
+    } catch (error) {
+        console.log('Error splitting addresses:', error);
+    }
+    return [];
+};
+
+const get_whitelist = () => {
+    const tag_by_address = split_address(process.env.TAG_BY_ADDRESS);
+    const address_book = split_address(process.env.ADDRESS_BOOK);
+    const withdrawal_address = [
+        process.env.KRAKEN_WITHDRAWAL_ADDRESS,
+        process.env.COINBASE_WITHDRAWAL_ADDRESS,
+        process.env.COINBASE_EXCHANGE_WITHDRAWAL_ADDRESS,
+        process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS,
+        process.env.GEMINI_WITHDRAWAL_ADDRESS,
+        process.env.BFX_WITHDRAWAL_ADDRESS,
+        process.env.BINANCE_WITHDRAWAL_ADDRESS,
+        process.env.OKX_WITHDRAWAL_ADDRESS,
+        process.env.BYBIT_WITHDRAWAL_ADDRESS,
+        process.env.KUCOIN_WITHDRAWAL_ADDRESS
+    ];
+    const whitelist = [
+        ...new Set([process.env.RARE_SAT_ADDRESS, ...tag_by_address, ...address_book, ...withdrawal_address].filter(Boolean))
+    ];
+    return whitelist;
+};
+
+const get_whitelist_rules = () => {
+    const rules = get_whitelist().map((address) => {
+        return {
+            name: 'Whitelist for Transactions',
+            whitelist: [address],
+            per_period: null,
+            max_amount: null,
+            users: [],
+            local_conf: false,
+            wallet: null
+        };
+    });
+    return rules;
+};
 
 // Define your HSM policy structure
 const hsmPolicy = {
@@ -38,18 +81,7 @@ const hsmPolicy = {
     // Not even the master PIN holder can change HSM policy nor escape HSM mode! Firmware upgrades are not possible.
     // boot directly to HSM mode, if defined, six-digit numeric code used to escape boot-to-HSM feature
     boot_to_hsm: null,
-    rules: [
-        {
-            name: 'Whitelist for Transactions',
-            // build a whitelist of allowed addresses based on the environment variable
-            whitelist: [process.env.RARE_SAT_ADDRESS],
-            per_period: null,
-            max_amount: null,
-            users: [],
-            local_conf: false,
-            wallet: null
-        }
-    ]
+    rules: get_whitelist_rules()
 };
 
 // Convert the HSM policy object to a JSON string
