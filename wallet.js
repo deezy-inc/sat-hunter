@@ -16,7 +16,7 @@ const bitcoin = require('bitcoinjs-lib');
 const bip39 = require('bip39');
 const { getAddressInfo } = require('bitcoin-address-validation');
 const { BTC_to_satoshi } = require('./utils');
-const { sign_psbt_with_hsm } = require('./hsm');
+const { sign_psbt_with_coldcard, get_hsm_address } = require('./hsm');
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space';
 
 bitcoin.initEccLib(ecc);
@@ -31,7 +31,7 @@ const get_wallet_type = () => {
 function get_address() {
     const wallet_type = get_wallet_type();
     if (wallet_type === 'coldcard') {
-        return get_address_from_hsm();
+        return get_hsm_address();
     }
     const address = process.env.LOCAL_WALLET_ADDRESS;
     if (wallet_type === 'local' && !address) {
@@ -142,7 +142,7 @@ async function get_utxos() {
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
     // We handle hsm signing in sat-hunter-signer repository
     if (is_hsm_enabled()) {
-        return sign_psbt_with_hsm(psbt);
+        return sign_psbt_with_coldcard(psbt);
     }
     if (get_wallet_type() === 'core') {
         const processed_psbt = walletprocesspsbt({ psbt }).psbt;

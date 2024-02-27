@@ -23,25 +23,33 @@ function check_wallet() {
     }
 }
 
+function get_hsm_address() {
+    if (!process.env.HSM_WALLET_ADDRESS) throw new Error(`HSM_WALLET_ADDRESS must be set in .env`);
+    return process.env.HSM_WALLET_ADDRESS;
+}
+
 // It fails if the coldcard is not connected or it is on HSM mode
-function get_address_from_hsm() {
+function get_address_from_coldcard() {
     check_wallet();
     try {
         const addr = child_process.execSync(`${hsm_command} addr`).toString().trim()?.split('\n')?.[2];
         return addr;
     } catch (error) {
-        return '';
+        if (!process.env.HSM_WALLET_ADDRESS) {
+            throw new Error(`HSM_WALLET_ADDRESS must be set in .env`);
+        }
+        return process.env.HSM_WALLET_ADDRESS;
     }
 }
 
-function sign_message_with_hsm(message) {
+function sign_message_with_coldcard(message) {
     check_wallet();
     const signingResult = child_process.execSync(`${hsm_command} msg ${message}`).toString();
     console.log(`Signing result: ${signingResult}`);
     return signingResult;
 }
 
-function sign_psbt_with_hsm(psbt) {
+function sign_psbt_with_coldcard(psbt) {
     check_wallet();
     const psbtBase64 = get_base64_psbt(psbt);
     const tempDir = os.tmpdir();
@@ -63,7 +71,8 @@ function sign_psbt_with_hsm(psbt) {
 }
 
 module.exports = {
-    get_address_from_hsm,
-    sign_psbt_with_hsm,
-    sign_message_with_hsm
+    get_address_from_coldcard,
+    get_hsm_address,
+    sign_psbt_with_coldcard,
+    sign_message_with_coldcard
 };

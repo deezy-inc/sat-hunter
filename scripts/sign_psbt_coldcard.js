@@ -1,4 +1,4 @@
-const { sign_psbt_with_hsm } = require('../hsm');
+const { sign_psbt_with_coldcard } = require('../hsm');
 
 require('dotenv').config({
     override: true
@@ -12,4 +12,4 @@ const get_psbt = () => {
     return psbt;
 };
 
-console.log(sign_psbt_with_hsm(get_psbt()));
+console.log(sign_psbt_with_coldcard(get_psbt()));
