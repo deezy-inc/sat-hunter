@@ -198,12 +198,25 @@ async function fetch_most_recent_unconfirmed_send() {
     const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit();
 
     if (WALLET_TYPE === 'core') {
-        const recent_transactions = listtransactions()
-        const all_unconfirmed_sends = recent_transactions.filter(
+        const recent_transactions_all_outputs = listtransactions({ count: 200 })
+        const all_unconfirmed_sends = recent_transactions_all_outputs.filter(
             it => it.category === 'send' && it.confirmations === 0
         )
-        const unconfirmed_sends= all_unconfirmed_sends.filter( it => BTC_to_satoshi(it.amount) >= IGNORE_UTXOS_BELOW_SATS)
-        const num_unconfirmed_send_below_limit = all_unconfirmed_sends.length - unconfirmed_sends.length
+        // Sort by most negative (largest send first)
+        const all_unconfirmed_sends_sorted = all_unconfirmed_sends.sort((a, b) => b.amount - a.amount)
+        // For a send with multiple outputs (common in an extraction tx), listtransactions() will return an entry for each output
+        // in the same tx. So we have many entries referring to the same txid, and should just grab one of them.
+        const unique_txids = new Set()
+        const unique_unconfirmed_sends = all_unconfirmed_sends_sorted.filter(it => {
+            if (unique_txids.has(it.txid)) {
+                // This assumes all_unconfirmed_sends_sorted is sorted by biggest (most negative) amounts first
+                return false
+            }
+            unique_txids.add(it.txid)
+            return true
+        })
+        const unconfirmed_sends = unique_unconfirmed_sends.filter( it => Math.abs(BTC_to_satoshi(it.amount)) >= IGNORE_UTXOS_BELOW_SATS)
+        const num_unconfirmed_send_below_limit = unique_unconfirmed_sends.length - unconfirmed_sends.length
         if (unconfirmed_sends.length === 0) {
             console.log(`Did not find any unconfirmed sends above ${IGNORE_UTXOS_BELOW_SATS} sats`)
             if (num_unconfirmed_send_below_limit > 0) {
