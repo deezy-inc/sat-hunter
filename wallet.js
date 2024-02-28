@@ -199,11 +199,16 @@ async function fetch_most_recent_unconfirmed_send() {
 
     if (WALLET_TYPE === 'core') {
         const recent_transactions = listtransactions()
-        const unconfirmed_sends = recent_transactions.filter(
-            it => it.category === 'send' && it.confirmations === 0 && BTC_to_satoshi(it.amount) >= IGNORE_UTXOS_BELOW_SATS
+        const all_unconfirmed_sends = recent_transactions.filter(
+            it => it.category === 'send' && it.confirmations === 0
         )
+        const unconfirmed_sends= all_unconfirmed_sends.filter( it => BTC_to_satoshi(it.amount) >= IGNORE_UTXOS_BELOW_SATS)
+        const num_unconfirmed_send_below_limit = all_unconfirmed_sends.length - unconfirmed_sends.length
         if (unconfirmed_sends.length === 0) {
-            console.log(`Did not find any unconfirmed sends above ${IGNORE_UTXOS_BELOW_SATS} sats from ${recent_transactions.length} recent transactions`)
+            console.log(`Did not find any unconfirmed sends above ${IGNORE_UTXOS_BELOW_SATS} sats`)
+            if (num_unconfirmed_send_below_limit > 0) {
+                console.log(`Ignored ${num_unconfirmed_send_below_limit} unconfirmed sends below ${IGNORE_UTXOS_BELOW_SATS} sats`)
+            }
             return {}
         }
 
