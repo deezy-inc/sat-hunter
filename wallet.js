@@ -202,7 +202,6 @@ async function fetch_most_recent_unconfirmed_send() {
         const all_unconfirmed_sends = recent_transactions_all_outputs.filter(
             it => it.category === 'send' && it.confirmations === 0
         )
-        console.log({ all_unconfirmed_sends })
         // Sort by most negative (largest send first)
         const all_unconfirmed_sends_sorted = all_unconfirmed_sends.sort((a, b) => b.amount - a.amount)
         // For a send with multiple outputs (common in an extraction tx), listtransactions() will return an entry for each output
@@ -216,7 +215,6 @@ async function fetch_most_recent_unconfirmed_send() {
             unique_txids.add(it.txid)
             return true
         })
-        console.log({ unique_unconfirmed_sends })
         const unconfirmed_sends = unique_unconfirmed_sends.filter( it => Math.abs(BTC_to_satoshi(it.amount)) >= IGNORE_UTXOS_BELOW_SATS)
         const num_unconfirmed_send_below_limit = unique_unconfirmed_sends.length - unconfirmed_sends.length
         if (unconfirmed_sends.length === 0) {
