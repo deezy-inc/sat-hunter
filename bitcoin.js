@@ -44,9 +44,9 @@ function decodepsbt({ psbt }) {
     return resp
 }
 
-function listtransactions({ count }) {
+function listtransactions({ label = '"*"', count }) {
     check_wallet()
-    const resp = JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listtransactions ${count ? count : '10'}`))
+    const resp = JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listtransactions ${label} ${count ? count : '10'}`))
     return resp
 }
 
