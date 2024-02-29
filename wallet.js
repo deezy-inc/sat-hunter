@@ -203,7 +203,7 @@ async function fetch_most_recent_unconfirmed_send() {
             it => it.category === 'send' && it.confirmations === 0
         )
         // Sort by most negative (largest send first)
-        const all_unconfirmed_sends_sorted = all_unconfirmed_sends.sort((a, b) => b.amount - a.amount)
+        const all_unconfirmed_sends_sorted = all_unconfirmed_sends.sort((a, b) => a.amount - b.amount)
         // For a send with multiple outputs (common in an extraction tx), listtransactions() will return an entry for each output
         // in the same tx. So we have many entries referring to the same txid, and should just grab one of them.
         const unique_txids = new Set()
