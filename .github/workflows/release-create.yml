@@ -1,0 +1,54 @@
+name: "Create Release"
+permissions:
+    contents: write
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Version bump'
+                required: true
+                default: 'patch'
+                type: choice
+                options:
+                    - patch
+                    - minor
+                    - major
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    job1:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Configure git
+              run: |
+                  git config --global user.name '${{github.actor}}'
+                  git config --global user.email '${{github.actor}}@users.noreply.github.com'
+            - name: Bump package.json version and tag
+              run: |
+                  npm version ${{ inputs.version }} --no-git-tag-version
+                  version=$(cat package.json | jq -r '.version')
+                  git add -A
+                  git commit -m "Bump version to ${version}"
+                  git tag "v$version"
+                  git push --set-upstream origin main --tags
+            - name: Create new release branch
+              run: |
+                  version=$(cat package.json | jq -r '.version')
+                  git checkout -b "release/$version"
+                  git push --set-upstream origin "release/$version"
+                  echo "tag_name=v$version" >> $GITHUB_ENV
+            - name: Create Draft release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ env.tag_name }}
+                  release_name: ${{ env.tag_name }}
+                  body: |
+                      TODO: Write release notes
+                  draft: true
+                  prerelease: false
