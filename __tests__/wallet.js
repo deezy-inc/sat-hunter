@@ -1,5 +1,5 @@
 const ecc = require('tiny-secp256k1')
-const { BIP32Factory } = require('bip32')
+const {BIP32Factory} = require('bip32')
 const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
@@ -16,14 +16,14 @@ const root = bip32.fromSeed(Buffer.from(bip39.mnemonicToSeedSync(seed)))
 const node = root.derivePath("m/84'/0'/0'/0/0")
 
 // Get the Bitcoin p2wpkh address associated with this node
-const { address } = bitcoin.payments.p2wpkh({ pubkey: node.publicKey })
+const {address} = bitcoin.payments.p2wpkh({pubkey: node.publicKey})
 
 process.env.LOCAL_WALLET_SEED = seed
 process.env.LOCAL_WALLET_ADDRESS = address
 process.env.LOCAL_DERIVATION_PATH = derivePath
 
-const { get_utxos } = require('../wallet')
-const { listunspent } = require('../bitcoin')
+const {get_utxos} = require('../wallet')
+const {listunspent} = require('../bitcoin')
 const axios = require('axios')
 
 jest.mock('../bitcoin')
@@ -75,7 +75,7 @@ describe('get_utxos', () => {
                         {
                             'txid': '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
                             'vout': 0,
-                            'status': { 'confirmed': false },
+                            'status': {'confirmed': false},
                             'value': 608
                         }
                     ]
@@ -109,7 +109,7 @@ describe('get_utxos', () => {
                         {
                             'txid': '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
                             'vout': 0,
-                            'status': { 'confirmed': false },
+                            'status': {'confirmed': false},
                             'value': 608
                         }
                     ]
@@ -140,7 +140,7 @@ describe('get_utxos', () => {
                         {
                             'txid': '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
                             'vout': 0,
-                            'status': { 'confirmed': false },
+                            'status': {'confirmed': false},
                             'value': 608
                         }
                     ]
@@ -165,8 +165,8 @@ describe('get_utxos', () => {
             process.env.WALLET_TYPE = 'local'
             axios.get.mockImplementation(() => Promise.resolve({
                 data: [
-                    { txid: 'tx1', vout: 0, value: 100000 },
-                    { txid: 'tx2', vout: 1, value: 200000 }
+                    {txid: 'tx1', vout: 0, value: 100000},
+                    {txid: 'tx2', vout: 1, value: 200000}
                 ]
             }))
 
@@ -192,17 +192,17 @@ describe('fetch_most_recent_unconfirmed_send', () => {
                         category: 'send',
                         confirmations: 0,
                         fee: 0.0000015,
-                        amount: 0.0000123,
+                        amount: -0.0000123,
                     },
                     {
                         category: 'send',
                         confirmations: 0,
                         fee: 0.0000020,
-                        amount: 0.00001123,
+                        amount: -0.00001123,
                     }
                 ]),
             }));
-            const { fetch_most_recent_unconfirmed_send } = require('../wallet')
+            const {fetch_most_recent_unconfirmed_send} = require('../wallet')
 
             // Then
             expect(await fetch_most_recent_unconfirmed_send()).toEqual({});
@@ -217,21 +217,104 @@ describe('fetch_most_recent_unconfirmed_send', () => {
                         category: 'send',
                         confirmations: 0,
                         fee: 0.0000030,
-                        amount: 0.0000123,
+                        amount: -0.0000123,
+                        txid: 'a'
                     },
                     {
                         category: 'send',
                         confirmations: 0,
                         fee: 0.0000045,
-                        amount: 0.00001123,
+                        amount: -0.00001123,
+                        txid: 'b'
                     }
                 ]),
-                getrawtransaction: jest.fn().mockReturnValue(
+                getrawtransaction: jest.fn().mockReturnValue({
+                    'in_active_chain': true,
+                    'hex': 'hex',
+                    'txid': 'txid',
+                    'hash': 'txid',
+                    'size': 1,
+                    'vsize': 263,
+                    'weight': 1,
+                    'version': 1,
+                    'locktime': 123,
+                    'vin': [
+                        {
+                            'txid': 'hex',
+                            'vout': 1,
+                            'scriptSig': {
+                                'asm': 'str',
+                                'hex': 'hex'
+                            },
+                            'sequence': 1,
+                            'txinwitness': ['hex']
+                        },
+                    ],
+                    'vout': [
+                        {
+                            'value': 1,
+                            'n': 1,
+                            'scriptPubKey': {
+                                'asm': 'str',
+                                'hex': 'str',
+                                'reqSigs': 1,
+                                'type': 'str',
+                                'addresses': ['str']
+                            }
+                        },
+                    ],
+                    'blockhash': 'hex',
+                    'confirmations': 1,
+                    'blocktime': 123,
+                    'time': 1
+                })
+            }));
+            const {fetch_most_recent_unconfirmed_send} = require('../wallet')
+
+            // Then
+            expect(await fetch_most_recent_unconfirmed_send()).not.toEqual({});
+        })
+
+        test('should handle same txid in multiple entries from listransactions', async () => {
+            // Given
+            process.env.IGNORE_UTXOS_BELOW_SATS = '1500';
+            jest.mock('../bitcoin', () => ({
+                listtransactions: jest.fn().mockReturnValue([
                     {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000015,
+                        amount: -0.00000546,
+                        txid: 'a',
+                    },
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000015,
+                        amount: -0.01,
+                        txid: 'a',
+                    },
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000015,
+                        amount: -0.00000546,
+                        txid: 'a',
+                    },
+                    {
+                        category: 'send',
+                        confirmations: 0,
+                        fee: 0.0000020,
+                        amount: -0.00001123,
+                        txid: 'b',
+                    }
+                ]),
+                getrawtransaction: jest.fn().mockImplementation(({txid}) => {
+                    return {
                         'in_active_chain': true,
                         'hex': 'hex',
-                        'txid': 'hex',
-                        'hash': 'hex',
+                        'txid': txid,
+                        'hash': txid,
                         'size': 1,
                         'vsize': 263,
                         'weight': 1,
@@ -239,7 +322,7 @@ describe('fetch_most_recent_unconfirmed_send', () => {
                         'locktime': 123,
                         'vin': [
                             {
-                                'txid': 'hex',
+                                'txid': `input-${txid}`,
                                 'vout': 1,
                                 'scriptSig': {
                                     'asm': 'str',
@@ -267,13 +350,15 @@ describe('fetch_most_recent_unconfirmed_send', () => {
                         'blocktime': 123,
                         'time': 1
                     }
-                )
-            }));
-            const { fetch_most_recent_unconfirmed_send } = require('../wallet')
+                })
+            }))
+            const {fetch_most_recent_unconfirmed_send} = require('../wallet')
 
             // Then
-            expect(await fetch_most_recent_unconfirmed_send()).not.toEqual({});
+            expect(await fetch_most_recent_unconfirmed_send()).toEqual({
+                "existing_fee_rate": "-0.6",
+                "input_utxo": "input-a:1",
+            });
         })
     });
-
 });
