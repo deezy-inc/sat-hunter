@@ -32,7 +32,6 @@ jobs:
             - name: Bump package.json version
               run: |
                   npm version ${{ inputs.version }} --no-git-tag-version
-                  version=$(cat package.json | jq -r '.version')
             - name: Commit changes
               env:
                   FILE_TO_COMMIT: package.json
