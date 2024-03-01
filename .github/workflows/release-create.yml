@@ -1,4 +1,5 @@
 name: "Create Release"
+run-name: "Create ${{ inputs.version }} release"
 permissions:
     contents: write
 on:
@@ -41,14 +42,12 @@ jobs:
                   git checkout -b "release/$version"
                   git push --set-upstream origin "release/$version"
                   echo "tag_name=v$version" >> $GITHUB_ENV
-            - name: Create Draft release
-              uses: actions/create-release@v1
+            - name: Create draft release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ env.tag_name }}
-                  release_name: ${{ env.tag_name }}
-                  body: |
-                      TODO: Write release notes
-                  draft: true
-                  prerelease: false
+              run: |
+                  version=$(cat package.json | jq -r '.version')
+                  gh release create "v$version" \
+                      --draft \
+                      --title="v$version" \
+                      --generate-notes
