@@ -13,8 +13,8 @@
         "hunter:limits": "node -r dotenv/config scripts/get_payment_details",
         "hunter:withdraw": "node -r dotenv/config scripts/create_withdraw_request",
         "hunter:bulk-transfer": "node -r dotenv/config scripts/bulk-transfer",
-        "ci:lint": "eslint src/ --ext .mjs,.js __tests__/ --ext .mjs,.js",
-        "lint": "eslint --fix src/ --ext .mjs,.js __tests__/ --ext .mjs,.js"
+        "ci:lint": "eslint . --ext .mjs,.js",
+        "lint": "eslint --fix . --ext .mjs,.js"
     },
     "jest": {
         "setupFiles": [
