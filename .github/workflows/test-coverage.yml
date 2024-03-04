@@ -11,6 +11,7 @@ concurrency:
 
 jobs:
   build:
+    name: Test Coverage & Linting
     runs-on: ubuntu-latest
 
     steps:
