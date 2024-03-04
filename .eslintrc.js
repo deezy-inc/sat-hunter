@@ -6,7 +6,7 @@ module.exports = {
     extends: ['eslint:recommended', 'prettier'],
     plugins: ['prettier'],
     parserOptions: {
-        ecmaVersion: 'latest'
+        ecmaVersion: 'latest',
     },
     rules: {
         indent: ['error', 4],
@@ -28,10 +28,7 @@ module.exports = {
         'no-multiple-empty-lines': ['error', { max: 2, maxEOF: 1 }],
         'no-whitespace-before-property': 'error',
         'nonblock-statement-body-position': 'error',
-        'object-property-newline': [
-            'error',
-            { allowAllPropertiesOnSameLine: true },
-        ],
+        'object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
 
         //* ES6
         'arrow-spacing': 'error',
