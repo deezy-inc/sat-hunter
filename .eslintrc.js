@@ -11,7 +11,14 @@ module.exports = {
     rules: {
         indent: ['error', 4],
         'linebreak-style': ['error', 'unix'],
-        quotes: ['warn', 'single'],
+        quotes: [
+            'error',
+            'single',
+            {
+                avoidEscape: true,
+                allowTemplateLiterals: true,
+            },
+        ],
         semi: ['error', 'never'],
         'no-undef': 'error',
         'no-unused-vars': ['error', { argsIgnorePattern: 'req|res|next|__' }],
