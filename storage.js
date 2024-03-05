@@ -26,7 +26,7 @@ function save_scan_config({ utxo, config }) {
 }
 
 function save_bulk_transfer(file_name, config) {
-    let dir = completed_bulk_transfer_dir
+    const dir = completed_bulk_transfer_dir
     const file = `${dir}/${file_name}.json`
     fs.writeFileSync(file, JSON.stringify(config, null, 2))
 }
@@ -43,7 +43,7 @@ function save_withdraw_request(address, amount) {
     const withdrawRequest = { address, amount }
 
     const file = `${data_dir}/withdraw_requests.json`
-    fs.appendFileSync(file, JSON.stringify(withdrawRequest) + '\n')
+    fs.appendFileSync(file, `${JSON.stringify(withdrawRequest)}\n`)
 }
 
 function process_first_withdrawal_request() {
@@ -88,5 +88,5 @@ module.exports = {
     delete_scan_configs,
     save_withdraw_request,
     process_first_withdrawal_request,
-    save_bulk_transfer
+    save_bulk_transfer,
 }

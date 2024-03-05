@@ -1,4 +1,3 @@
-
 const {
     get_excluded_tags,
     get_min_tag_sizes,
@@ -7,12 +6,10 @@ const {
     sleep,
     get_scan_config,
     satoshi_to_BTC,
-    get_max_tag_ages
+    get_max_tag_ages,
 } = require('../../utils')
 
-const {
-    delete_scan_configs
-} = require('../../storage')
+const { delete_scan_configs } = require('../../storage')
 
 describe('get_excluded_tags', () => {
     test('should return correct format', () => {
@@ -79,13 +76,13 @@ describe('get_min_tag_sizes', () => {
     test('should return correct format', () => {
         process.env.MIN_TAG_SIZES = 'block_9:1000 block_78:2000'
         const result = get_min_tag_sizes({ fee_rate: 0 })
-        expect(result).toEqual({ 'block_9': 1000, 'block_78': 2000 })
+        expect(result).toEqual({ block_9: 1000, block_78: 2000 })
     })
 
     test('should trim leading and trailing spaces', () => {
         process.env.MIN_TAG_SIZES = ' block_9:1000 block_78:2000 '
         const result = get_min_tag_sizes({ fee_rate: 0 })
-        expect(result).toEqual({ 'block_9': 1000, 'block_78': 2000 })
+        expect(result).toEqual({ block_9: 1000, block_78: 2000 })
     })
 
     test('should return null when MIN_TAG_SIZES is not set', () => {
@@ -99,17 +96,17 @@ describe('get_min_tag_sizes', () => {
         process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:2000 block_78:3000'
         process.env.MIN_TAG_SIZES = 'block_9:1000 block_78:2000'
         const result = get_min_tag_sizes({ fee_rate: 20 })
-        expect(result).toEqual({ 'block_9': 2000, 'block_78': 3000 })
+        expect(result).toEqual({ block_9: 2000, block_78: 3000 })
     })
 
     test('should use medium fee min tag sizes when fee_rate is higher than MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD but lower than MIN_TAG_SIZES_HIGH_FEE_THRESHOLD', () => {
-        process.env.MIN_TAG_SIZES = "vintage_nakamoto:1000 block_78:2000"
+        process.env.MIN_TAG_SIZES = 'vintage_nakamoto:1000 block_78:2000'
         process.env.MIN_TAG_SIZES_MEDIUM_FEE_THRESHOLD = 20
-        process.env.MIN_TAG_SIZES_MEDIUM_FEE = "vintage_nakamoto:5000 block_78:5000"
+        process.env.MIN_TAG_SIZES_MEDIUM_FEE = 'vintage_nakamoto:5000 block_78:5000'
         process.env.MIN_TAG_SIZES_HIGH_FEE_THRESHOLD = 50
-        process.env.MIN_TAG_SIZES_HIGH_FEE = "vintage_nakamoto:10000 block_78:10000"
+        process.env.MIN_TAG_SIZES_HIGH_FEE = 'vintage_nakamoto:10000 block_78:10000'
         const result = get_min_tag_sizes({ fee_rate: 30 })
-        expect(result).toEqual({ 'vintage_nakamoto': 5000, 'block_78': 5000 })
+        expect(result).toEqual({ vintage_nakamoto: 5000, block_78: 5000 })
     })
 
     test('should not use high fee min tag sizes when fee_rate is lower than MIN_TAG_SIZES_HIGH_FEE_THRESHOLD', () => {
@@ -117,7 +114,7 @@ describe('get_min_tag_sizes', () => {
         process.env.MIN_TAG_SIZES_HIGH_FEE = 'block_9:2000 block_78:3000'
         process.env.MIN_TAG_SIZES = 'block_9:1000 block_78:2000'
         const result = get_min_tag_sizes({ fee_rate: 5 })
-        expect(result).toEqual({ 'block_9': 1000, 'block_78': 2000 })
+        expect(result).toEqual({ block_9: 1000, block_78: 2000 })
     })
 })
 
@@ -183,53 +180,53 @@ describe('get_included_tags', () => {
 
 describe('satoshi_to_BTC', () => {
     test('should correctly convert satoshi to BTC', () => {
-        const satoshi = 123456789;
-        const result = satoshi_to_BTC(satoshi);
-        expect(result).toBe(1.23456789);
-    });
+        const satoshi = 123456789
+        const result = satoshi_to_BTC(satoshi)
+        expect(result).toBe(1.23456789)
+    })
 
     test('should correctly convert satoshi to BTC', () => {
-        const satoshi = 6789;
-        const result = satoshi_to_BTC(satoshi);
-        expect(result).toBe(0.00006789);
-    });
+        const satoshi = 6789
+        const result = satoshi_to_BTC(satoshi)
+        expect(result).toBe(0.00006789)
+    })
 
     test('should remove trailing zeros', () => {
-        const satoshi = 100000000;
-        const result = satoshi_to_BTC(satoshi);
-        expect(result).toBe(1);
-    });
+        const satoshi = 100000000
+        const result = satoshi_to_BTC(satoshi)
+        expect(result).toBe(1)
+    })
 
     test('should remove trailing zeros', () => {
-        const satoshi = 100050000;
-        const result = satoshi_to_BTC(satoshi);
-        expect(result).toBe(1.0005);
-    });
+        const satoshi = 100050000
+        const result = satoshi_to_BTC(satoshi)
+        expect(result).toBe(1.0005)
+    })
 
     test('should remove trailing zeros', () => {
-        const satoshi = 20050010;
-        const result = satoshi_to_BTC(satoshi);
-        expect(result).toBe(0.2005001);
-    });
+        const satoshi = 20050010
+        const result = satoshi_to_BTC(satoshi)
+        expect(result).toBe(0.2005001)
+    })
 
     test('should handle zero', () => {
-        const satoshi = 0;
-        const result = satoshi_to_BTC(satoshi);
-        expect(result).toBe(0);
-    });
-});
+        const satoshi = 0
+        const result = satoshi_to_BTC(satoshi)
+        expect(result).toBe(0)
+    })
+})
 
 describe('get_tag_by_address', () => {
     test('should return correct format', () => {
         process.env.TAG_BY_ADDRESS = 'tag1:address1 tag2:address2'
         const result = get_tag_by_address()
-        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2' })
+        expect(result).toEqual({ tag1: 'address1', tag2: 'address2' })
     })
 
     test('should trim leading and trailing spaces', () => {
         process.env.TAG_BY_ADDRESS = ' tag1:address1      tag2:address2 '
         const result = get_tag_by_address()
-        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2' })
+        expect(result).toEqual({ tag1: 'address1', tag2: 'address2' })
     })
 
     test('should return null when TAG_BY_ADDRESS is not set', () => {
@@ -247,7 +244,7 @@ describe('get_tag_by_address', () => {
     test('should handle multiple tag-address pairs', () => {
         process.env.TAG_BY_ADDRESS = 'tag1:address1 tag2:address2 tag3:address3'
         const result = get_tag_by_address()
-        expect(result).toEqual({ 'tag1': 'address1', 'tag2': 'address2', 'tag3': 'address3' })
+        expect(result).toEqual({ tag1: 'address1', tag2: 'address2', tag3: 'address3' })
     })
 })
 
@@ -261,7 +258,6 @@ describe('sleep', () => {
         // We use toBeGreaterThanOrEqual and toBeLessThan to account for slight variations in timing
         expect(endTime - startTime).toBeGreaterThanOrEqual(1000)
         expect(endTime - startTime).toBeLessThan(1010)
-
     })
 })
 describe('get_scan_config', () => {
@@ -364,7 +360,6 @@ describe('get_scan_config', () => {
         process.env.INCLUDE_TAGS_MEDIUM_FEE = 'uncommon rare'
         process.env.INCLUDE_TAGS_MEDIUM_FEE_THRESHOLD = '15'
 
-
         process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD = '40'
         process.env.SPLIT_TRIGGER_HIGH_FEE = 'NEVER'
         process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE = '50000000'
@@ -383,7 +378,7 @@ describe('get_scan_config', () => {
             min_tag_sizes: { block_9: 1000 },
             max_tag_ages: { alpha: 2009 },
             included_tags: [['special_name'], ['uncommon'], ['rare']],
-            split_config: { split_trigger: 'ALWAYS', split_target_size_sats: 10000000 }
+            split_config: { split_trigger: 'ALWAYS', split_target_size_sats: 10000000 },
         }
         expect(get_scan_config({ fee_rate: 4 })).toEqual(expected_result)
         // Cached result should be saved, so we should get the same result at higher fee levels.
@@ -403,7 +398,7 @@ describe('get_scan_config', () => {
             min_tag_sizes: { block_9: 20000 },
             included_tags: [['rare']],
             max_tag_ages: { alpha: 2009 },
-            split_config: { split_trigger: 'NEVER', split_target_size_sats: 50000000 }
+            split_config: { split_trigger: 'NEVER', split_target_size_sats: 50000000 },
         })
     })
 })
@@ -412,13 +407,13 @@ describe('get_max_tag_ages', () => {
     test('should return correct format', () => {
         process.env.MAX_TAG_AGES = 'alpha:2009 omega:2000'
         const result = get_max_tag_ages({ fee_rate: 0 })
-        expect(result).toEqual({ 'alpha': 2009, 'omega': 2000 })
+        expect(result).toEqual({ alpha: 2009, omega: 2000 })
     })
 
     test('should trim leading and trailing spaces', () => {
         process.env.MAX_TAG_AGES = ' alpha:2009 omega:2000 '
         const result = get_max_tag_ages({ fee_rate: 0 })
-        expect(result).toEqual({ 'alpha': 2009, 'omega': 2000 })
+        expect(result).toEqual({ alpha: 2009, omega: 2000 })
     })
 
     test('should return null when MAX_TAG_AGES is not set', () => {
@@ -432,17 +427,17 @@ describe('get_max_tag_ages', () => {
         process.env.MAX_TAG_AGES_HIGH_FEE = 'alpha:2000 omega:3000'
         process.env.MAX_TAG_AGES = 'alpha:2009 omega:2000'
         const result = get_max_tag_ages({ fee_rate: 20 })
-        expect(result).toEqual({ 'alpha': 2000, 'omega': 3000 })
+        expect(result).toEqual({ alpha: 2000, omega: 3000 })
     })
 
     test('should use medium fee max tag ages when fee_rate is higher than MAX_TAG_AGES_MEDIUM_FEE_THRESHOLD but lower than MAX_TAG_AGES_HIGH_FEE_THRESHOLD', () => {
-        process.env.MAX_TAG_AGES = "vintage_nakamoto:2009 omega:2000"
+        process.env.MAX_TAG_AGES = 'vintage_nakamoto:2009 omega:2000'
         process.env.MAX_TAG_AGES_MEDIUM_FEE_THRESHOLD = 20
-        process.env.MAX_TAG_AGES_MEDIUM_FEE = "vintage_nakamoto:2009 omega:2010"
+        process.env.MAX_TAG_AGES_MEDIUM_FEE = 'vintage_nakamoto:2009 omega:2010'
         process.env.MAX_TAG_AGES_HIGH_FEE_THRESHOLD = 50
-        process.env.MAX_TAG_AGES_HIGH_FEE = "vintage_nakamoto:2005 omega:2006"
+        process.env.MAX_TAG_AGES_HIGH_FEE = 'vintage_nakamoto:2005 omega:2006'
         const result = get_max_tag_ages({ fee_rate: 30 })
-        expect(result).toEqual({ 'vintage_nakamoto': 2009, 'omega': 2010 })
+        expect(result).toEqual({ vintage_nakamoto: 2009, omega: 2010 })
     })
 
     test('should not use high fee max tag ages when fee_rate is lower than MAX_TAG_AGES_HIGH_FEE_THRESHOLD', () => {
@@ -450,6 +445,6 @@ describe('get_max_tag_ages', () => {
         process.env.MAX_TAG_AGES_HIGH_FEE = 'alpha:2000 omega:3000'
         process.env.MAX_TAG_AGES = 'alpha:2009 omega:2000'
         const result = get_max_tag_ages({ fee_rate: 5 })
-        expect(result).toEqual({ 'alpha': 2009, 'omega': 2000 })
+        expect(result).toEqual({ alpha: 2009, omega: 2000 })
     })
 })

@@ -14,16 +14,16 @@ async function initCommands() {
     await telegramBot.setMyCommands([
         {
             command: 'limits',
-            description: 'Get current limits and payment info'
+            description: 'Get current limits and payment info',
         },
         {
             command: 'withdraw',
-            description: 'Create a new withdrawal request (denominated in BTC)'
+            description: 'Create a new withdrawal request (denominated in BTC)',
         },
         {
             command: 'bulktransfer',
-            description: 'Perform a bulk transfer'
-        }
+            description: 'Perform a bulk transfer',
+        },
     ])
     telegramBot.onText(/\/limits/, async (msg) => {
         const chatId = msg.chat.id
@@ -125,5 +125,5 @@ module.exports = {
     TELEGRAM_BOT_ENABLED,
     TELEGRAM_CHAT_IDS,
     trySendTelegramMessage,
-    initCommands
+    initCommands,
 }
