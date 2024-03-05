@@ -1,4 +1,4 @@
-const { Spot } = require('@binance/connector');
+const { Spot } = require('@binance/connector')
 
 // Initialize the Binance client with your API key and secret
 let client
@@ -14,11 +14,11 @@ async function get_btc_balance() {
     if (!client) {
         init_client()
     }
-    const { data } = await client.account().catch(err => {
+    const { data } = await client.account().catch((err) => {
         console.log(err)
         return {}
     })
-    const wallet_info = data.balances.filter(it => it.asset === 'BTC')
+    const wallet_info = data.balances.filter((it) => it.asset === 'BTC')
     console.log(wallet_info[0])
     return parseFloat(wallet_info[0].free)
 }
@@ -31,11 +31,7 @@ async function withdraw({ amount_btc }) {
         throw new Error('BINANCE_WITHDRAWAL_ADDRESS must be set')
     }
     const amount = parseFloat(parseFloat(amount_btc).toFixed(8))
-    const { data } = await client.withdraw(
-        'BTC',
-        process.env.BINANCE_WITHDRAWAL_ADDRESS,
-        amount
-    ).catch(err => {
+    const { data } = await client.withdraw('BTC', process.env.BINANCE_WITHDRAWAL_ADDRESS, amount).catch((err) => {
         console.log(err)
         throw new Error(err.message)
     })
@@ -52,5 +48,5 @@ async function get_deposit_address() {
 module.exports = {
     get_deposit_address,
     get_btc_balance,
-    withdraw
+    withdraw,
 }
