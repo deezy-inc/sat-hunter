@@ -140,7 +140,7 @@ async function get_utxos() {
 }
 
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
-    // We handle hsm signing in sat-hunter-signer repository
+    // TODO: We handle hsm signing in sat-hunter-signer repository?
     if (is_hsm_enabled()) {
         const signed_psbt = sign_psbt_with_coldcard(psbt);
         return signed_psbt;
