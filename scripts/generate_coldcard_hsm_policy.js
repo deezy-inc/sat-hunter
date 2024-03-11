@@ -12,10 +12,13 @@ const getPeriod = () => {
     try {
         if (!process.argv[2]) throw new Error('No custom period provided')
         const period = parseInt(process.argv[2])
-        if (isNaN(period) || period < 1 || period > 4320) throw new Error('Invalid period provided')
+        if (isNaN(period) || period < 1 || period > 4320) {
+            throw new Error('Invalid period provided. Must be between 1 and 4320 minutes (3 days)')
+        }
         console.log('Using custom period for HSM policy in minutes:', period)
         return period
     } catch (error) {
+        console.log('Error getting period:', error.message)
         console.log('Using default period for HSM policy in minutes:', DEFAULT_PERIOD_IN_MINUTES, '(3 days)')
         return DEFAULT_PERIOD_IN_MINUTES
     }
