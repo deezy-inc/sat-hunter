@@ -4,9 +4,8 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const { BIP32Factory } = require('bip32')
-const bip32 = BIP32Factory(ecc)
-
 const ecc = require('tiny-secp256k1')
+const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const NETWORK = bitcoin.networks.bitcoin
 bitcoin.initEccLib(ecc)
@@ -60,15 +59,11 @@ function get_hsm_address() {
 
 // It fails if the coldcard is not connected or it is on HSM mode
 function get_address_from_coldcard() {
-    check_wallet()
     try {
         const addr = child_process.execSync(`${hsm_command} addr`).toString().trim()?.split('\n')?.[2]
         return addr
     } catch (error) {
-        if (!process.env.HSM_WALLET_ADDRESS) {
-            throw new Error(`HSM_WALLET_ADDRESS must be set in .env`)
-        }
-        return process.env.HSM_WALLET_ADDRESS
+        return ''
     }
 }
 
