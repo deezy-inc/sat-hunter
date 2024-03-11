@@ -67,6 +67,26 @@ function get_address_from_coldcard() {
     }
 }
 
+function get_xpub_from_coldcard() {
+    try {
+        const xpub = child_process.execSync(`${hsm_command} xpub`).toString().trim()?.split('\n')
+        return xpub
+    } catch (error) {
+        console.error(`Error getting xpub: ${error.message}`)
+        return ''
+    }
+}
+
+function get_child_xpub_from_coldcard(derivation_path) {
+    try {
+        const addr = child_process.execSync(`${hsm_command} xpub "${derivation_path}"`).toString().trim()?.split('\n')
+        return addr
+    } catch (error) {
+        console.error(`Error getting child xpub: ${error.message}`)
+        return ''
+    }
+}
+
 function sign_message_with_coldcard(message) {
     check_wallet()
     const signingResult = child_process.execSync(`${hsm_command} msg ${message}`).toString()
@@ -116,4 +136,6 @@ module.exports = {
     get_hsm_address,
     sign_psbt_with_coldcard,
     sign_message_with_coldcard,
+    get_xpub_from_coldcard,
+    get_child_xpub_from_coldcard,
 }
