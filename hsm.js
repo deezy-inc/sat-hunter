@@ -1,5 +1,5 @@
 const child_process = require('node:child_process');
-const hsm_command = process.env.HSM_CLI_PATH || 'ckcc'; // TODO: change to 'ckcc' when ready
+const hsm_command = process.env.HSM_CLI_PATH || 'ckcc';
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -81,7 +81,6 @@ function sign_psbt_with_coldcard(psbt) {
     // Create a temporary file to store the PSBT
     const psbtFilePath = path.join(tempDir, `psbt_in_${id}.psbt`);
     fs.writeFileSync(psbtFilePath, psbtBase64, 'base64');
-    console.log(`PSBT file path: ${psbtFilePath}`);
     try {
         const signedPsbtBase64 = child_process
             .execSync(`${hsm_command} sign --base64 --finalize ${psbtFilePath}`)

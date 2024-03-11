@@ -87,7 +87,6 @@ async function decode_sign_and_send_psbt({ psbt, exchange_address, rare_sat_addr
             throw new Error(`Invalid psbt. Output ${output.address} is not one of our addresses.`);
         }
     }
-    console.log(`Valid psbt`, JSON.stringify(decoded_psbt, null, 2));
     let witnessUtxo = null;
     if (decoded_psbt.data.inputs[0].witnessUtxo) {
         witnessUtxo = decoded_psbt.data.inputs[0].witnessUtxo;
@@ -333,7 +332,7 @@ async function run() {
         let decodeError = null;
         try {
             await decode_sign_and_send_psbt({
-                psbt: 'cHNidP8BALACAAAAAw0LFe2nYZVhWGRFccsyZ1kWzineRsUq2xM/gJAqfHvYAAAAAAD/////T3KwcSU2a3qn8J9opvAs61NbbruFTmebo4ZCgIJ/sukAAAAAAP////939XUhgWBqk1icrzcEAFQmsv6hKPx9tlzuQi23gby5FwAAAAAA/////wFAwfwQAAAAACIAICKwk9O/uMVkMqVMZ2HyTe1d5B1YdAZxHnutVEG9LSRcAAAAAAABASIA4fUFAAAAABl2qRQLJTen1vPMZoyen6AwP/s8rW6bgYisIgYDK+NygB2EYN2lKuF4qtd0pUgAulb5Scl7ii9R4pkgnQYMDwVpQwAAAAAAAAAAAAEBIgDh9QUAAAAAGXapFIKLdGycxuL7uJOU9U/0Dv/SpLZRiKwiBgLZIpA7jrKVuyMvwDBNiM8XVaYBeRVvqPhJcPDUBy1fuwwPBWlDAAAAAAEAAAAAAQEiAOH1BQAAAAAZdqkUEYjZdEwP6Oj67HctDEgb+BQA+QmIrCIGAh+0I9QlEuSddanSdBUEenQ3gkPPeu4Hwbabp9oKA9QoDA8FaUMAAAAAAgAAAAABASIAICKwk9O/uMVkMqVMZ2HyTe1d5B1YdAZxHnutVEG9LSRcAA==',
+                psbt: info.extraction_psbt,
                 exchange_address,
                 rare_sat_address,
                 is_replacement: rescan_request_ids.has(scan_request_id),
