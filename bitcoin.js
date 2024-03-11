@@ -3,12 +3,14 @@ const bitcoin_command = process.env.BITCOIN_CLI_PATH || 'bitcoin-cli'
 
 function check_wallet() {
     if (!process.env.BITCOIN_WALLET) {
-        throw new Error(`BITCOIN_WALLET must be set in .env`)
+        throw new Error('BITCOIN_WALLET must be set in .env')
     }
 }
 function listunspent() {
     check_wallet()
-    const unspents = JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listunspent 0`))
+    const unspents = JSON.parse(
+        child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listunspent 0`)
+    )
     return unspents
 }
 
@@ -20,17 +22,25 @@ function utxoupdatepsbt({ psbt }) {
 
 function walletprocesspsbt({ psbt }) {
     check_wallet()
-    return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} walletprocesspsbt '${psbt}' true "ALL"`))
+    return JSON.parse(
+        child_process.execSync(
+            `${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} walletprocesspsbt '${psbt}' true "ALL"`
+        )
+    )
 }
 
 function finalizepsbt({ psbt, extract = true }) {
     check_wallet()
-    return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} finalizepsbt '${psbt}' ${extract}`))
+    return JSON.parse(
+        child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} finalizepsbt '${psbt}' ${extract}`)
+    )
 }
 
 function testmempoolaccept({ hex }) {
     check_wallet()
-    return JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} testmempoolaccept '["${hex}"]'`))
+    return JSON.parse(
+        child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} testmempoolaccept '["${hex}"]'`)
+    )
 }
 
 function sendrawtransaction({ hex }) {
@@ -44,9 +54,11 @@ function decodepsbt({ psbt }) {
     return resp
 }
 
-function listtransactions() {
+function listtransactions({ label = '"*"', count = 10 }) {
     check_wallet()
-    const resp = JSON.parse(child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listtransactions`))
+    const resp = JSON.parse(
+        child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} listtransactions ${label} ${count}`)
+    )
     return resp
 }
 
@@ -64,5 +76,5 @@ module.exports = {
     sendrawtransaction,
     decodepsbt,
     listtransactions,
-    getrawtransaction
+    getrawtransaction,
 }

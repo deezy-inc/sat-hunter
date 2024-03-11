@@ -17,12 +17,13 @@ const bip39 = require('bip39');
 const { getAddressInfo } = require('bitcoin-address-validation');
 const { BTC_to_satoshi } = require('./utils');
 const { sign_psbt_with_coldcard, get_hsm_address } = require('./hsm');
-const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space';
 
 bitcoin.initEccLib(ecc);
 
-const is_hsm_enabled = () => process.env.USE_HSM === 'true';
+const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space';
+const MEMPOOL_API = `${MEMPOOL_URL}/api`
 
+const is_hsm_enabled = () => process.env.USE_HSM === 'true';
 const get_wallet_type = () => {
     if (is_hsm_enabled()) return 'coldcard';
     return process.env.BITCOIN_WALLET ? 'core' : 'local';
@@ -40,7 +41,6 @@ function get_address() {
     return address;
 }
 
-const MEMPOOL_API = `${MEMPOOL_URL}/api`;
 let local_wallet_type;
 let child_xonly_pubkey;
 let tweaked_child_node;
@@ -48,7 +48,6 @@ let root_hd_node;
 let child_hd_node;
 let derivation_path;
 const toXOnly = (pubKey) => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
-
 const get_min_sat_utxo_limit = () => Number(process.env.IGNORE_UTXOS_BELOW_SATS) || 1001;
 
 async function init_wallet() {
@@ -113,7 +112,7 @@ async function get_utxos_from_mempool_space({ address }) {
 }
 
 async function get_utxos() {
-    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit();
+    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit()
 
     if (get_wallet_type() === 'core') {
         const unspents = listunspent();
@@ -219,18 +218,36 @@ async function get_address_txs({ address }) {
 }
 
 async function fetch_most_recent_unconfirmed_send() {
-    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit();
+    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit()
 
     if (get_wallet_type() === 'core') {
-        const recent_transactions = listtransactions();
-        const unconfirmed_sends = recent_transactions.filter(
-            (it) => it.category === 'send' && it.confirmations === 0 && BTC_to_satoshi(it.amount) >= IGNORE_UTXOS_BELOW_SATS
-        );
+        const recent_transactions_all_outputs = listtransactions({ count: 200 })
+        const all_unconfirmed_sends = recent_transactions_all_outputs.filter(
+            (it) => it.category === 'send' && it.confirmations === 0
+        )
+        // Sort by most negative (largest send first)
+        const all_unconfirmed_sends_sorted = all_unconfirmed_sends.sort((a, b) => a.amount - b.amount)
+        // For a send with multiple outputs (common in an extraction tx), listtransactions() will return an entry for each output
+        // in the same tx. So we have many entries referring to the same txid, and should just grab one of them.
+        const unique_txids = new Set()
+        const unique_unconfirmed_sends = all_unconfirmed_sends_sorted.filter((it) => {
+            if (unique_txids.has(it.txid)) {
+                // This assumes all_unconfirmed_sends_sorted is sorted by biggest (most negative) amounts first
+                return false
+            }
+            unique_txids.add(it.txid)
+            return true
+        })
+        const unconfirmed_sends = unique_unconfirmed_sends.filter(
+            (it) => Math.abs(BTC_to_satoshi(it.amount)) >= IGNORE_UTXOS_BELOW_SATS
+        )
+        const num_unconfirmed_send_below_limit = unique_unconfirmed_sends.length - unconfirmed_sends.length
         if (unconfirmed_sends.length === 0) {
-            console.log(
-                `Did not find any unconfirmed sends above ${IGNORE_UTXOS_BELOW_SATS} sats from ${recent_transactions.length} recent transactions`
-            );
-            return {};
+            console.log(`Did not find any unconfirmed sends above ${IGNORE_UTXOS_BELOW_SATS} sats`)
+            if (num_unconfirmed_send_below_limit > 0) {
+                console.log(`Ignored ${num_unconfirmed_send_below_limit} unconfirmed sends below ${IGNORE_UTXOS_BELOW_SATS} sats`)
+            }
+            return {}
         }
 
         // sort by fee ascending

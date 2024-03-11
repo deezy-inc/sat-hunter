@@ -13,7 +13,7 @@ if (!AMOUNT_BTC) {
 
 async function run() {
     const exchange = exchanges[EXCHANGE]
-    const resp = await exchange.withdraw({ amount_btc: AMOUNT_BTC }).catch(err => {
+    const resp = await exchange.withdraw({ amount_btc: AMOUNT_BTC }).catch((err) => {
         return err.message
     })
     console.log(resp)

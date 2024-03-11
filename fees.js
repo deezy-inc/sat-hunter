@@ -12,7 +12,7 @@ let MIN_FEE_BUFFER_PERCENT
 if (process.env.MIN_FEE_BUFFER_PERCENT) {
     MIN_FEE_BUFFER_PERCENT = parseFloat(process.env.MIN_FEE_BUFFER_PERCENT)
     if (MIN_FEE_BUFFER_PERCENT < 1 || MIN_FEE_BUFFER_PERCENT > 2) {
-        console.log(`MIN_FEE_BUFFER_PERCENT must be between 1.00 and 2.00`)
+        console.log('MIN_FEE_BUFFER_PERCENT must be between 1.00 and 2.00')
     }
 }
 const MIN_FEE_BUFFER = parseFloat(process.env.MIN_FEE_BUFFER || 3)
@@ -22,7 +22,7 @@ async function get_fee_rate() {
     if (process.env.AUTO_RBF) {
         return get_min_next_block_fee_rate()
     }
-    const { data } = await axios.get(`${MEMPOOL_URL}/api/v1/fees/recommended`).catch(err => {
+    const { data } = await axios.get(`${MEMPOOL_URL}/api/v1/fees/recommended`).catch((err) => {
         console.error(err)
         return { data: {} }
     })
@@ -33,16 +33,16 @@ async function get_fee_rate() {
 }
 
 async function get_min_next_block_fee_rate() {
-    const { data } = await axios.get(`${MEMPOOL_URL}/api/v1/fees/mempool-blocks`).catch(err => {
+    const { data } = await axios.get(`${MEMPOOL_URL}/api/v1/fees/mempool-blocks`).catch((err) => {
         console.error(err)
-        return { }
+        return {}
     })
     if (!data) {
         throw new Error('Could not get mempool blocks')
     }
     if (MIN_FEE_BUFFER_PERCENT) {
         const min_fee_buffer_percent = parseFloat(process.env.MIN_FEE_BUFFER_PERCENT)
-        return Math.ceil((data[0].feeRange[NEXT_BLOCK_FEE_SLOT] * min_fee_buffer_percent) * 10) / 10
+        return Math.ceil(data[0].feeRange[NEXT_BLOCK_FEE_SLOT] * min_fee_buffer_percent * 10) / 10
     }
     // We add 3 right now because we want to be sure we get into the next block.
     return Math.ceil((data[0].feeRange[NEXT_BLOCK_FEE_SLOT] + MIN_FEE_BUFFER) * 10) / 10
@@ -50,5 +50,5 @@ async function get_min_next_block_fee_rate() {
 
 module.exports = {
     get_fee_rate,
-    get_min_next_block_fee_rate
+    get_min_next_block_fee_rate,
 }

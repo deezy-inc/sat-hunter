@@ -9,8 +9,8 @@ async function run() {
         message: 'What seed would you like to encrypt?',
         choices: [
             { title: 'I want to enter a new seed phrase here', value: 'ENTER' },
-            { title: 'I want to use the LOCAL_WALLET_SEED that is already in my .env file', value: 'LOCAL'},
-        ]
+            { title: 'I want to use the LOCAL_WALLET_SEED that is already in my .env file', value: 'LOCAL' },
+        ],
     })
     let seed_phrase
     if (seed_input === 'LOCAL') {
@@ -53,7 +53,9 @@ async function run() {
         console.error('Decrypted seed phrase does not match original')
         return
     }
-    console.log(`Successfully encrypted seed phrase, add the following line to your .env file${seed_input === 'LOCAL' ? 'and remove LOCAL_WALLET_SEED': ''}:\n`)
+    console.log(
+        `Successfully encrypted seed phrase, add the following line to your .env file${seed_input === 'LOCAL' ? 'and remove LOCAL_WALLET_SEED' : ''}:\n`
+    )
     console.log(`LOCAL_WALLET_SEED_ENCRYPTED=${encrypted}\n`)
 }
 
