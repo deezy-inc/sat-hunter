@@ -10,31 +10,13 @@ const bitcoin = require('bitcoinjs-lib')
 const NETWORK = bitcoin.networks.bitcoin
 bitcoin.initEccLib(ecc)
 
-function isHexadecimal(str) {
-    const hexRegex = /^[0-9A-Fa-f]*$/
-    return str.length % 2 === 0 && hexRegex.test(str)
-}
-
-const validate_psbt = (psbtContent) => {
-    const psbt = isHexadecimal(psbtContent)
-        ? bitcoin.Psbt.fromHex(psbtContent, { network: NETWORK })
-        : bitcoin.Psbt.fromBase64(psbtContent, { network: NETWORK })
-    return psbt
-}
-
 function get_base64_psbt(psbt) {
-    const psbt_object = validate_psbt(psbt)
-    console.log(`PSBT object: ${JSON.stringify(psbt_object)}`)
-    let psbtBase64
     if (/^[0-9a-fA-F]+$/.test(psbt)) {
         // PSBT is in hex, convert to Buffer then to base64
-        const psbtBuffer = Buffer.from(psbt, 'hex')
-        psbtBase64 = psbtBuffer.toString('base64')
-    } else {
-        // Assume PSBT is already in base64
-        psbtBase64 = psbt
+        return Buffer.from(psbt, 'hex').toString('base64')
     }
-    return psbtBase64
+    // Assume PSBT is already in base64
+    return psbt
 }
 
 function check_wallet() {
@@ -69,7 +51,7 @@ function get_address_from_coldcard() {
 
 function get_xpub_from_coldcard() {
     try {
-        const xpub = child_process.execSync(`${hsm_command} xpub`).toString().trim()?.split('\n')
+        const xpub = child_process.execSync(`${hsm_command} xpub`).toString().trim()
         return xpub
     } catch (error) {
         console.error(`Error getting xpub: ${error.message}`)
@@ -79,7 +61,7 @@ function get_xpub_from_coldcard() {
 
 function get_child_xpub_from_coldcard(derivation_path) {
     try {
-        const addr = child_process.execSync(`${hsm_command} xpub "${derivation_path}"`).toString().trim()?.split('\n')
+        const addr = child_process.execSync(`${hsm_command} xpub "${derivation_path}"`).toString().trim()
         return addr
     } catch (error) {
         console.error(`Error getting child xpub: ${error.message}`)
@@ -138,4 +120,6 @@ module.exports = {
     sign_message_with_coldcard,
     get_xpub_from_coldcard,
     get_child_xpub_from_coldcard,
+    check_wallet,
+    get_base64_psbt,
 }
