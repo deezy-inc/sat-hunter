@@ -1,15 +1,15 @@
-const { sign_psbt_with_coldcard } = require('../hsm');
+const { sign_psbt_with_coldcard } = require('../hsm')
 
 require('dotenv').config({
-    override: true
-});
+    override: true,
+})
 
 const get_psbt = () => {
-    let psbt = process.argv[2];
+    const psbt = process.argv[2]
     if (!psbt) {
-        throw new Error('No PSBT provided');
+        throw new Error('No PSBT provided')
     }
-    return psbt;
-};
+    return psbt
+}
 
-console.log(sign_psbt_with_coldcard(get_psbt()));
+console.log(sign_psbt_with_coldcard(get_psbt()))
