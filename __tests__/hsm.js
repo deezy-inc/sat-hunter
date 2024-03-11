@@ -43,6 +43,7 @@ describe('HSM Tests', () => {
         // Reset process.env to a known state before each test
         jest.resetModules() // This is necessary if your module reads environment variables on import
         process.env = { ...originalEnv } // Copy the original process.env
+        jest.clearAllMocks()
     })
 
     afterAll(() => {
@@ -84,10 +85,6 @@ describe('HSM Tests', () => {
     })
 
     describe('get_xpub_from_coldcard', () => {
-        beforeEach(() => {
-            jest.clearAllMocks()
-        })
-
         it('should return xpub when command executes successfully', () => {
             // Mock execSync to simulate successful command execution
             const mockXpub =
@@ -119,10 +116,6 @@ describe('HSM Tests', () => {
 
     describe('get_child_xpub_from_coldcard', () => {
         const mockDerivationPath = "m/44'/0'/0'"
-        beforeEach(() => {
-            // Clear all mocks before each test
-            jest.clearAllMocks()
-        })
 
         it('should return child xpub when command executes successfully', () => {
             // Mock execSync to simulate successful command execution
@@ -253,20 +246,6 @@ describe('HSM Tests', () => {
     })
 
     describe('check_wallet', () => {
-        // Save original process.env
-        const originalEnv = process.env
-
-        beforeEach(() => {
-            // Reset process.env to a known state before each test
-            jest.resetModules()
-            process.env = { ...originalEnv }
-        })
-
-        afterAll(() => {
-            // Restore process.env after all tests
-            process.env = originalEnv
-        })
-
         it('should not throw an error when all environment variables are set', () => {
             process.env.USE_HSM = 'true'
             process.env.HSM_XPUB = 'mocked_xpub'

@@ -124,7 +124,6 @@ async function get_utxos() {
         return filtered_unspents.map((it) => `${it.txid}:${it.vout}`)
     }
     const address = get_address()
-    console.log(`Fetching utxos for address: ${address}`)
     const unspents = await get_utxos_from_mempool_space({ address })
     if (!unspents) {
         throw new Error('Error reaching mempool api')
@@ -139,7 +138,6 @@ async function get_utxos() {
 }
 
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
-    // TODO: We handle hsm signing in sat-hunter-signer repository?
     if (is_hsm_enabled()) {
         const signed_psbt = sign_psbt_with_coldcard(psbt)
         return signed_psbt
@@ -182,7 +180,7 @@ async function broadcast_to_mempool_space({ hex }) {
 }
 
 async function broadcast_to_blockstream({ hex }) {
-    const url = `https://blockstream.info/api/tx`
+    const url = 'https://blockstream.info/api/tx'
     const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch((err) => {
         console.error(err)
         return {}
