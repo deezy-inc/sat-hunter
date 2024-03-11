@@ -3,6 +3,8 @@ const hsm_command = process.env.HSM_CLI_PATH || 'ckcc';
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { BIP32Factory } = require('bip32');
+const bip32 = BIP32Factory(ecc);
 
 const ecc = require('tiny-secp256k1');
 const bitcoin = require('bitcoinjs-lib');
@@ -45,6 +47,12 @@ function check_wallet() {
     if (!process.env.USE_HSM) {
         throw new Error(`USE_HSM must be set in .env`);
     }
+    if (!process.env.HSM_XPUB) {
+        throw new Error(`HSM_XPUB must be set in .env`);
+    }
+    if (!process.env.HSM_CHILD_XPUB) {
+        throw new Error(`HSM_CHILD_XPUB must be set in .env`);
+    }
 }
 
 function get_hsm_address() {
@@ -75,23 +83,39 @@ function sign_message_with_coldcard(message) {
 
 function sign_psbt_with_coldcard(psbt) {
     check_wallet();
-    const psbtBase64 = get_base64_psbt(psbt);
+    const emptyPsbtBase64 = get_base64_psbt(psbt);
+    const psbtObj = bitcoin.Psbt.fromBase64(emptyPsbtBase64, { network: NETWORK });
+    const masterNode = bip32.fromBase58(process.env.HSM_XPUB);
+    const childNode = bip32.fromBase58(process.env.HSM_CHILD_XPUB);
+    psbtObj.updateInput(0, {
+        bip32Derivation: [
+            {
+                masterFingerprint: masterNode.fingerprint,
+                path: process.env.HSM_DERIVATION_PATH,
+                pubkey: childNode.publicKey
+            }
+        ]
+    });
+    const psbtBase64 = psbtObj.toBase64();
     const tempDir = os.tmpdir();
     const id = Math.random().toString(36).substring(7);
     // Create a temporary file to store the PSBT
     const psbtFilePath = path.join(tempDir, `psbt_in_${id}.psbt`);
     fs.writeFileSync(psbtFilePath, psbtBase64, 'base64');
+    console.log(`PSBT file path: ${psbtFilePath}`);
+    let signedPsbtBase64;
     try {
-        const signedPsbtBase64 = child_process
-            .execSync(`${hsm_command} sign --base64 --finalize ${psbtFilePath}`)
-            .toString()
-            .trim();
-        return signedPsbtBase64.split('\n').pop();
+        signedPsbtBase64 = child_process.execSync(`${hsm_command} sign --base64 -6 ${psbtFilePath}`).toString().trim();
     } catch (error) {
         console.error(`execSync error: ${error.message}`);
+        throw new Error(error);
     } finally {
         fs.unlinkSync(psbtFilePath);
     }
+    const unfinalizedPsbt = signedPsbtBase64.split('\n').pop();
+    const finalPsbtObj = bitcoin.Psbt.fromBase64(unfinalizedPsbt, { network: NETWORK });
+    finalPsbtObj.finalizeAllInputs();
+    return finalPsbtObj.toBase64();
 }
 
 module.exports = {
