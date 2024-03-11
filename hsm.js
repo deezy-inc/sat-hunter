@@ -48,6 +48,9 @@ function check_wallet() {
     if (!process.env.HSM_CHILD_XPUB) {
         throw new Error(`HSM_CHILD_XPUB must be set in .env`)
     }
+    if (!process.env.HSM_DERIVATION_PATH) {
+        throw new Error(`HSM_DERIVATION_PATH must be set in .env`)
+    }
 }
 
 function get_hsm_address() {
