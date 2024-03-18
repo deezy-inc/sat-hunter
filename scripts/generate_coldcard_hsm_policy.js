@@ -18,7 +18,7 @@ const getPeriod = (custom_period) => {
         console.log('Using custom period for HSM policy in minutes:', period)
         return period
     } catch (error) {
-        console.log('Error getting period:', error.message)
+        if (error.message !== 'No custom period provided') console.log('Error getting period:', error.message)
         console.log('Using default period for HSM policy in minutes:', DEFAULT_PERIOD_IN_MINUTES, '(3 days)')
         return DEFAULT_PERIOD_IN_MINUTES
     }

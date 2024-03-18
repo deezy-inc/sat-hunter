@@ -42,11 +42,10 @@ function get_hsm_address() {
 // It fails if the coldcard is not connected or it is on HSM mode
 function get_address_from_coldcard(derivation_path) {
     try {
-        const addr = child_process
-            .execSync(`${hsm_command} addr --segwit "${derivation_path}"`)
-            .toString()
-            .trim()
-            ?.split('\n')?.[2]
+        console.log(`Getting address for derivation path: ${derivation_path}`)
+        const command = `${hsm_command} addr --segwit "${derivation_path}"`
+        console.log(`\nRunning command: ${command}\n`)
+        const addr = child_process.execSync(command).toString().trim()?.split('\n')?.[2]
         return addr
     } catch (error) {
         return ''
