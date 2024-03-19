@@ -2,7 +2,7 @@ const fs = require('fs')
 const { get_user_limits, post_scan_request, get_scan_request } = require('./deezy')
 const { save_withdraw_request, save_bulk_transfer } = require('./storage')
 const { satoshi_to_BTC, get_address_by_name, validate_user_limits, get_success_scan_address_file } = require('./utils')
-const { wallet_process_psbt, finalizepsbt, sendrawtransaction } = require('./bitcoin')
+const { walletprocesspsbt, finalizepsbt, sendrawtransaction } = require('./bitcoin')
 
 const get_payment_details = async () => {
     const {
