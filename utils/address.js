@@ -1,5 +1,5 @@
 function get_address_by_name() {
-    let configured_address_book = process.env.ADDRESS_BOOK
+    const configured_address_book = process.env.ADDRESS_BOOK
     if (!configured_address_book || configured_address_book.trim() === '') {
         return null
     }
@@ -14,7 +14,7 @@ function get_address_by_name() {
 }
 
 function get_name_by_address() {
-    let configured_address_book = process.env.ADDRESS_BOOK
+    const configured_address_book = process.env.ADDRESS_BOOK
     if (!configured_address_book || configured_address_book.trim() === '') {
         return null
     }

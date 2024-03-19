@@ -1,4 +1,5 @@
-const { get_user_limits } = require('../deezy');
+const { get_user_limits } = require('../deezy')
+const { satoshi_to_BTC } = require('./currency')
 const get_warning_limits_exceeded = ({ payment_address, tier_info, one_time_cost }) => {
     return `
 --------------------------

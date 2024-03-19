@@ -4,7 +4,6 @@ const BTC_to_satoshi = (btc) => {
     return Math.floor(btc * 100000000)
 }
 
-
 module.exports = {
     satoshi_to_BTC,
     BTC_to_satoshi,
