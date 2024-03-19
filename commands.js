@@ -110,8 +110,8 @@ function parse_tag_limits({ tag_limits_arg, default_tag }) {
         const entries = tag_limits_arg.split(',')
         for (const entry of entries) {
             const [tag, num_str] = entry.split(':')
-            entry[tag] = parseInt(num_str)
-            if (isNaN(entry[tag])) {
+            tag_limits_object[tag] = parseInt(num_str)
+            if (isNaN(tag_limits_object[tag])) {
                 throw new Error(`Invalid tag limit: ${entry}`)
             }
         }
