@@ -20,17 +20,19 @@ function utxoupdatepsbt({ psbt }) {
     return resp.toString('utf8').trim()
 }
 
-function walletprocesspsbt({ psbt }) {
+function walletprocesspsbt({ psbt, bitcoin_wallet = process.env.BITCOIN_WALLET }) {
     check_wallet()
     return JSON.parse(
         child_process.execSync(
-            `${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} walletprocesspsbt '${psbt}' true "ALL"`
+            `${bitcoin_command} -rpcwallet=${bitcoin_wallet} walletprocesspsbt '${psbt}' true "ALL"`
         )
     )
 }
 
 function finalizepsbt({ psbt, extract = true }) {
     check_wallet()
+    // When extract is true, it returns something like { hex: 'someHex', complete: true }
+    // When extract is false, it returns something like: { psbt: 'someBase64', complete: true }
     return JSON.parse(
         child_process.execSync(`${bitcoin_command} -rpcwallet=${process.env.BITCOIN_WALLET} finalizepsbt '${psbt}' ${extract}`)
     )
