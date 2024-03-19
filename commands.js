@@ -201,7 +201,7 @@ const sign_and_send = async ({
     console.log(`Reading data from file: ${data_file}`)
     const { extraction_psbt } = JSON.parse(fs.readFileSync(data_file))
     console.log(`Processing PSBT`)
-    const { psbt } = wallet_process_psbt({ psbt: extraction_psbt, bitcoin_wallet: bitcoin_core_wallet })
+    const { psbt } = walletprocesspsbt({ psbt: extraction_psbt, bitcoin_wallet: bitcoin_core_wallet })
     console.log(`Finalizing PSBT`)
     const { hex } = finalizepsbt({ psbt, extract: true })
     console.log(`Sending transaction`)
