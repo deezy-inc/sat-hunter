@@ -106,7 +106,7 @@ async function loop_check_bulk_transfer(scan_request_id) {
 
 function parse_tag_limits({ tag_limits_arg, default_tag }) {
     const tag_limits_object = {}
-    if (isNaN(parseInt(tag_limits_arg)) {
+    if (isNaN(parseInt(tag_limits_arg))) {
         const entries = tag_limits_arg.split(',')
         for (const entry of entries) {
             const [tag, num_str] = entry.split(':')
@@ -121,14 +121,7 @@ function parse_tag_limits({ tag_limits_arg, default_tag }) {
     return tag_limits_object
 }
 
-const bulk_transfer = async (
-    p_from_address,
-    p_to_address,
-    p_tag_to_extract,
-    p_tag_limits,
-    p_fee_rate,
-    callbackMessage
-) => {
+const bulk_transfer = async (p_from_address, p_to_address, p_tag_to_extract, p_tag_limits, p_fee_rate, callbackMessage) => {
     const tag_limits = parse_tag_limits({ tag_limits_arg: p_tag_limits, default_tag: p_tag_to_extract })
     try {
         if (!p_from_address || !p_to_address || !p_tag_to_extract || !tag_limits || !p_fee_rate) {
