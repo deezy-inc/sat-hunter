@@ -188,10 +188,7 @@ This command will transfer 100 uncommon tags from address 1A1zP1eP5QGefi2DMPTfTL
     }
 }
 
-const sign_and_send = async ({
-    data_file,
-    bitcoin_core_wallet
-}) => {
+const sign_and_send = async ({ data_file, bitcoin_core_wallet }) => {
     if (!data_file) {
         throw new Error('No data file provided')
     }

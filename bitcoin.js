@@ -23,9 +23,7 @@ function utxoupdatepsbt({ psbt }) {
 function walletprocesspsbt({ psbt, bitcoin_wallet = process.env.BITCOIN_WALLET }) {
     check_wallet()
     return JSON.parse(
-        child_process.execSync(
-            `${bitcoin_command} -rpcwallet=${bitcoin_wallet} walletprocesspsbt '${psbt}' true "ALL"`
-        )
+        child_process.execSync(`${bitcoin_command} -rpcwallet=${bitcoin_wallet} walletprocesspsbt '${psbt}' true "ALL"`)
     )
 }
 
