@@ -379,6 +379,7 @@ describe('get_scan_config', () => {
             max_tag_ages: { alpha: 2009 },
             included_tags: [['special_name'], ['uncommon'], ['rare']],
             split_config: { split_trigger: 'ALWAYS', split_target_size_sats: 10000000 },
+            split_special_ranges: false,
         }
         expect(get_scan_config({ fee_rate: 4 })).toEqual(expected_result)
         // Cached result should be saved, so we should get the same result at higher fee levels.
@@ -399,6 +400,7 @@ describe('get_scan_config', () => {
             included_tags: [['rare']],
             max_tag_ages: { alpha: 2009 },
             split_config: { split_trigger: 'NEVER', split_target_size_sats: 50000000 },
+            split_special_ranges: false,
         })
     })
 })
