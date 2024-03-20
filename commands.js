@@ -201,4 +201,5 @@ module.exports = {
     get_payment_details,
     create_withdraw_request,
     bulk_transfer,
+    parse_tag_limits,
 }
