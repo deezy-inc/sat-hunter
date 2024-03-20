@@ -106,37 +106,50 @@ async function loop_check_bulk_transfer(scan_request_id) {
     })
 }
 
-const bulk_transfer = async (
-    p_from_address,
-    p_to_address,
-    p_tag_to_extract,
-    p_num_of_tag_to_send,
-    p_fee_rate,
-    callbackMessage
-) => {
+function parse_tag_limits({ tag_limits_arg, default_tag }) {
+    const tag_limits_object = {}
+    if (isNaN(parseInt(tag_limits_arg))) {
+        const entries = tag_limits_arg.split(',')
+        for (const entry of entries) {
+            const [tag, num_str] = entry.split(':')
+            tag_limits_object[tag] = parseInt(num_str)
+            if (isNaN(tag_limits_object[tag])) {
+                throw new Error(`Invalid tag limit: ${entry}`)
+            }
+        }
+    } else {
+        tag_limits_object[default_tag] = parseInt(tag_limits_arg)
+    }
+    return tag_limits_object
+}
+
+const bulk_transfer = async (p_from_address, p_to_address, p_tag_to_extract, p_tag_limits, p_fee_rate, callbackMessage) => {
+    const tag_limits = parse_tag_limits({ tag_limits_arg: p_tag_limits, default_tag: p_tag_to_extract })
     try {
-        if (!p_from_address || !p_to_address || !p_tag_to_extract || !p_num_of_tag_to_send || !p_fee_rate) {
+        if (!p_from_address || !p_to_address || !p_tag_to_extract || !tag_limits || !p_fee_rate) {
             console.log(`
-Usage: hunter:bulk-transfer [from_address] [to_address] [tag_to_extract] [num_of_tag_to_send] [fee_rate]
+Usage: hunter:bulk-transfer [from_address] [to_address] [tag_to_extract] [tag_limits] [fee_rate]
 
 - from_address: The blockchain address from which the tags will be extracted. This should be a valid address from which you have permission to transfer.
 - to_address: The destination blockchain address to which the tags will be sent. Ensure this address is correct to avoid loss of assets.
 - tag_to_extract: The specific tag or identifier of the assets to be transferred.
-- num_of_tag_to_send: The number of tags or assets to send to the destination address. This must be a positive integer.
+- tag_limits: The number of tags or assets to send to the destination address. This can either be a single positive integer, or a string like "uncommon:25,alpha:0" to set limits for multiple tags.
 - fee_rate: The fee rate for the transaction in satoshis per virtual byte (sat/vbyte). This rate affects how quickly the transaction is processed by the network.
 
-Example: hunter:bulk-transfer 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy uncommon 100 30
+Examples:
+
+hunter:bulk-transfer 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy uncommon 100 30
 
 This command will transfer 100 uncommon tags from address 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa to 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy with a fee rate of 30 sat/vbyte.
+
+hunter:bulk-transfer 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy uncommon "uncommon:50,alpha:0" 30
+
+This command will transfer 50 uncommons (none of which are alpha) from address 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa to 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy with a fee rate of 30 sat/vbyte.
 `)
             return { message: 'Missing or invalid arguments. Please refer to the usage information above.' }
         }
         console.log('Bulk transfer called')
 
-        const num_of_tag_to_send = parseInt(p_num_of_tag_to_send)
-        if (isNaN(num_of_tag_to_send) || num_of_tag_to_send <= 0) {
-            throw new Error(`num_of_tag_to_send must be an integer and positive number, got ${p_num_of_tag_to_send}`)
-        }
         const fee_rate = parseFloat(p_fee_rate)
         if (isNaN(fee_rate) || fee_rate <= 0) {
             throw new Error(`fee_rate must be a positive number, got ${p_fee_rate}`)
@@ -150,9 +163,7 @@ This command will transfer 100 uncommon tags from address 1A1zP1eP5QGefi2DMPTfTL
             regular_funds_addresses: [p_from_address],
             special_sat_addresses: [p_to_address],
             extraction_fee_rate: fee_rate,
-            tag_limits: {
-                [p_tag_to_extract]: num_of_tag_to_send,
-            },
+            tag_limits,
             included_tags: [[p_tag_to_extract]],
         }
 
@@ -177,7 +188,7 @@ This command will transfer 100 uncommon tags from address 1A1zP1eP5QGefi2DMPTfTL
         return {
             message: get_success_scan_address_file({
                 scan_request_id,
-                transfer_message: `${num_of_tag_to_send} ${p_tag_to_extract}`,
+                transfer_message: `${p_tag_to_extract} with tag limits ${p_tag_limits} and fee rate ${fee_rate} sat/vbyte`,
             }),
         }
     } catch (error) {
@@ -210,5 +221,6 @@ module.exports = {
     get_payment_details,
     create_withdraw_request,
     bulk_transfer,
+    parse_tag_limits,
     sign_and_send,
 }

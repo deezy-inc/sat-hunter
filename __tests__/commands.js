@@ -1,4 +1,4 @@
-const { get_payment_details } = require('./../commands')
+const { get_payment_details, parse_tag_limits } = require('./../commands')
 const { get_user_limits } = require('./../deezy')
 
 jest.mock('./../deezy')
@@ -45,5 +45,50 @@ Payment Address:
         const result = await get_payment_details()
 
         expect(result).toBe('')
+    })
+})
+
+describe('parse_tag_limits', () => {
+    it('default tag limits', async () => {
+        expect(
+            parse_tag_limits({
+                tag_limits_arg: '100',
+                default_tag: 'uncommon',
+            })
+        ).toStrictEqual({
+            uncommon: 100,
+        })
+
+        expect(
+            parse_tag_limits({
+                tag_limits_arg: '20',
+                default_tag: 'black_uncommon',
+            })
+        ).toStrictEqual({
+            black_uncommon: 20,
+        })
+    })
+
+    it('multiple tag limits', async () => {
+        expect(
+            parse_tag_limits({
+                tag_limits_arg: 'uncommon:10,alpha:0',
+                default_tag: 'uncommon',
+            })
+        ).toStrictEqual({
+            uncommon: 10,
+            alpha: 0,
+        })
+
+        expect(
+            parse_tag_limits({
+                tag_limits_arg: 'pizza:100,palindrome:0,name_palindrome:0',
+                default_tag: 'pizza',
+            })
+        ).toStrictEqual({
+            pizza: 100,
+            palindrome: 0,
+            name_palindrome: 0,
+        })
     })
 })
