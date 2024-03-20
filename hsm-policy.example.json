@@ -1,0 +1,23 @@
+{
+    "never_log": false,
+    "must_log": false,
+    "priv_over_ux": false,
+    "boot_to_hsm": null,
+    "period": 2880,
+    "set_sl": null,
+    "allow_sl": null,
+    "rules": [
+        {
+            "whitelist": ["bc1qknfqya5asgwgkl5de36wqvcg65vsrvvs3x0fy0"],
+            "per_period": null,
+            "max_amount": null,
+            "users": [],
+            "local_conf": false,
+            "wallet": null
+        }
+    ],
+    "warnings_ok": true,
+    "msg_paths": null,
+    "share_xpubs": null,
+    "share_addrs": null
+}
