@@ -16,12 +16,31 @@ const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation')
 const { BTC_to_satoshi } = require('./utils')
-const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
+const { sign_psbt_with_coldcard, get_hsm_address } = require('./hsm')
 
 bitcoin.initEccLib(ecc)
 
+const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
 const MEMPOOL_API = `${MEMPOOL_URL}/api`
-const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
+
+const is_hsm_enabled = () => process.env.USE_HSM === 'true'
+const get_wallet_type = () => {
+    if (is_hsm_enabled()) return 'coldcard'
+    return process.env.BITCOIN_WALLET ? 'core' : 'local'
+}
+
+function get_address() {
+    const wallet_type = get_wallet_type()
+    if (wallet_type === 'coldcard') {
+        return get_hsm_address()
+    }
+    const address = process.env.LOCAL_WALLET_ADDRESS
+    if (wallet_type === 'local' && !address) {
+        throw new Error('LOCAL_WALLET_ADDRESS must be set')
+    }
+    return address
+}
+
 let local_wallet_type
 let child_xonly_pubkey
 let tweaked_child_node
@@ -29,11 +48,10 @@ let root_hd_node
 let child_hd_node
 let derivation_path
 const toXOnly = (pubKey) => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33))
-
 const get_min_sat_utxo_limit = () => Number(process.env.IGNORE_UTXOS_BELOW_SATS) || 1001
 
 async function init_wallet() {
-    if (WALLET_TYPE === 'local') {
+    if (get_wallet_type() === 'local') {
         if ((!process.env.LOCAL_WALLET_SEED && !process.env.LOCAL_WALLET_SEED_ENCRYPTED) || !process.env.LOCAL_WALLET_ADDRESS) {
             throw new Error('LOCAL_WALLET_ADDRESS and LOCAL_WALLET_SEED or LOCAL_WALLET_SEED_ENCRYPTED must be set')
         }
@@ -96,7 +114,7 @@ async function get_utxos_from_mempool_space({ address }) {
 async function get_utxos() {
     const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit()
 
-    if (WALLET_TYPE === 'core') {
+    if (get_wallet_type() === 'core') {
         const unspents = listunspent()
         const filtered_unspents = unspents.filter((it) => it.amount * 100000000 >= IGNORE_UTXOS_BELOW_SATS)
         const ignored_num = unspents.length - filtered_unspents.length
@@ -105,10 +123,7 @@ async function get_utxos() {
         }
         return filtered_unspents.map((it) => `${it.txid}:${it.vout}`)
     }
-    const address = process.env.LOCAL_WALLET_ADDRESS
-    if (!address) {
-        throw new Error('LOCAL_WALLET_ADDRESS must be set')
-    }
+    const address = get_address()
     const unspents = await get_utxos_from_mempool_space({ address })
     if (!unspents) {
         throw new Error('Error reaching mempool api')
@@ -123,7 +138,11 @@ async function get_utxos() {
 }
 
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
-    if (WALLET_TYPE === 'core') {
+    if (is_hsm_enabled()) {
+        const signed_psbt = sign_psbt_with_coldcard(psbt)
+        return signed_psbt
+    }
+    if (get_wallet_type() === 'core') {
         const processed_psbt = walletprocesspsbt({ psbt }).psbt
         return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt
     }
@@ -170,7 +189,7 @@ async function broadcast_to_blockstream({ hex }) {
 }
 
 async function broadcast_transaction({ hex }) {
-    if (WALLET_TYPE === 'core') {
+    if (get_wallet_type() === 'core') {
         return sendrawtransaction({ hex })
     }
     const txid = await broadcast_to_mempool_space({ hex })
@@ -199,7 +218,7 @@ async function get_address_txs({ address }) {
 async function fetch_most_recent_unconfirmed_send() {
     const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit()
 
-    if (WALLET_TYPE === 'core') {
+    if (get_wallet_type() === 'core') {
         const recent_transactions_all_outputs = listtransactions({ count: 200 })
         const all_unconfirmed_sends = recent_transactions_all_outputs.filter(
             (it) => it.category === 'send' && it.confirmations === 0
@@ -243,7 +262,8 @@ async function fetch_most_recent_unconfirmed_send() {
         }
     }
 
-    const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
+    const address = get_address()
+    const txs = await get_address_txs({ address })
     const unconfirmed_sends = txs.filter((it) => {
         // Hacky way to find which ones are ours...
         if (it.status.confirmed) return false

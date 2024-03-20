@@ -17,3 +17,5 @@ README.local.md
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+hsm_policy.json

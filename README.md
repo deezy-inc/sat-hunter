@@ -50,7 +50,7 @@ npm start
 ```
 
 ## Sparrow
-We recommend using Sparrow unless you're running an instance of Bitcoin Core. For security purposes we recommend creating a new wallet for sat hunting even if you already use Sparrow for other activities.
+We recommend using Sparrow unless you're running an instance of Bitcoin Core. For security purposes we recommend creating a new wallet for sat hunting even if you already use Sparrow for other activities. Alternatively, you can also use a Coldcard running in HSM mode for an even higher level of security, and is described further down.
 1) Download Sparrow from https://sparrowwallet.com/download/
 2) Open Sparrow, click File, New Wallet.
 3) Name your wallet, click Create Vault
@@ -69,6 +69,13 @@ To encrypt the wallet seed run:
 npm run encrypt-seed
 ```
 This will require you to enter a password to unlock the bot every time it starts up.
+
+## Coldcard HSM
+Enable Coldcard HSM support for enhanced security during the signing process. This ensures that private keys are managed within a secure, tamper-resistant hardware environment, offering an additional layer of security.
+
+To utilize this, you'll need to [install the ckcc CLI tool](https://github.com/Coldcard/ckcc-protocol?tab=readme-ov-file#setup-for-everyday-use) first, and be able to physically connect your Coldcard to the machine running the sat-hunter via USB.
+
+To activate HSM support, run the `npm run hsm` command, which will guide you through configuring your .env file and activating an HSM policy.
 
 ### Fetching limits and payment information
 To fetch your scan limits and payment information run:
