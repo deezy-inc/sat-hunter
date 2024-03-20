@@ -11,6 +11,7 @@
         "hunter:limits": "node -r dotenv/config scripts/get_payment_details",
         "hunter:withdraw": "node -r dotenv/config scripts/create_withdraw_request",
         "hunter:bulk-transfer": "node -r dotenv/config scripts/bulk-transfer",
+        "hunter:sign-and-send": "node -r dotenv/config scripts/sign-and-send",
 
         "test": "jest",
         "test:report": "jest --coverage && open coverage/lcov-report/index.html",
