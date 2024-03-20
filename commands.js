@@ -1,6 +1,8 @@
+const fs = require('fs')
 const { get_user_limits, post_scan_request, get_scan_request } = require('./deezy')
 const { save_withdraw_request, save_bulk_transfer } = require('./storage')
 const { satoshi_to_BTC, get_address_by_name, validate_user_limits, get_success_scan_address_file } = require('./utils')
+const { walletprocesspsbt, finalizepsbt, sendrawtransaction } = require('./bitcoin')
 
 const get_payment_details = async () => {
     const {
@@ -197,9 +199,28 @@ This command will transfer 50 uncommons (none of which are alpha) from address 1
     }
 }
 
+const sign_and_send = async ({ data_file, bitcoin_core_wallet }) => {
+    if (!data_file) {
+        throw new Error('No data file provided')
+    }
+    if (!bitcoin_core_wallet) {
+        throw new Error('No bitcoin core wallet provided')
+    }
+    console.log(`Reading data from file: ${data_file}`)
+    const { extraction_psbt } = JSON.parse(fs.readFileSync(data_file))
+    console.log(`Processing PSBT`)
+    const { psbt } = walletprocesspsbt({ psbt: extraction_psbt, bitcoin_wallet: bitcoin_core_wallet })
+    console.log(`Finalizing PSBT`)
+    const { hex } = finalizepsbt({ psbt, extract: true })
+    console.log(`Sending transaction`)
+    const txid = sendrawtransaction({ hex })
+    console.log(`Transaction sent with txid: ${txid}`)
+}
+
 module.exports = {
     get_payment_details,
     create_withdraw_request,
     bulk_transfer,
     parse_tag_limits,
+    sign_and_send,
 }
