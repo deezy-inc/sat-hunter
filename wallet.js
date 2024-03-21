@@ -17,11 +17,9 @@ const bip39 = require('bip39')
 const { getAddressInfo } = require('bitcoin-address-validation')
 const { BTC_to_satoshi } = require('./utils')
 const { sign_psbt_with_coldcard, get_hsm_address } = require('./hsm')
+const { getMempoolClient } = require('./utils/mempool')
 
 bitcoin.initEccLib(ecc)
-
-const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
-const MEMPOOL_API = `${MEMPOOL_URL}/api`
 
 const is_hsm_enabled = () => process.env.USE_HSM === 'true'
 const get_wallet_type = () => {
@@ -103,11 +101,13 @@ async function init_wallet() {
 }
 
 async function get_utxos_from_mempool_space({ address }) {
-    const url = `${MEMPOOL_API}/address/${address}/utxo`
-    const { data } = await axios.get(url).catch((err) => {
-        console.error(err)
-        return {}
-    })
+    const url = `/address/${address}/utxo`
+    const { data } = await getMempoolClient()
+        .get(url)
+        .catch((err) => {
+            console.error(err)
+            return {}
+        })
     return data
 }
 
@@ -171,11 +171,13 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
 }
 
 async function broadcast_to_mempool_space({ hex }) {
-    const url = `${MEMPOOL_API}/tx`
-    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch((err) => {
-        console.error(err)
-        return {}
-    })
+    const url = `/tx`
+    const { data } = await getMempoolClient()
+        .post(url, hex, { headers: { 'Content-Type': 'text/plain' } })
+        .catch((err) => {
+            console.error(err)
+            return {}
+        })
     return data
 }
 
@@ -200,8 +202,8 @@ async function broadcast_transaction({ hex }) {
 }
 
 async function get_address_txs({ address }) {
-    const url = `${MEMPOOL_API}/address/${address}/txs`
-    const { data } = await axios
+    const url = `/address/${address}/txs`
+    const { data } = await getMempoolClient()
         .get(url, {
             maxContentLength: Math.MAX_SAFE_INTEGER,
         })
