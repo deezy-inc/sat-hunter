@@ -34,7 +34,7 @@ describe('fees', () => {
                 jest.resetModules()
             })
 
-            test('return correct fee rate using MIN_FEE_BUFFER_PERCENT', async () => {
+            test('should print error to console, but return a valid value', async () => {
                 // Given
                 process.env.MEMPOOL_URL = 'http://mempool-not-real-to-fail.space'
                 jest.mock('axios', () => jest.requireActual('axios'))
