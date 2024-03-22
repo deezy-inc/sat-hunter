@@ -38,6 +38,7 @@ describe('fees', () => {
                 // Given
                 jest.mock('axios', () => jest.requireActual('axios'))
                 process.env.MEMPOOL_URL = 'http://mempool-not-real-to-fail.space'
+                process.env.MEMPOOL_RETRY_URL = 'http://mempool.space'
                 const consoleErrorSpy = jest.spyOn(global.console, 'error')
 
                 // When
