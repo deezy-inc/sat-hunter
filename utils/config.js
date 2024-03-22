@@ -49,6 +49,7 @@ function get_scan_config({ fee_rate, utxo }) {
         max_tag_ages: get_max_tag_ages({ fee_rate }),
         tag_by_address: get_tag_by_address(),
         split_config: get_split_config({ fee_rate }),
+        split_special_ranges: process.env.SPLIT_SPECIAL_RANGES === '1',
     }
     const pending_withdrawal = process_first_withdrawal_request()
     if (pending_withdrawal) {

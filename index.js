@@ -225,8 +225,16 @@ async function run() {
             special_sat_addresses: [rare_sat_address],
             extraction_fee_rate: fee_rate,
         }
-        const { excluded_tags, included_tags, min_tag_sizes, tag_by_address, max_tag_ages, split_config, withdraw_config } =
-            get_scan_config({ fee_rate, utxo })
+        const {
+            excluded_tags,
+            included_tags,
+            min_tag_sizes,
+            tag_by_address,
+            max_tag_ages,
+            split_config,
+            withdraw_config,
+            split_special_ranges,
+        } = get_scan_config({ fee_rate, utxo })
         if (excluded_tags) {
             console.log(`Using excluded tags: ${excluded_tags}`)
             request_body.excluded_tags = excluded_tags
@@ -274,6 +282,9 @@ async function run() {
             if (amount) {
                 request_body.withdraw_size_sats = amount
             }
+        }
+        if (split_special_ranges) {
+            request_body.split_special_ranges = split_special_ranges
         }
         const scan_request = await post_scan_request(request_body)
         if (!scan_request.id) {
