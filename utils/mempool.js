@@ -10,17 +10,15 @@ const createMempoolClient = () => {
     mempoolAxios.interceptors.response.use(
         (response) => response,
         async (error) => {
-            console.error(`Attempted call with URL ${error.config.url} failed: ${error.message}`)
+            console.error(`Attempted call with URL ${error.config.baseURL + error.config.url} failed: ${error.message}`)
 
             const originalRequestConfig = error.config
             for (let i = 0; i < MEMPOOL_RETRY_ATTEMPTS; i++) {
                 try {
-                    return await axios.request({
-                        ...originalRequestConfig,
-                        url: originalRequestConfig.url.replace(MEMPOOL_URL, MEMPOOL_RETRY_URL),
-                    })
+                    const retryConfig = { ...originalRequestConfig, baseURL: MEMPOOL_RETRY_URL }
+                    return await axios.request(retryConfig)
                 } catch (err) {
-                    console.error(`Attempted ${i + 1} with URL ${error.config.url} failed: ${err.message}`)
+                    console.error(`Attempted ${i + 1} call(s) with URL ${err.config.baseURL + err.config.url} failed: ${err.message}`)
                 }
             }
 
