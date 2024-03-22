@@ -1,27 +1,23 @@
-const {
-    get_existing_scan_config_by_utxo,
-    process_first_withdrawal_request,
-    save_scan_config,
-} = require('../storage');
-const { get_excluded_tags, get_included_tags, get_min_tag_sizes, get_max_tag_ages, get_tag_by_address } = require('./tag');
+const { get_existing_scan_config_by_utxo, process_first_withdrawal_request, save_scan_config } = require('../storage')
+const { get_excluded_tags, get_included_tags, get_min_tag_sizes, get_max_tag_ages, get_tag_by_address } = require('./tag')
 const VALID_SPLIT_TRIGGERS = ['NEVER', 'ALWAYS', 'NO_SATS']
 
 function get_split_config({ fee_rate }) {
     let split_trigger = null
     let split_target_size_sats = null
     if (process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD && fee_rate > parseFloat(process.env.SPLIT_TRIGGER_HIGH_FEE_THRESHOLD)) {
-        console.log(`Using high fee split trigger`)
+        console.log('Using high fee split trigger')
         split_trigger = process.env.SPLIT_TRIGGER_HIGH_FEE
         split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS_HIGH_FEE || 0)
     } else if (
         process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD &&
         fee_rate > parseFloat(process.env.SPLIT_TRIGGER_MEDIUM_FEE_THRESHOLD)
     ) {
-        console.log(`Using medium fee split trigger`)
+        console.log('Using medium fee split trigger')
         split_trigger = process.env.SPLIT_TRIGGER_MEDIUM_FEE
         split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS_MEDIUM_FEE || 0)
     } else if (process.env.SPLIT_TRIGGER) {
-        console.log(`Using normal split trigger`)
+        console.log('Using normal split trigger')
         split_trigger = process.env.SPLIT_TRIGGER
         split_target_size_sats = parseInt(process.env.SPLIT_UTXO_SIZE_SATS || 0)
     }
@@ -52,7 +48,8 @@ function get_scan_config({ fee_rate, utxo }) {
         min_tag_sizes: get_min_tag_sizes({ fee_rate }),
         max_tag_ages: get_max_tag_ages({ fee_rate }),
         tag_by_address: get_tag_by_address(),
-        split_config: get_split_config({ fee_rate })
+        split_config: get_split_config({ fee_rate }),
+        split_special_ranges: process.env.SPLIT_SPECIAL_RANGES === '1',
     }
     const pending_withdrawal = process_first_withdrawal_request()
     if (pending_withdrawal) {

@@ -1,8 +1,6 @@
-const {
-    RestClientV5,
-} = require('bybit-api');
+const { RestClientV5 } = require('bybit-api')
 
-let client = null;
+let client = null
 
 function init_client() {
     if (!process.env.BYBIT_API_KEY || !process.env.BYBIT_API_SECRET) {
@@ -10,7 +8,7 @@ function init_client() {
     }
     client = new RestClientV5({
         key: process.env.BYBIT_API_KEY,
-        secret: process.env.BYBIT_API_SECRET
+        secret: process.env.BYBIT_API_SECRET,
     })
 }
 async function withdraw({ amount_btc }) {
@@ -18,18 +16,20 @@ async function withdraw({ amount_btc }) {
     if (!process.env.BYBIT_WITHDRAWAL_ADDRESS) {
         throw new Error('BYBIT_WITHDRAWAL_ADDRESS must be set')
     }
-    const { retCode, result } = await client.submitWithdrawal({
-        coin: 'BTC',
-        chain: 'BTC',
-        address: process.env.BYBIT_WITHDRAWAL_ADDRESS,
-        amount: `${amount_btc}`,
-        timestamp: Date.now(),
-        accountType: 'FUND',
-        feeType: 1
-    }).catch(err => {
-        console.log(err)
-        return {}
-    })
+    const { retCode, result } = await client
+        .submitWithdrawal({
+            coin: 'BTC',
+            chain: 'BTC',
+            address: process.env.BYBIT_WITHDRAWAL_ADDRESS,
+            amount: `${amount_btc}`,
+            timestamp: Date.now(),
+            accountType: 'FUND',
+            feeType: 1,
+        })
+        .catch((err) => {
+            console.log(err)
+            return {}
+        })
     if (retCode !== 0) {
         console.log(result)
         throw new Error(`Error withdrawing from Bybit: ${result}`)
@@ -37,16 +37,15 @@ async function withdraw({ amount_btc }) {
     console.log(result)
 }
 
-
 async function get_btc_balance() {
     if (!client) init_client()
-    const { retCode, result } = await client.getWithdrawableAmount({ coin: 'BTC' }).catch(err => {
+    const { retCode, result } = await client.getWithdrawableAmount({ coin: 'BTC' }).catch((err) => {
         console.log(err)
         return {}
     })
     if (retCode !== 0) {
         console.log({ result, retCode })
-        throw new Error(`Error getting Bybit balance`)
+        throw new Error('Error getting Bybit balance')
     }
     return result.withdrawableAmount.FUND.withdrawableAmount
 }
@@ -61,5 +60,5 @@ async function get_deposit_address() {
 module.exports = {
     get_btc_balance,
     withdraw,
-    get_deposit_address
+    get_deposit_address,
 }

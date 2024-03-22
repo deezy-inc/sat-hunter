@@ -4,7 +4,7 @@ const {
     sendrawtransaction,
     finalizepsbt,
     listtransactions,
-    getrawtransaction
+    getrawtransaction,
 } = require('./bitcoin')
 const prompts = require('prompts')
 const { decrypt } = require('./encryption')
@@ -14,26 +14,42 @@ const { BIP32Factory } = require('bip32')
 const bip32 = BIP32Factory(ecc)
 const bitcoin = require('bitcoinjs-lib')
 const bip39 = require('bip39')
-const { getAddressInfo } = require('bitcoin-address-validation');
-const { BTC_to_satoshi } = require('./utils');
-const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
+const { getAddressInfo } = require('bitcoin-address-validation')
+const { BTC_to_satoshi } = require('./utils')
+const { sign_psbt_with_coldcard, get_hsm_address } = require('./hsm')
+const { getMempoolClient } = require('./utils/mempool')
 
 bitcoin.initEccLib(ecc)
 
-const MEMPOOL_API = `${MEMPOOL_URL}/api`
-const WALLET_TYPE = process.env.BITCOIN_WALLET ? 'core' : 'local'
+const is_hsm_enabled = () => process.env.USE_HSM === 'true'
+const get_wallet_type = () => {
+    if (is_hsm_enabled()) return 'coldcard'
+    return process.env.BITCOIN_WALLET ? 'core' : 'local'
+}
+
+function get_address() {
+    const wallet_type = get_wallet_type()
+    if (wallet_type === 'coldcard') {
+        return get_hsm_address()
+    }
+    const address = process.env.LOCAL_WALLET_ADDRESS
+    if (wallet_type === 'local' && !address) {
+        throw new Error('LOCAL_WALLET_ADDRESS must be set')
+    }
+    return address
+}
+
 let local_wallet_type
 let child_xonly_pubkey
 let tweaked_child_node
 let root_hd_node
 let child_hd_node
 let derivation_path
-const toXOnly = pubKey => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33));
-
+const toXOnly = (pubKey) => (pubKey.length === 32 ? pubKey : pubKey.slice(1, 33))
 const get_min_sat_utxo_limit = () => Number(process.env.IGNORE_UTXOS_BELOW_SATS) || 1001
 
 async function init_wallet() {
-    if (WALLET_TYPE === 'local') {
+    if (get_wallet_type() === 'local') {
         if ((!process.env.LOCAL_WALLET_SEED && !process.env.LOCAL_WALLET_SEED_ENCRYPTED) || !process.env.LOCAL_WALLET_ADDRESS) {
             throw new Error('LOCAL_WALLET_ADDRESS and LOCAL_WALLET_SEED or LOCAL_WALLET_SEED_ENCRYPTED must be set')
         }
@@ -72,58 +88,61 @@ async function init_wallet() {
             address = p2wpkh_derived_info.address
         }
         if (address !== process.env.LOCAL_WALLET_ADDRESS) {
-            throw new Error('Local address does not match expected - ensure LOCAL_WALLET_SEED/LOCAL_WALLET_SEED_ENCRYPTED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct')
+            throw new Error(
+                'Local address does not match expected - ensure LOCAL_WALLET_SEED/LOCAL_WALLET_SEED_ENCRYPTED, LOCAL_DERIVATION_PATH, and LOCAL_WALLET_ADDRESS are correct'
+            )
         } else {
             console.log(`Local wallet address: ${address}`)
             if (local_wallet_type === 'p2tr') {
-                tweaked_child_node = child_hd_node.tweak(
-                    bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey),
-                );
+                tweaked_child_node = child_hd_node.tweak(bitcoin.crypto.taggedHash('TapTweak', child_xonly_pubkey))
             }
         }
     }
 }
 
 async function get_utxos_from_mempool_space({ address }) {
-    const url = `${MEMPOOL_API}/address/${address}/utxo`
-    const { data } = await axios.get(url).catch(err => {
-        console.error(err)
-        return {}
-    })
+    const url = `/address/${address}/utxo`
+    const { data } = await getMempoolClient()
+        .get(url)
+        .catch((err) => {
+            console.error(err)
+            return {}
+        })
     return data
 }
 
 async function get_utxos() {
-    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit();
+    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit()
 
-    if (WALLET_TYPE === 'core') {
+    if (get_wallet_type() === 'core') {
         const unspents = listunspent()
-        const filtered_unspents = unspents.filter(it => it.amount * 100000000 >= IGNORE_UTXOS_BELOW_SATS)
+        const filtered_unspents = unspents.filter((it) => it.amount * 100000000 >= IGNORE_UTXOS_BELOW_SATS)
         const ignored_num = unspents.length - filtered_unspents.length
         if (ignored_num > 0) {
             console.log(`Ignored ${ignored_num} dust unspents below ${IGNORE_UTXOS_BELOW_SATS} sats`)
         }
-        return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
+        return filtered_unspents.map((it) => `${it.txid}:${it.vout}`)
     }
-    const address = process.env.LOCAL_WALLET_ADDRESS
-    if (!address) {
-        throw new Error('LOCAL_WALLET_ADDRESS must be set')
-    }
+    const address = get_address()
     const unspents = await get_utxos_from_mempool_space({ address })
     if (!unspents) {
         throw new Error('Error reaching mempool api')
     }
     const all_unspents_length = unspents.length
-    const filtered_unspents = unspents.filter(it => it.value >= IGNORE_UTXOS_BELOW_SATS)
+    const filtered_unspents = unspents.filter((it) => it.value >= IGNORE_UTXOS_BELOW_SATS)
     const ignored_num = all_unspents_length - filtered_unspents.length
     if (ignored_num > 0) {
         console.log(`Ignored ${ignored_num} dust unspents below ${IGNORE_UTXOS_BELOW_SATS} sats`)
     }
-    return filtered_unspents.map(it => `${it.txid}:${it.vout}`)
+    return filtered_unspents.map((it) => `${it.txid}:${it.vout}`)
 }
 
 function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
-    if (WALLET_TYPE === 'core') {
+    if (is_hsm_enabled()) {
+        const signed_psbt = sign_psbt_with_coldcard(psbt)
+        return signed_psbt
+    }
+    if (get_wallet_type() === 'core') {
         const processed_psbt = walletprocesspsbt({ psbt }).psbt
         return finalizepsbt({ psbt: processed_psbt, extract: false }).psbt
     }
@@ -140,9 +159,9 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
                 {
                     masterFingerprint: root_hd_node.fingerprint,
                     path: derivation_path,
-                    pubkey: child_hd_node.publicKey
-                }
-            ]
+                    pubkey: child_hd_node.publicKey,
+                },
+            ],
         })
         psbt_object = psbt_object.signInputHD(0, root_hd_node, [bitcoin.Transaction.SIGHASH_ALL])
     }
@@ -152,17 +171,19 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
 }
 
 async function broadcast_to_mempool_space({ hex }) {
-    const url = `${MEMPOOL_API}/tx`
-    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
-        console.error(err)
-        return {}
-    })
+    const url = `/tx`
+    const { data } = await getMempoolClient()
+        .post(url, hex, { headers: { 'Content-Type': 'text/plain' } })
+        .catch((err) => {
+            console.error(err)
+            return {}
+        })
     return data
 }
 
 async function broadcast_to_blockstream({ hex }) {
-    const url = `https://blockstream.info/api/tx`
-    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch(err => {
+    const url = 'https://blockstream.info/api/tx'
+    const { data } = await axios.post(url, hex, { headers: { 'Content-Type': 'text/plain' } }).catch((err) => {
         console.error(err)
         return {}
     })
@@ -170,7 +191,7 @@ async function broadcast_to_blockstream({ hex }) {
 }
 
 async function broadcast_transaction({ hex }) {
-    if (WALLET_TYPE === 'core') {
+    if (get_wallet_type() === 'core') {
         return sendrawtransaction({ hex })
     }
     const txid = await broadcast_to_mempool_space({ hex })
@@ -181,13 +202,15 @@ async function broadcast_transaction({ hex }) {
 }
 
 async function get_address_txs({ address }) {
-    const url = `${MEMPOOL_API}/address/${address}/txs`
-    const { data } = await axios.get(url, {
-        maxContentLength: Math.MAX_SAFE_INTEGER,
-    }).catch(err => {
-        console.error(err)
-        return {}
-    })
+    const url = `/address/${address}/txs`
+    const { data } = await getMempoolClient()
+        .get(url, {
+            maxContentLength: Math.MAX_SAFE_INTEGER,
+        })
+        .catch((err) => {
+            console.error(err)
+            return {}
+        })
     if (process.env.DEBUG) {
         console.log(data)
     }
@@ -195,15 +218,30 @@ async function get_address_txs({ address }) {
 }
 
 async function fetch_most_recent_unconfirmed_send() {
-    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit();
+    const IGNORE_UTXOS_BELOW_SATS = get_min_sat_utxo_limit()
 
-    if (WALLET_TYPE === 'core') {
-        const recent_transactions = listtransactions()
-        const all_unconfirmed_sends = recent_transactions.filter(
-            it => it.category === 'send' && it.confirmations === 0
+    if (get_wallet_type() === 'core') {
+        const recent_transactions_all_outputs = listtransactions({ count: 200 })
+        const all_unconfirmed_sends = recent_transactions_all_outputs.filter(
+            (it) => it.category === 'send' && it.confirmations === 0
         )
-        const unconfirmed_sends= all_unconfirmed_sends.filter( it => BTC_to_satoshi(it.amount) >= IGNORE_UTXOS_BELOW_SATS)
-        const num_unconfirmed_send_below_limit = all_unconfirmed_sends.length - unconfirmed_sends.length
+        // Sort by most negative (largest send first)
+        const all_unconfirmed_sends_sorted = all_unconfirmed_sends.sort((a, b) => a.amount - b.amount)
+        // For a send with multiple outputs (common in an extraction tx), listtransactions() will return an entry for each output
+        // in the same tx. So we have many entries referring to the same txid, and should just grab one of them.
+        const unique_txids = new Set()
+        const unique_unconfirmed_sends = all_unconfirmed_sends_sorted.filter((it) => {
+            if (unique_txids.has(it.txid)) {
+                // This assumes all_unconfirmed_sends_sorted is sorted by biggest (most negative) amounts first
+                return false
+            }
+            unique_txids.add(it.txid)
+            return true
+        })
+        const unconfirmed_sends = unique_unconfirmed_sends.filter(
+            (it) => Math.abs(BTC_to_satoshi(it.amount)) >= IGNORE_UTXOS_BELOW_SATS
+        )
+        const num_unconfirmed_send_below_limit = unique_unconfirmed_sends.length - unconfirmed_sends.length
         if (unconfirmed_sends.length === 0) {
             console.log(`Did not find any unconfirmed sends above ${IGNORE_UTXOS_BELOW_SATS} sats`)
             if (num_unconfirmed_send_below_limit > 0) {
@@ -226,8 +264,9 @@ async function fetch_most_recent_unconfirmed_send() {
         }
     }
 
-    const txs = await get_address_txs({ address: process.env.LOCAL_WALLET_ADDRESS })
-    const unconfirmed_sends = txs.filter(it => {
+    const address = get_address()
+    const txs = await get_address_txs({ address })
+    const unconfirmed_sends = txs.filter((it) => {
         // Hacky way to find which ones are ours...
         if (it.status.confirmed) return false
         if (it.vin.length !== 1) return false
@@ -258,5 +297,5 @@ module.exports = {
     sign_and_finalize_transaction,
     broadcast_transaction,
     fetch_most_recent_unconfirmed_send,
-    init_wallet
+    init_wallet,
 }
