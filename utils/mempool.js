@@ -18,7 +18,9 @@ const createMempoolClient = () => {
                     const retryConfig = { ...originalRequestConfig, baseURL: MEMPOOL_RETRY_URL }
                     return await axios.request(retryConfig)
                 } catch (err) {
-                    console.error(`Attempted ${i + 1} call(s) with URL ${err.config.baseURL + err.config.url} failed: ${err.message}`)
+                    console.error(
+                        `Attempted ${i + 1} call(s) with URL ${err.config.baseURL + err.config.url} failed: ${err.message}`
+                    )
                 }
             }
 
