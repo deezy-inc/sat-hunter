@@ -23,17 +23,14 @@ process.env.LOCAL_WALLET_ADDRESS = address
 process.env.LOCAL_DERIVATION_PATH = derivePath
 
 const { get_utxos } = require('../wallet')
-const { listunspent } = require('../bitcoin')
-const axios = require('axios')
+const { getMempoolClient } = require('../utils/mempool')
 
 jest.mock('../bitcoin')
-jest.mock('axios')
+jest.mock('../utils/mempool')
 
 describe('get_utxos', () => {
     beforeEach(() => {
-        // Reset the mocks before each test
-        listunspent.mockReset()
-        axios.get.mockReset()
+        jest.resetAllMocks()
     })
 
     describe('Environment variables', () => {
@@ -51,7 +48,7 @@ describe('get_utxos', () => {
         test('should throw error when mempool api is unreachable', async () => {
             delete process.env.BITCOIN_WALLET
             process.env.LOCAL_WALLET_ADDRESS = 'address'
-            axios.get.mockImplementation(() => Promise.reject(new Error('Network error')))
+            getMempoolClient.mockImplementation(() => ({ get: () => Promise.reject(new Error('Network error')) }))
 
             await expect(get_utxos()).rejects.toThrow('Error reaching mempool api')
         })
@@ -59,29 +56,30 @@ describe('get_utxos', () => {
         describe('IGNORE_UTXOS_BELOW_SATS', () => {
             test('should filter utxos below specified limit in IGNORE_UTXOS_BELOW_SATS (lower)', async () => {
                 // Given
-                axios.get.mockImplementation(() =>
-                    Promise.resolve({
-                        data: [
-                            {
-                                txid: '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
-                                vout: 4,
-                                status: {
-                                    confirmed: true,
-                                    block_height: 831003,
-                                    block_hash: '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
-                                    block_time: 1708268225,
+                getMempoolClient.mockImplementation(() => ({
+                    get: () =>
+                        Promise.resolve({
+                            data: [
+                                {
+                                    txid: '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
+                                    vout: 4,
+                                    status: {
+                                        confirmed: true,
+                                        block_height: 831003,
+                                        block_hash: '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
+                                        block_time: 1708268225,
+                                    },
+                                    value: 14599,
                                 },
-                                value: 14599,
-                            },
-                            {
-                                txid: '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
-                                vout: 0,
-                                status: { confirmed: false },
-                                value: 608,
-                            },
-                        ],
-                    })
-                )
+                                {
+                                    txid: '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
+                                    vout: 0,
+                                    status: { confirmed: false },
+                                    value: 608,
+                                },
+                            ],
+                        }),
+                }))
 
                 // When
                 process.env.IGNORE_UTXOS_BELOW_SATS = 400
@@ -95,29 +93,30 @@ describe('get_utxos', () => {
 
             test('should filter utxos below specified limit in IGNORE_UTXOS_BELOW_SATS (higher)', async () => {
                 // Given
-                axios.get.mockImplementation(() =>
-                    Promise.resolve({
-                        data: [
-                            {
-                                txid: '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
-                                vout: 4,
-                                status: {
-                                    confirmed: true,
-                                    block_height: 831003,
-                                    block_hash: '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
-                                    block_time: 1708268225,
+                getMempoolClient.mockImplementation(() => ({
+                    get: () =>
+                        Promise.resolve({
+                            data: [
+                                {
+                                    txid: '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
+                                    vout: 4,
+                                    status: {
+                                        confirmed: true,
+                                        block_height: 831003,
+                                        block_hash: '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
+                                        block_time: 1708268225,
+                                    },
+                                    value: 14599,
                                 },
-                                value: 14599,
-                            },
-                            {
-                                txid: '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
-                                vout: 0,
-                                status: { confirmed: false },
-                                value: 608,
-                            },
-                        ],
-                    })
-                )
+                                {
+                                    txid: '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
+                                    vout: 0,
+                                    status: { confirmed: false },
+                                    value: 608,
+                                },
+                            ],
+                        }),
+                }))
 
                 // When
                 process.env.IGNORE_UTXOS_BELOW_SATS = 17000
@@ -128,29 +127,30 @@ describe('get_utxos', () => {
 
             test('should filter utxos below 1000 (default value for IGNORE_UTXOS_BELOW_SATS)', async () => {
                 // Given
-                axios.get.mockImplementation(() =>
-                    Promise.resolve({
-                        data: [
-                            {
-                                txid: '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
-                                vout: 4,
-                                status: {
-                                    confirmed: true,
-                                    block_height: 831003,
-                                    block_hash: '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
-                                    block_time: 1708268225,
+                getMempoolClient.mockImplementation(() => ({
+                    get: () =>
+                        Promise.resolve({
+                            data: [
+                                {
+                                    txid: '4fe6b37932bd5ae8cc1b0a407a606c3fb22190005c64abc67f5def792b058190',
+                                    vout: 4,
+                                    status: {
+                                        confirmed: true,
+                                        block_height: 831003,
+                                        block_hash: '00000000000000000002f23559d46afb2bceff111af5e5cc08c738b44187318a',
+                                        block_time: 1708268225,
+                                    },
+                                    value: 14599,
                                 },
-                                value: 14599,
-                            },
-                            {
-                                txid: '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
-                                vout: 0,
-                                status: { confirmed: false },
-                                value: 608,
-                            },
-                        ],
-                    })
-                )
+                                {
+                                    txid: '25b2bf9bfb1b27eb9555a872b4abced233dc2e4b7248ee2373d9a42eac46e25e',
+                                    vout: 0,
+                                    status: { confirmed: false },
+                                    value: 608,
+                                },
+                            ],
+                        }),
+                }))
 
                 // When
                 delete process.env.IGNORE_UTXOS_BELOW_SATS
@@ -165,14 +165,15 @@ describe('get_utxos', () => {
         test('should return correct utxos for local wallet', async () => {
             delete process.env.BITCOIN_WALLET
             process.env.WALLET_TYPE = 'local'
-            axios.get.mockImplementation(() =>
-                Promise.resolve({
-                    data: [
-                        { txid: 'tx1', vout: 0, value: 100000 },
-                        { txid: 'tx2', vout: 1, value: 200000 },
-                    ],
-                })
-            )
+            getMempoolClient.mockImplementation(() => ({
+                get: () =>
+                    Promise.resolve({
+                        data: [
+                            { txid: 'tx1', vout: 0, value: 100000 },
+                            { txid: 'tx2', vout: 1, value: 200000 },
+                        ],
+                    }),
+            }))
 
             const result = await get_utxos()
             expect(result).toEqual(['tx1:0', 'tx2:1'])
