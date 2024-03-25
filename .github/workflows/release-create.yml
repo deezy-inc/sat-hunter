@@ -29,13 +29,22 @@ jobs:
               run: |
                   git config --global user.name '${{github.actor}}'
                   git config --global user.email '${{github.actor}}@users.noreply.github.com'
+
+            - name: Create new release branch
+              run: |
+                  git reset --hard
+                  git pull
+                  version=$(cat package.json | jq -r '.version')
+                  git checkout -b "release/$version"
+                  git push --set-upstream origin "release/$version"
+
             - name: Bump package.json version
               run: |
                   npm version ${{ inputs.version }} --no-git-tag-version
+
             - name: Commit changes
               env:
                   FILE_TO_COMMIT: package.json
-                  DESTINATION_BRANCH: main
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   OWNER: ${{ github.repository_owner }}
                   REPO: ${{ github.event.repository.name }}
@@ -45,19 +54,14 @@ jobs:
                   export MESSAGE="Bump package.json to $VERSION"
                   export SHA=$( git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT )
                   export CONTENT=$( base64 -i $FILE_TO_COMMIT )
-                  gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT --field message="$MESSAGE" --field branch="$DESTINATION_BRANCH" --field content=@<( base64 -i $FILE_TO_COMMIT ) --field sha="$SHA"
-            - name: Pull and tag
+                  gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT --field message="$MESSAGE" --field branch="release/$version" --field content=@<( base64 -i $FILE_TO_COMMIT ) --field sha="$SHA"
+          
+            - name: Tag release branch and push
               run: |
-                  git reset --hard
-                  git pull
                   version=$(cat package.json | jq -r '.version')
                   git tag "v$version"
-                  git push --set-upstream origin main "v$version"
-            - name: Create new release branch
-              run: |
-                  version=$(cat package.json | jq -r '.version')
-                  git checkout -b "release/$version"
-                  git push --set-upstream origin "release/$version"
+                  git push --set-upstream origin "release/$version" "v$version"
+            
             - name: Create draft release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
