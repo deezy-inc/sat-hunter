@@ -89,6 +89,9 @@ async function get_btc_balance() {
 
 async function withdraw({ amount_btc }) {
     await check_and_set_credentials()
+    if (!process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS_NAME || !process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS) {
+        throw new Error('COINBASE_PRIME_WITHDRAWAL_ADDRESS_NAME and COINBASE_PRIME_WITHDRAWAL_ADDRESS must be set')
+    }
     const path = '/withdrawals/crypto'
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
@@ -101,7 +104,7 @@ async function withdraw({ amount_btc }) {
         destination_type: 'DESTINATION_BLOCKCHAIN',
         blockchain_address: {
             address: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS,
-            account_identifier: 'trezor-sat-hunter',
+            account_identifier: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS_NAME,
         },
     }
     if (process.env.COINBASE_PRIME_TOTP_SECRET) {
