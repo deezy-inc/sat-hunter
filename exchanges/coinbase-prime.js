@@ -46,7 +46,7 @@ async function set_coinbase_ids() {
 }
 
 async function set_btc_wallet_id() {
-    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets?type=TRADING&symbol=BTC`
+    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
     const headers = create_headers({ path, timestamp, method })
@@ -54,8 +54,7 @@ async function set_btc_wallet_id() {
         console.log(err)
         return {}
     })
-    console.log(data)
-    BTC_WALLET_ID = data.wallets[0].id
+    BTC_WALLET_ID = data.wallets.find(it => it.symbol === 'BTC' && it.type === 'TRADING').id
 }
 
 async function check_and_set_credentials() {
