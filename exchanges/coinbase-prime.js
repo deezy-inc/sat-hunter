@@ -114,7 +114,7 @@ async function withdraw({ amount_btc }) {
     headers['Content-Type'] = 'application/json'
     const { data } = await axios.post(`${BASE_URL}${path}`, body, { headers }).catch((err) => {
         console.log(err)
-        throw new Error(JSON.stringify(err, null, 2))
+        throw new Error(JSON.stringify(err.message, null, 2))
     })
     console.log(data)
 }
