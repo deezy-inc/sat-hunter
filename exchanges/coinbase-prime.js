@@ -46,7 +46,7 @@ async function set_coinbase_ids() {
 }
 
 async function set_btc_wallet_id() {
-    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets` // ?type=TRADING&symbol=BTC
+    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets?type=TRADING&symbol=BTC`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
     const headers = create_headers({ path, timestamp, method })
