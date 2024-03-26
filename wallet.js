@@ -209,7 +209,7 @@ async function get_address_txs({ address }) {
         })
         .catch((err) => {
             console.error(err)
-            return []
+            return { data: []}
         })
     if (process.env.DEBUG) {
         console.log(data)
