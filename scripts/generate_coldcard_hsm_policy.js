@@ -88,17 +88,18 @@ const get_whitelist = () => {
 }
 
 const get_whitelist_rules = () => {
-    const rules = get_whitelist().map((item_address) => {
-        return {
-            description: item_address.description,
-            whitelist: [item_address.address],
+    const whitelistAddresses = get_whitelist().map((item_address) => item_address.address)
+    const rules = [
+        {
+            description: 'Combined Whitelist',
+            whitelist: [...new Set(whitelistAddresses)], // Ensure addresses are unique
             per_period: null,
             max_amount: null,
             users: [],
             local_conf: false,
             wallet: null,
-        }
-    })
+        },
+    ]
     return rules
 }
 
