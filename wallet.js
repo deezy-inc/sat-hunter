@@ -101,7 +101,7 @@ async function init_wallet() {
 }
 
 async function get_utxos_from_mempool_space({ address }) {
-    const url = `/address/${address}/utxo`
+    const url = `/api/address/${address}/utxo`
     const { data } = await getMempoolClient()
         .get(url)
         .catch((err) => {
@@ -171,7 +171,7 @@ function sign_and_finalize_transaction({ psbt, witnessUtxo }) {
 }
 
 async function broadcast_to_mempool_space({ hex }) {
-    const url = `/tx`
+    const url = `/api/tx`
     const { data } = await getMempoolClient()
         .post(url, hex, { headers: { 'Content-Type': 'text/plain' } })
         .catch((err) => {
@@ -202,7 +202,7 @@ async function broadcast_transaction({ hex }) {
 }
 
 async function get_address_txs({ address }) {
-    const url = `/address/${address}/txs`
+    const url = `/api/address/${address}/txs`
     const { data } = await getMempoolClient()
         .get(url, {
             maxContentLength: Math.MAX_SAFE_INTEGER,

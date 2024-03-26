@@ -1,13 +1,12 @@
 const axios = require('axios')
 const MEMPOOL_URL = process.env.MEMPOOL_URL || 'https://mempool.space'
-const MEMPOOL_API = `${MEMPOOL_URL}/api`
 const MEMPOOL_RETRY_URL = process.env.MEMPOOL_RETRY_URL || 'https://yourmempoolinstance.com'
 const MEMPOOL_RETRY_ATTEMPTS = process.env.MEMPOOL_RETRY_ATTEMPTS || 1
 
 let mempoolClient
 
 const createMempoolClient = () => {
-    const mempoolAxios = axios.create({ baseURL: MEMPOOL_API })
+    const mempoolAxios = axios.create({ baseURL: MEMPOOL_URL })
     mempoolAxios.interceptors.response.use(
         (response) => response,
         async (error) => {
