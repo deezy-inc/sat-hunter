@@ -92,7 +92,7 @@ async function withdraw({ amount_btc }) {
     if (!process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS_NAME || !process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS) {
         throw new Error('COINBASE_PRIME_WITHDRAWAL_ADDRESS_NAME and COINBASE_PRIME_WITHDRAWAL_ADDRESS must be set')
     }
-    const path = '/withdrawals/crypto'
+    const path = `v1/portfolios/${PORTFOLIO_ID}/wallet/${BTC_WALLET_ID}/withdrawals`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
     const body = {
