@@ -54,7 +54,7 @@ async function set_btc_wallet_id() {
         console.log(err)
         return {}
     })
-    BTC_WALLET_ID = data.wallets.find(it => it.symbol === 'BTC' && it.type === 'TRADING').id
+    BTC_WALLET_ID = data.wallets.find((it) => it.symbol === 'BTC' && it.type === 'TRADING').id
 }
 
 async function check_and_set_credentials() {
