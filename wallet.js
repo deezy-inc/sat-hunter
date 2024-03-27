@@ -298,4 +298,7 @@ module.exports = {
     broadcast_transaction,
     fetch_most_recent_unconfirmed_send,
     init_wallet,
+    get_utxos_from_mempool_space,
+    broadcast_to_mempool_space,
+    get_address_txs,
 }
