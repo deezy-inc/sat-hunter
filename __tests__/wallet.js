@@ -48,7 +48,7 @@ describe('wallet', () => {
         })
 
         describe('get_utxos_from_mempool_space', () => {
-            test('should use correct endpoint address', async () => {
+            test('request url should be: /api/address/${address}/utxo', async () => {
                 // Given
                 const url = `/api/address/${address}/utxo`
 
@@ -61,7 +61,7 @@ describe('wallet', () => {
             })
         })
         describe('broadcast_to_mempool_space', () => {
-            test('should use correct endpoint address', async () => {
+            test('request url should be: /api/tx', async () => {
                 // Given
                 const url = `/api/tx`
 
@@ -74,7 +74,7 @@ describe('wallet', () => {
             })
         })
         describe('get_address_txs', () => {
-            test('should use correct endpoint address', async () => {
+            test('request url should be: /api/address/${address}/txs', async () => {
                 // Given
                 const url = `/api/address/${address}/txs`
 
