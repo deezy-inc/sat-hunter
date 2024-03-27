@@ -46,7 +46,7 @@ async function set_coinbase_ids() {
 }
 
 async function set_btc_wallet_id() {
-    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets` // ?type=TRADING&symbol=BTC
+    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'GET'
     const headers = create_headers({ path, timestamp, method })
@@ -54,8 +54,7 @@ async function set_btc_wallet_id() {
         console.log(err)
         return {}
     })
-    console.log(data)
-    BTC_WALLET_ID = data.wallets[0].id
+    BTC_WALLET_ID = data.wallets.find((it) => it.symbol === 'BTC' && it.type === 'TRADING').id
 }
 
 async function check_and_set_credentials() {
@@ -90,7 +89,10 @@ async function get_btc_balance() {
 
 async function withdraw({ amount_btc }) {
     await check_and_set_credentials()
-    const path = '/withdrawals/crypto'
+    if (!process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS_NAME || !process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS) {
+        throw new Error('COINBASE_PRIME_WITHDRAWAL_ADDRESS_NAME and COINBASE_PRIME_WITHDRAWAL_ADDRESS must be set')
+    }
+    const path = `/v1/portfolios/${PORTFOLIO_ID}/wallets/${BTC_WALLET_ID}/withdrawals`
     const timestamp = `${Math.floor(Date.now() / 1000)}`
     const method = 'POST'
     const body = {
@@ -102,7 +104,7 @@ async function withdraw({ amount_btc }) {
         destination_type: 'DESTINATION_BLOCKCHAIN',
         blockchain_address: {
             address: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS,
-            account_identifier: 'trezor-sat-hunter',
+            account_identifier: process.env.COINBASE_PRIME_WITHDRAWAL_ADDRESS_NAME,
         },
     }
     if (process.env.COINBASE_PRIME_TOTP_SECRET) {
@@ -111,8 +113,8 @@ async function withdraw({ amount_btc }) {
     const headers = create_headers({ path, timestamp, method, body: JSON.stringify(body) })
     headers['Content-Type'] = 'application/json'
     const { data } = await axios.post(`${BASE_URL}${path}`, body, { headers }).catch((err) => {
-        console.log(err.response.data)
-        throw new Error(JSON.stringify(err.response.data, null, 2))
+        console.log(err)
+        throw new Error(JSON.stringify(err.message, null, 2))
     })
     console.log(data)
 }
