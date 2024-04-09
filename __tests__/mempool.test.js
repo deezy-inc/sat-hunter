@@ -62,7 +62,7 @@ describe('mempool', () => {
 
                 // Then
                 try {
-                    const response = await mempoolClient.get('/api/activity')
+                    await mempoolClient.get('/api/activity')
                 } catch (error) {
                     expect(error.response.data?.activity).toBeFalsy()
                     expect(error.response.status).toBe(404)
