@@ -25,12 +25,13 @@ const emojis_by_rarity = {
     special_name: '🔤',
     2009: '0️⃣9️⃣',
     '450x': '⁴⁵⁰ˣ',
+    block_840000: '⁸⁴⁰ˣ',
 }
 const first_2010_sat = 162450000000000
 const first_450x_sat = 45000000000
 const last_450x_sat = 45100000000
 
-function generate_satributes_messages(satributes) {
+function generate_satributes_messages(satributes, runes = []) {
     if (satributes.length === 0) return ['No special sats found on this utxo']
     const messages = [`Found ${satributes.length} special sats:`]
     for (const satribute of satributes) {
@@ -47,7 +48,7 @@ function generate_satributes_messages(satributes) {
         }
         for (const rarity of satribute.rarity_tags) {
             msg += `${rarity} `
-            if (['block_9', 'block_78', 'pizza'].includes(rarity)) {
+            if (['block_9', 'block_78', 'pizza', 'block_840000', 'block_666'].includes(rarity)) {
                 is_chunkly = true
             }
         }
@@ -59,6 +60,13 @@ function generate_satributes_messages(satributes) {
         if (satribute.size > 1 || is_chunkly) {
             msg += `\nsize: ${satribute.size}`
         }
+        messages.push(msg)
+    }
+    for (const rune of runes) {
+        let msg = 'Rune:'
+        msg += `\n${rune.symbol} ${rune.name ? `\nname: ${rune.name}` : ''}`
+        msg += `\namount: ${rune.amount}`
+        msg += `\ndivisibility: ${rune.divisibility}`
         messages.push(msg)
     }
     return messages

@@ -326,8 +326,8 @@ async function run() {
         }
         console.log(`Scan request with id: ${scan_request_id} is complete`)
         if (!rescan_request_ids.has(scan_request_id)) {
-            if (info.satributes.length > 0 || !process.env.ONLY_NOTIFY_ON_SATS) {
-                const messages = generate_satributes_messages(info.satributes)
+            if (info.satributes.length > 0 || info.runes.length > 0 || !process.env.ONLY_NOTIFY_ON_SATS) {
+                const messages = generate_satributes_messages(info.satributes, info.runes)
                 for (const msg of messages) {
                     await sendNotifications(msg)
                 }
