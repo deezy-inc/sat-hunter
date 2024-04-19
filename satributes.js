@@ -25,6 +25,7 @@ const emojis_by_rarity = {
     special_name: '🔤',
     2009: '0️⃣9️⃣',
     '450x': '⁴⁵⁰ˣ',
+    block_840000: '⁸⁴⁰ˣ',
 }
 const first_2010_sat = 162450000000000
 const first_450x_sat = 45000000000
@@ -47,7 +48,7 @@ function generate_satributes_messages(satributes, runes = []) {
         }
         for (const rarity of satribute.rarity_tags) {
             msg += `${rarity} `
-            if (['block_9', 'block_78', 'pizza'].includes(rarity)) {
+            if (['block_9', 'block_78', 'pizza', 'block_840000', 'block_666'].includes(rarity)) {
                 is_chunkly = true
             }
         }
