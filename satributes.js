@@ -32,7 +32,7 @@ const first_450x_sat = 45000000000
 const last_450x_sat = 45100000000
 
 function generate_satributes_messages(satributes, runes = []) {
-    if (satributes.length === 0) return ['No special sats found on this utxo']
+    if (satributes.length === 0 && runes.length === 0) return ['No special sats found on this utxo']
     const messages = [`Found ${satributes.length} special sats:`]
     for (const satribute of satributes) {
         let msg = ''
