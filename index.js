@@ -212,6 +212,7 @@ async function run() {
     const scan_request_ids = []
     const exchange_address = await exchange.get_deposit_address()
     const rare_sat_address = process.env.RARE_SAT_ADDRESS
+    const min_regular_funds_output_size_sats_env = parseInt(process.env.MIN_REGULAR_FUNDS_OUTPUT_SIZE_SATS || 0)
     for (const utxo of utxos) {
         console.log(`Preparing to scan: ${utxo}`)
         if (!rescanned_utxos.has(utxo) && !process.env.ONLY_NOTIFY_ON_SATS) {
@@ -224,6 +225,7 @@ async function run() {
             regular_funds_addresses: [exchange_address],
             special_sat_addresses: [rare_sat_address],
             extraction_fee_rate: fee_rate,
+            min_regular_funds_output_size_sats: min_regular_funds_output_size_sats_env,
         }
         const {
             excluded_tags,
@@ -234,6 +236,7 @@ async function run() {
             split_config,
             withdraw_config,
             split_special_ranges,
+            min_regular_funds_output_size_sats,
         } = get_scan_config({ fee_rate, utxo })
         if (excluded_tags) {
             console.log(`Using excluded tags: ${excluded_tags}`)
@@ -285,6 +288,9 @@ async function run() {
         }
         if (split_special_ranges) {
             request_body.split_special_ranges = split_special_ranges
+        }
+        if (min_regular_funds_output_size_sats || min_regular_funds_output_size_sats === 0) {
+            request_body.min_regular_funds_output_size_sats = min_regular_funds_output_size_sats
         }
         const scan_request = await post_scan_request(request_body)
         if (!scan_request.id) {
