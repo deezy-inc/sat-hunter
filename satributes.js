@@ -26,6 +26,7 @@ const emojis_by_rarity = {
     2009: '0️⃣9️⃣',
     '450x': '⁴⁵⁰ˣ',
     block_840000: '⁸⁴⁰ˣ',
+    ephemera: '🌟',
 }
 const first_2010_sat = 162450000000000
 const first_450x_sat = 45000000000
