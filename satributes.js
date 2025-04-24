@@ -23,6 +23,8 @@ const emojis_by_rarity = {
     halfinney: '👨🏻',
     inscription: '🖼',
     special_name: '🔤',
+    special_name_prod: '🔤🎞️',
+    special_name_old: '🔤👴🏻',
     2009: '0️⃣9️⃣',
     '450x': '⁴⁵⁰ˣ',
     block_840000: '⁸⁴⁰ˣ',
